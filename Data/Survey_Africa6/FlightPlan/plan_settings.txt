@@ -1,0 +1,12 @@
+Direction:
+Points:
+Start:
+Spacing:
+LineSpacing:
+OvershootSurvey:
+OvershootBlock:
+ElevationBuffer:
+Clockwise:-1
+Elevation:0
+TieLineSpacing:
+TieStart:

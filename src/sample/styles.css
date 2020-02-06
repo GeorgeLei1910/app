@@ -1,0 +1,8 @@
+
+
+
+.buttonLogData {
+    -fx-border-color: #484848; -fx-border-width: 2;
+    -fx-border-radius: 10 10 10 10;
+    -fx-background-radius: 10 10 10 10;
+}

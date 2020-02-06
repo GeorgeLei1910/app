@@ -1,0 +1,7 @@
+From:1
+To:2
+fromTie:1
+toTie:4
+useSeperateLines:0
+seperateLines:
+applyOrNot:Applied

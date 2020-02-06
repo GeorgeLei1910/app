@@ -1,0 +1,5 @@
+From:1
+To:4
+FromTie:3
+ToTie:4
+applyOrNot:Applied

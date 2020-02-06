@@ -1,0 +1,12 @@
+Direction:-268
+Points:(-120.1696,50.1533):(-120.1837,50.1533):(-120.1837,50.1714):(-120.1696,50.1714):
+Start:-120.18313208333333,50.15309888888889
+Spacing:125
+LineSpacing:100
+OvershootSurvey:0
+OvershootBlock:50
+ElevationBuffer:55
+Clockwise:1
+Elevation:1
+TieLineSpacing:
+TieStart:
