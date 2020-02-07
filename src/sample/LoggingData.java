@@ -8,6 +8,8 @@ import javafx.scene.layout.StackPane;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -127,7 +129,7 @@ public class LoggingData {
                 buttonStop.setDisable(true);
                 buttonDownload.setDisable(true);
                 buttonConnect.setDisable(false);
-                buttonProcess.fire();
+//                buttonProcess.fire();
 
             }else{
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -150,12 +152,21 @@ public class LoggingData {
         buttonProcess.setOnAction((event) -> {
             try{
             String path = System.getProperty("user.dir");
-            String pathPython = path+ "/Package/pythontest.py";
-            String  pathFolder =  Controller.getCurDataFolder();
-            String command = "python " +pathPython+" -m process " + "-f " +pathFolder;
-            Process p = Runtime.getRuntime().exec(command);
-            }catch(IOException e){
+            String pathPython = path+ "\\Package\\hellotest.py";
+            String  pathFolder =  Controller.getCurDataFolder().replace("/", "\\");
+            String command = "python " + pathPython;
+//            String command = "python " +pathPython+" -m process " + "-f " +pathFolder;
+            System.out.println(command);
+            // Puts python Package\pythontest.py -m process -f
 
+            Process p = Runtime.getRuntime().exec(command);
+            OutputStream rtm = p.getOutputStream();
+            PrintStream prntstrm = new PrintStream(rtm);
+            prntstrm.println();
+
+//            System.out.println(pyos.);
+            }catch(IOException e){
+                System.out.println("IO exception occurred");
 
             }
             System.out.println(">>>>>>>>>>>>>>>>> The Raw data processed and Saved Successfully");

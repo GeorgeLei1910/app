@@ -839,11 +839,12 @@ def treamData(array):
             array = array[i:]
             return array
 
-
+# Processes data
 def process_data(filename):
 
-    '''file_paths = list("Mag.csv", "PiksiGPS.csv", "PiksiGPSTime.csv", "Mav.csv","MavLaser.csv", "MavAtt.csv")
+    file_paths = ["Mag.csv", "PiksiGPS.csv", "PiksiGPSTime.csv", "Mav.csv","MavLaser.csv", "MavAtt.csv"]
     filepatOrig = os.path.dirname(filename)
+    print(filepatOrig)
     foldername = os.path.basename(filepatOrig)
     listFlightFolders = list()
     for name in os.listdir(filepatOrig):
@@ -851,8 +852,10 @@ def process_data(filename):
             listFlightFolders.append()
     if(foldername.startswith("Block")):
         for file_name in file_paths:
-            for folder in listFlightFolders:'''
+            for folder in listFlightFolders:
+                print("Thing")
 
+    print("Processing data")
     filepath = filename
     data_mag = pd.read_csv(filepath + "/Mag.csv")
     print("data_mag", len(data_mag))
@@ -945,6 +948,7 @@ def process_data(filename):
     FINAL_RESULT['Lamor'] = LAMOR
     FINAL_RESULT['Laser'] = NEW_LASER_MAV
 
+    #Makes data_from_UAV.csv
     pd.DataFrame(FINAL_RESULT).to_csv(filepatOrig + "/data_from_UAV.csv")
 
 
@@ -983,78 +987,80 @@ if __name__ == "__main__":
     parser.add_argument('-i', '--proc', type=str, default='0',
                         help='graph type to graph')
 
-    print("Hello World")
-
     io_args = parser.parse_args()
     arg1 = io_args.model
     filename = io_args.flight
-    proc = int(io_args.proc)
-    if (int(io_args.range1) and int(io_args.range2)):
-        range1 = int(io_args.range1)
-        range2 = int(io_args.range2)
-    else:
-        range2 = 0
-        range1 = 0
 
-    if arg1 == "FourthDiff":
-        qualitycheck = QualityCheck(filename)
-        qualitycheck.load_data(proc)
-        qualitycheck.fourtDifference(range1, range2)
-    if arg1 == "MagProfile":
-        qualitycheck = QualityCheck(filename)
-        qualitycheck.load_data(proc)
-        qualitycheck.magProfile()
-    if arg1 == "LaserProfile":
-        qualitycheck = QualityCheck(filename)
-        qualitycheck.load_data(proc)
-        qualitycheck.laserProfile()
-    if arg1 == "FourthDiffBMag":
-        qualitycheck = QualityCheck(filename)
-        qualitycheck.load_data(proc)
-        qualitycheck.fourtDifference(range1, range2)
-    if arg1 == "BaseMagProfile":
-        qualitycheck = QualityCheck(filename)
-        qualitycheck.load_data(proc)
-        qualitycheck.magProfile()
-    if arg1 == "FlightMap":
-        qualitycheck = QualityCheck(filename)
-        qualitycheck.load_data(proc)
-        qualitycheck.flightMap()
-    if arg1 == "FlightMapPiksivsMav":
-        qualitycheck = QualityCheck(filename)
-        qualitycheck.load_data(proc)
-        qualitycheck.FlightMapPiksivsMav()
-    if arg1 == "MavAltvsPiksiAlt":
-        qualitycheck = QualityCheck(filename)
-        qualitycheck.load_data(proc)
-        qualitycheck.mavalt_piksialt()
-    if arg1 == "CounterMap":
-        qualitycheck = QualityCheck(filename)
-        qualitycheck.load_data(proc)
-        qualitycheck.counter_map()
-    if arg1 == "process":
-        process_data(filename)
-    if arg1 == "ExportFile":
-        export_data(filename)
-    if arg1 == "FlightPlan":
-        for name in os.listdir(os.path.dirname(filename)):
-            if (name == "waypointsDataTieLine.txt" or name == "waypointsData.txt"):
-                os.remove(os.path.dirname(filename) + "/" + name)
-        flightPlanning = FlightPlanning(filename)
-        flightPlanning.updateParams()
-        flightPlanning.makeGrid(1)
-        if (flightPlanning.tie_line == 1):
-            flightPlanning.makeGrid(2)
-    if arg1 == "FlightPlanBlocks":
-        flightPlanning = FlightPlanning(filename)
-        flightPlanning.updateParams()
-        flightPlanning.createBlocks(1)
-        if (flightPlanning.tie_line == 1):
-            flightPlanning.createBlocks(2)
+    process_data("C;/Users/georg/OneDrive/University/COOP/Stratus/stratus29Jan20/app/Data/Survey_Africa1/Block4/Flight2/")
 
-    if arg1 == "CreateFlight":
-        flightPlanning = FlightPlanning(filename)
-        flightPlanning.creatFlight()
-    if arg1 == "QualityNoTurn":
-        QualityCheckNoTurns = QualityCheckNoTurns(filename)
-        # QualityCheckNoTurns.flightMap()
+    # proc = int(io_args.proc)
+    # if (int(io_args.range1) and int(io_args.range2)):
+    #     range1 = int(io_args.range1)
+    #     range2 = int(io_args.range2)
+    # else:
+    #     range2 = 0
+    #     range1 = 0
+    #
+    # if arg1 == "FourthDiff":
+    #     qualitycheck = QualityCheck(filename)
+    #     qualitycheck.load_data(proc)
+    #     qualitycheck.fourtDifference(range1, range2)
+    # if arg1 == "MagProfile":
+    #     qualitycheck = QualityCheck(filename)
+    #     qualitycheck.load_data(proc)
+    #     qualitycheck.magProfile()
+    # if arg1 == "LaserProfile":
+    #     qualitycheck = QualityCheck(filename)
+    #     qualitycheck.load_data(proc)
+    #     qualitycheck.laserProfile()
+    # if arg1 == "FourthDiffBMag":
+    #     qualitycheck = QualityCheck(filename)
+    #     qualitycheck.load_data(proc)
+    #     qualitycheck.fourtDifference(range1, range2)
+    # if arg1 == "BaseMagProfile":
+    #     qualitycheck = QualityCheck(filename)
+    #     qualitycheck.load_data(proc)
+    #     qualitycheck.magProfile()
+    # if arg1 == "FlightMap":
+    #     qualitycheck = QualityCheck(filename)
+    #     qualitycheck.load_data(proc)
+    #     qualitycheck.flightMap()
+    # if arg1 == "FlightMapPiksivsMav":
+    #     qualitycheck = QualityCheck(filename)
+    #     qualitycheck.load_data(proc)
+    #     qualitycheck.FlightMapPiksivsMav()
+    # if arg1 == "MavAltvsPiksiAlt":
+    #     qualitycheck = QualityCheck(filename)
+    #     qualitycheck.load_data(proc)
+    #     qualitycheck.mavalt_piksialt()
+    # if arg1 == "CounterMap":
+    #     qualitycheck = QualityCheck(filename)
+    #     qualitycheck.load_data(proc)
+    #     qualitycheck.counter_map()
+    # if arg1 == "process":
+    #     print("Processing Data")
+    #     process_data(filename)
+    # if arg1 == "ExportFile":
+    #     export_data(filename)
+    # if arg1 == "FlightPlan":
+    #     for name in os.listdir(os.path.dirname(filename)):
+    #         if (name == "waypointsDataTieLine.txt" or name == "waypointsData.txt"):
+    #             os.remove(os.path.dirname(filename) + "/" + name)
+    #     flightPlanning = FlightPlanning(filename)
+    #     flightPlanning.updateParams()
+    #     flightPlanning.makeGrid(1)
+    #     if (flightPlanning.tie_line == 1):
+    #         flightPlanning.makeGrid(2)
+    # if arg1 == "FlightPlanBlocks":
+    #     flightPlanning = FlightPlanning(filename)
+    #     flightPlanning.updateParams()
+    #     flightPlanning.createBlocks(1)
+    #     if (flightPlanning.tie_line == 1):
+    #         flightPlanning.createBlocks(2)
+    #
+    # if arg1 == "CreateFlight":
+    #     flightPlanning = FlightPlanning(filename)
+    #     flightPlanning.creatFlight()
+    # if arg1 == "QualityNoTurn":
+    #     QualityCheckNoTurns = QualityCheckNoTurns(filename)
+    #     # QualityCheckNoTurns.flightMap()
