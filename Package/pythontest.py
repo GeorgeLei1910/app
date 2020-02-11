@@ -4,14 +4,14 @@ import argparse
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
-from scipy import interpolate
-from scipy.interpolate import make_interp_spline, BSpline
-from mpl_toolkits.mplot3d import Axes3D
-from scipy.signal import savgol_filter
+# from scipy import interpolate
+# from scipy.interpolate import make_interp_spline, BSpline
+# from mpl_toolkits.mplot3d import Axes3D
+# from scipy.signal import savgol_filter
 import pandas as pd
-import pickle
+# import pickle
 import os
-import csv
+# import csv
 import sys
 import math
 from pyproj import Proj
@@ -28,7 +28,7 @@ import urllib
 # This file include the functions for the FlightPlanning and Quality
 
 LARGE_NUMBER = 1000000000000000000
-
+print("These are the arguments")
 
 class FlightPlanning(object):
     def __init__(self, filepath):
@@ -832,17 +832,17 @@ def StringToDecimal(ss):
     return result
 
 
-def treamData(array):
+def treamdata(array):
     size = array.size
     for i in range(0, size - 1):
         if ((array[i + 1] - array[i]) > 0.1):
             array = array[i:]
             return array
 
+
 # Processes data
 def process_data(filename):
-
-    file_paths = ["Mag.csv", "PiksiGPS.csv", "PiksiGPSTime.csv", "Mav.csv","MavLaser.csv", "MavAtt.csv"]
+    file_paths = ["Mag.csv", "PiksiGPS.csv", "PiksiGPSTime.csv", "Mav.csv", "MavLaser.csv", "MavAtt.csv"]
     filepatOrig = os.path.dirname(filename)
     print(filepatOrig)
     foldername = os.path.basename(filepatOrig)
@@ -850,7 +850,7 @@ def process_data(filename):
     for name in os.listdir(filepatOrig):
         if name.startswith("Flight"):
             listFlightFolders.append()
-    if(foldername.startswith("Block")):
+    if (foldername.startswith("Block")):
         for file_name in file_paths:
             for folder in listFlightFolders:
                 print("Thing")
@@ -905,20 +905,20 @@ def process_data(filename):
     # plt.plot( BBB_timePiksi_GPS, Lat_data , '.', color ="red", markersize=1)
     # plt.show()
 
-    TIME_MAG_USED = treamData(TIME_MAG_USED)
+    TIME_MAG_USED = treamdata(TIME_MAG_USED)
 
-    BBB_time_piksi = treamData(BBB_time_piksi)
+    BBB_time_piksi = treamdata(BBB_time_piksi)
     Piksi_time = Piksi_time[Piksi_time.size - BBB_time_piksi.size:Piksi_time.size]
 
-    BBB_timePiksi_GPS = treamData(BBB_timePiksi_GPS)
+    BBB_timePiksi_GPS = treamdata(BBB_timePiksi_GPS)
     Lat_data = Lat_data[Lat_data.size - BBB_timePiksi_GPS.size:Lat_data.size]
     Lon_data = Lon_data[Lon_data.size - BBB_timePiksi_GPS.size:Lon_data.size]
 
-    BBB_mavTime = treamData(BBB_mavTime)
+    BBB_mavTime = treamdata(BBB_mavTime)
     Lat_mav_data = Lat_mav_data[Lat_mav_data.size - BBB_mavTime.size:Lat_mav_data.size]
     Lon_mav_data = Lon_mav_data[Lon_mav_data.size - BBB_mavTime.size:Lon_mav_data.size]
 
-    BBB_mavLaserTime = treamData(BBB_mavLaserTime)
+    BBB_mavLaserTime = treamdata(BBB_mavLaserTime)
     Laser = Laser[Laser.size - BBB_mavLaserTime.size:Laser.size]
 
     MAG_VALS = MAG_VALS[MAG_VALS.size - TIME_MAG_USED.size:MAG_VALS.size]
@@ -948,7 +948,7 @@ def process_data(filename):
     FINAL_RESULT['Lamor'] = LAMOR
     FINAL_RESULT['Laser'] = NEW_LASER_MAV
 
-    #Makes data_from_UAV.csv
+    # Makes data_from_UAV.csv
     pd.DataFrame(FINAL_RESULT).to_csv(filepatOrig + "/data_from_UAV.csv")
 
 
@@ -973,8 +973,10 @@ def export_data(filename):
 
     file_save.close()
 
+
 # The main function of the python program
 if __name__ == "__main__":
+    print("These are the arguments")
     parser = argparse.ArgumentParser()
     parser.add_argument('-m', '--model', type=str, default='FC',
                         help='graph type to graph')
@@ -990,77 +992,76 @@ if __name__ == "__main__":
     io_args = parser.parse_args()
     arg1 = io_args.model
     filename = io_args.flight
+    # process_data("C:/Users/georg/OneDrive/University/COOP/Stratus/stratus29Jan20/app/Data/Survey_Africa1/Block4/Flight2/raw_data")
 
-    process_data("C;/Users/georg/OneDrive/University/COOP/Stratus/stratus29Jan20/app/Data/Survey_Africa1/Block4/Flight2/")
+    proc = int(io_args.proc)
+    if (int(io_args.range1) and int(io_args.range2)):
+        range1 = int(io_args.range1)
+        range2 = int(io_args.range2)
+    else:
+        range2 = 0
+        range1 = 0
 
-    # proc = int(io_args.proc)
-    # if (int(io_args.range1) and int(io_args.range2)):
-    #     range1 = int(io_args.range1)
-    #     range2 = int(io_args.range2)
-    # else:
-    #     range2 = 0
-    #     range1 = 0
-    #
-    # if arg1 == "FourthDiff":
-    #     qualitycheck = QualityCheck(filename)
-    #     qualitycheck.load_data(proc)
-    #     qualitycheck.fourtDifference(range1, range2)
-    # if arg1 == "MagProfile":
-    #     qualitycheck = QualityCheck(filename)
-    #     qualitycheck.load_data(proc)
-    #     qualitycheck.magProfile()
-    # if arg1 == "LaserProfile":
-    #     qualitycheck = QualityCheck(filename)
-    #     qualitycheck.load_data(proc)
-    #     qualitycheck.laserProfile()
-    # if arg1 == "FourthDiffBMag":
-    #     qualitycheck = QualityCheck(filename)
-    #     qualitycheck.load_data(proc)
-    #     qualitycheck.fourtDifference(range1, range2)
-    # if arg1 == "BaseMagProfile":
-    #     qualitycheck = QualityCheck(filename)
-    #     qualitycheck.load_data(proc)
-    #     qualitycheck.magProfile()
-    # if arg1 == "FlightMap":
-    #     qualitycheck = QualityCheck(filename)
-    #     qualitycheck.load_data(proc)
-    #     qualitycheck.flightMap()
-    # if arg1 == "FlightMapPiksivsMav":
-    #     qualitycheck = QualityCheck(filename)
-    #     qualitycheck.load_data(proc)
-    #     qualitycheck.FlightMapPiksivsMav()
-    # if arg1 == "MavAltvsPiksiAlt":
-    #     qualitycheck = QualityCheck(filename)
-    #     qualitycheck.load_data(proc)
-    #     qualitycheck.mavalt_piksialt()
-    # if arg1 == "CounterMap":
-    #     qualitycheck = QualityCheck(filename)
-    #     qualitycheck.load_data(proc)
-    #     qualitycheck.counter_map()
-    # if arg1 == "process":
-    #     print("Processing Data")
-    #     process_data(filename)
-    # if arg1 == "ExportFile":
-    #     export_data(filename)
-    # if arg1 == "FlightPlan":
-    #     for name in os.listdir(os.path.dirname(filename)):
-    #         if (name == "waypointsDataTieLine.txt" or name == "waypointsData.txt"):
-    #             os.remove(os.path.dirname(filename) + "/" + name)
-    #     flightPlanning = FlightPlanning(filename)
-    #     flightPlanning.updateParams()
-    #     flightPlanning.makeGrid(1)
-    #     if (flightPlanning.tie_line == 1):
-    #         flightPlanning.makeGrid(2)
-    # if arg1 == "FlightPlanBlocks":
-    #     flightPlanning = FlightPlanning(filename)
-    #     flightPlanning.updateParams()
-    #     flightPlanning.createBlocks(1)
-    #     if (flightPlanning.tie_line == 1):
-    #         flightPlanning.createBlocks(2)
-    #
-    # if arg1 == "CreateFlight":
-    #     flightPlanning = FlightPlanning(filename)
-    #     flightPlanning.creatFlight()
+    if arg1 == "FourthDiff":
+        qualitycheck = QualityCheck(filename)
+        qualitycheck.load_data(proc)
+        qualitycheck.fourtDifference(range1, range2)
+    if arg1 == "MagProfile":
+        qualitycheck = QualityCheck(filename)
+        qualitycheck.load_data(proc)
+        qualitycheck.magProfile()
+    if arg1 == "LaserProfile":
+        qualitycheck = QualityCheck(filename)
+        qualitycheck.load_data(proc)
+        qualitycheck.laserProfile()
+    if arg1 == "FourthDiffBMag":
+        qualitycheck = QualityCheck(filename)
+        qualitycheck.load_data(proc)
+        qualitycheck.fourtDifference(range1, range2)
+    if arg1 == "BaseMagProfile":
+        qualitycheck = QualityCheck(filename)
+        qualitycheck.load_data(proc)
+        qualitycheck.magProfile()
+    if arg1 == "FlightMap":
+        qualitycheck = QualityCheck(filename)
+        qualitycheck.load_data(proc)
+        qualitycheck.flightMap()
+    if arg1 == "FlightMapPiksivsMav":
+        qualitycheck = QualityCheck(filename)
+        qualitycheck.load_data(proc)
+        qualitycheck.FlightMapPiksivsMav()
+    if arg1 == "MavAltvsPiksiAlt":
+        qualitycheck = QualityCheck(filename)
+        qualitycheck.load_data(proc)
+        qualitycheck.mavalt_piksialt()
+    if arg1 == "CounterMap":
+        qualitycheck = QualityCheck(filename)
+        qualitycheck.load_data(proc)
+        qualitycheck.counter_map()
+    if arg1 == "process":
+        print("Processing Data")
+        process_data(filename)
+    if arg1 == "ExportFile":
+        export_data(filename)
+    if arg1 == "FlightPlan":
+        for name in os.listdir(os.path.dirname(filename)):
+            if (name == "waypointsDataTieLine.txt" or name == "waypointsData.txt"):
+                os.remove(os.path.dirname(filename) + "/" + name)
+        flightPlanning = FlightPlanning(filename)
+        flightPlanning.updateParams()
+        flightPlanning.makeGrid(1)
+        if (flightPlanning.tie_line == 1):
+            flightPlanning.makeGrid(2)
+    if arg1 == "FlightPlanBlocks":
+        flightPlanning = FlightPlanning(filename)
+        flightPlanning.updateParams()
+        flightPlanning.createBlocks(1)
+        if (flightPlanning.tie_line == 1):
+            flightPlanning.createBlocks(2)
+    if arg1 == "CreateFlight":
+        flightPlanning = FlightPlanning(filename)
+        flightPlanning.creatFlight()
     # if arg1 == "QualityNoTurn":
     #     QualityCheckNoTurns = QualityCheckNoTurns(filename)
     #     # QualityCheckNoTurns.flightMap()
+    print("ENDER")

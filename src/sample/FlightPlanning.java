@@ -103,7 +103,7 @@ public class FlightPlanning {
         });
 
         buttonExport.setOnAction((event) -> {
-            String curPath = System.getProperty("user.dir")+"/Exports";
+            String curPath = System.getProperty("user.dir").replace('\\', '/')+"/Exports";
             File  exportedFolder = new File(curPath);
             exportedFolder.mkdirs();
             String srcPath = Controller.getCurDataFolder();

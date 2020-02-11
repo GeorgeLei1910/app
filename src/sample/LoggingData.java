@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.io.*;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -129,7 +130,7 @@ public class LoggingData {
                 buttonStop.setDisable(true);
                 buttonDownload.setDisable(true);
                 buttonConnect.setDisable(false);
-//                buttonProcess.fire();
+                buttonProcess.fire();
 
             }else{
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -152,14 +153,26 @@ public class LoggingData {
         buttonProcess.setOnAction((event) -> {
             try{
             String path = System.getProperty("user.dir");
-            String pathPython = path+ "\\Package\\hellotest.py";
-            String  pathFolder =  Controller.getCurDataFolder().replace("/", "\\");
-            String command = "python " + pathPython;
-//            String command = "python " +pathPython+" -m process " + "-f " +pathFolder;
-            System.out.println(command);
-            // Puts python Package\pythontest.py -m process -f
+            path = path.replace('\\', '/');
+            String pathPython = path+ "/Package/pythontest.py";
+            String  pathFolder =  Controller.getCurDataFolder().replace('\\', '/');
+//            String command = "python " + pathPython;
+            String command = "python " +pathPython+" -m process " + "-f " +pathFolder;
 
+            // Puts python Package\pythontest.py -m process -f
+            System.out.println(command);
             Process p = Runtime.getRuntime().exec(command);
+
+            //Python console print (Can be commented out)
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(p.getOutputStream()));
+            BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(p.getInputStream()));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                System.out.println(line);
+            }
+            reader.close();
+
             OutputStream rtm = p.getOutputStream();
             PrintStream prntstrm = new PrintStream(rtm);
             prntstrm.println();
@@ -173,11 +186,6 @@ public class LoggingData {
 
 
         });
-
-
-
-
-
     }
 
     public static LoggingData getInstance(StackPane layout)

@@ -93,7 +93,7 @@ public class DataQuality {
             public void handle(ActionEvent event) {
                 fillGraphList();
                 try{
-                    String path = System.getProperty("user.dir");
+                    String path = System.getProperty("user.dir").replace('\\', '/');
                     String pathPython = path + "/Package/pythontest.py";
                     Iterator<graphType> listInterator = listOfGraphs.iterator();
                     String param = "";
@@ -107,7 +107,6 @@ public class DataQuality {
                         System.out.println(command);
                         GraphingThread graphingThread = new GraphingThread(command);
                         graphingThread.showGraph();
-
                     }
 
                 }catch(Exception e){
@@ -138,7 +137,6 @@ public class DataQuality {
             listOfGraphs.add(graphType.MavAltvsPiksiAlt);
         if(cb8.isSelected())
             listOfGraphs.add(graphType.FlightMapPiksivsMav);
-
     }
 
     public static DataQuality getInstance(StackPane layout)
