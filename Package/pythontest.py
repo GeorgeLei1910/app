@@ -29,7 +29,7 @@ import urllib
 
 LARGE_NUMBER = 1000000000000000000
 print("These are the arguments")
-
+#Class for flight planning
 class FlightPlanning(object):
     def __init__(self, filepath):
         self.Clockwise = 1
@@ -647,14 +647,16 @@ class FlightPlanning(object):
             np.savetxt(filePointsBlock, df.values, fmt='%1.10f')
             self.UTMtoLL(filePointsBlock, type)
 
-
+#Class for Quality Check
 class QualityCheck(object):
     # Initialized QualityCheck Object
     def __init__(self, filepath):
         self.filepath = filepath
+        print(self.filepath)
 
     # Loads the 6 csv files to
     def load_data(self, type):
+        #IF using data_from_UAV.csv, go to load_data_processed()
         if (type == 1):
             self.load_data_processed()
         else:
@@ -688,14 +690,16 @@ class QualityCheck(object):
         self.data_mav = self.data[["BBB Time", "BBB Time", "Altitude", "Mav Lat", "Mav Lon"]]
         self.data_piksi = self.data[["BBB Time", "Piksi Lat", "Piksi Lon", "Piksi Alt"]]
 
+    # fouth difference formula for mag (x - 4x + 6x^2 - 4x^3 + 1)
     def fourthDiffFormula(self, mag1, mag2, mag3, mag4, mag5):
-
         val = (mag1 - 4 * mag2 + 6 * mag3 - 4 * mag4 + mag5) / 16
         return val
 
+    #
     def saveShowFig(self, profileName, yAxis, xAxisName, yAxisName, colour, format, *positional_parameters,
                     **keyword_parameters):
 
+        #plot figure
         plt.figure(figsize=(8, 6))
         fig = plt.gcf()
         fig.canvas.set_window_title(profileName)
@@ -760,6 +764,7 @@ class QualityCheck(object):
                                xAxisName="LON", yAxisName="LAT", colour="black", format='.')
         plt.show()
 
+    # TODO: Nothing here is showing. Fix me!
     def FlightMapPiksivsMav(self):
         PiksiLat = self.data_piksi["Piksi Lat"]
         PiksiLon = self.data_piksi["Piksi Lon"]

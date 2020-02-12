@@ -84,17 +84,27 @@ public class CanvasFlightPlan  {
     public  CanvasFlightPlan(int type) {
 
         this.type = type;
-        planSettingsFile = System.getProperty("user.dir")+"/Data/"+Current_Survey+"/FlightPlan/plan_settings.txt";
-        wayPointsFile = System.getProperty("user.dir")+"/Data/"+Current_Survey+"/FlightPlan/waypointsData.txt";
-        wayPointsTieFile = System.getProperty("user.dir")+"/Data/"+Current_Survey+"/FlightPlan/waypointsDataTieLine.txt";
+        String path = System.getProperty("user.dir").replace('\\', '/') + "/Data/" + Current_Survey;
+        planSettingsFile = path +"/FlightPlan/plan_settings.txt";
+        wayPointsFile = path + "/FlightPlan/waypointsData.txt";
+        wayPointsTieFile = path + "/FlightPlan/waypointsDataTieLine.txt";
 
+        path += "/Block" + Current_Block;
 
-        planSettingsFileBlock = System.getProperty("user.dir")+"/Data/"+Current_Survey+"/Block"+Current_Block+"/flight_plan/flightPalnBlock.txt";
-        wayPointsFileBlock = System.getProperty("user.dir")+"/Data/"+Current_Survey+"/Block"+Current_Block+"/flight_plan/waypointsDataBlock.txt";
-        wayPointsFileBlockTie = System.getProperty("user.dir")+"/Data/"+Current_Survey+"/Block"+Current_Block+"/flight_plan/waypointsDataBlockTieLines.txt";
+        planSettingsFileBlock = path + "/flight_plan/flightPalnBlock.txt";
+        wayPointsFileBlock = path + "/flight_plan/waypointsDataBlock.txt";
+        wayPointsFileBlockTie = path + "/flight_plan/waypointsDataBlockTieLines.txt";
 
-        planSettingsFileFlight = System.getProperty("user.dir")+"/Data/"+Current_Survey+"/Block"+Current_Block+ "/flight_plan/flightPalnBlock.txt";
-        wayPointsFileFlight = System.getProperty("user.dir")+"/Data/"+Current_Survey+"/Block"+Current_Block+"/Flight"+Current_Flight+"/flight_plan/waypointsDataFlight.txt";
+        planSettingsFileFlight = path + "/flight_plan/flightPalnBlock.txt";
+        wayPointsFileFlight = path + "/Flight"+Current_Flight+"/flight_plan/waypointsDataFlight.txt";
+
+        System.out.println(planSettingsFile);
+        System.out.println(wayPointsFile);
+        System.out.println(wayPointsTieFile);
+        System.out.println(planSettingsFileBlock);
+        System.out.println(wayPointsFileBlock);
+        System.out.println(wayPointsFileBlockTie);
+        System.out.println(planSettingsFile);
 
 
 
