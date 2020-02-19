@@ -106,44 +106,51 @@ public class CanvasFlightPlan  {
         System.out.println(wayPointsFileBlockTie);
         System.out.println(planSettingsFile);
 
-
-
-        if(type == 1){
-
-            planSettings = planSettingsFile;
-            wayPoints = wayPointsFile;
-            color = Color.BLUE;
-        }else if(type == 0){
-            color = Color.RED;
-            planSettings = planSettingsFileBlock;
-            wayPoints = wayPointsFileBlock;
-
-        }else if(type == -1){
-            color = Color.NAVY;
-            planSettings = planSettingsFileFlight;
-            wayPoints = wayPointsFileFlight;
-        }else if(type == 2){
-            color = Color.GREEN;
-            wayPoints = wayPointsTieFile;
-            planSettings = planSettingsFile;
-        }else if(type == 3){
-            color = Color.BLACK;
-            planSettings = planSettingsFile;
-            try {
-                wayPoints = mergeTwoFiles(wayPointsTieFile, wayPointsFile);
-            }catch(IOException e){
-                e.printStackTrace();
-
-            }
-        }else{
-
-            planSettings = planSettingsFile;
+        switch(type){
+            case -1:
+                color = Color.NAVY;
+                planSettings = planSettingsFileFlight;
+                wayPoints = wayPointsFileFlight;
+            break;
+            case 0:
+                color = Color.RED;
+                planSettings = planSettingsFileBlock;
+                wayPoints = wayPointsFileBlock;
+            break;
+            case 1:
+                System.out.println("Case 1");
+                planSettings = planSettingsFile;
+                wayPoints = wayPointsFile;
+                color = Color.BLUE;
+            break;
+            case 2:
+                color = Color.GREEN;
+                wayPoints = wayPointsTieFile;
+                planSettings = planSettingsFile;
+            break;
+            case 3:
+                color = Color.BLACK;
+                planSettings = planSettingsFile;
+                try {
+                    wayPoints = mergeTwoFiles(wayPointsTieFile, wayPointsFile);
+                }catch(IOException e){
+                    e.printStackTrace();
+                }
+            break;
+            default: planSettings = planSettingsFile;
+            break;
         }
+//        if(type == 1){
+//        }else if(type == 0){
+//        }else if(type == -1){
+//        }else if(type == 2){
+//        }else if(type == 3){
+//        }else{
+//        }
         System.out.println(Current_Survey);
         STAGE = new Stage();
         STAGE.initModality(Modality.APPLICATION_MODAL);
         STAGE.initOwner(Controller.getPrimaryStage());
-
 
         if(type != 1 && type != 2 && type != 3){
             aCanvas = 1500.0f;
@@ -152,11 +159,9 @@ public class CanvasFlightPlan  {
             b = 800.0;
             offsetX = 40;
             offsetY = 40;
-
         }
         //fpMap.setTitle("FlightPlan Map");
         Canvas canvas = new Canvas(aCanvas, bCanvas);
-
         // graphics context
         GraphicsContext graphics_context =
                 canvas.getGraphicsContext2D();
@@ -174,9 +179,6 @@ public class CanvasFlightPlan  {
         // create a scene
         Scene scene = new Scene(group, a, b);
         this.SCENE = scene;
-
-
-
 
         // set the scene
         STAGE.setScene(scene);
@@ -451,7 +453,7 @@ public class CanvasFlightPlan  {
             showBlocksPlan.setDisable(true);
 
         });
-
+        //TODO: fix null pointer
         double h = maxPosition.getX() - minPosition.getX();
         double v = maxPosition.getY() - minPosition.getY();
         showBlocksPlan.setOnAction((event) -> {

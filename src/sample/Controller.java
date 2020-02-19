@@ -10,6 +10,9 @@ import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.*;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 public class Controller {
     private static Controller single_instance = null;
     private static LocalDate date = LocalDate.now(); // Create a date object
@@ -258,17 +261,20 @@ public class Controller {
         }
     }
 
-
+    // When apply is clicked on
     static public void updateFilePlanSetting(String From, String To,String FromTie, String ToTie,String useSep, String seperateLines, String applyOrNot,int curFlight){
         File flightPlanFolder = new File(curFlightFolder+"/Data/" + Current_Survey+"/Block" +
                 Current_Block + "/Flight"+ Controller.getCurFlight()+"/flight_plan/flightPlan.txt");
         try {
-            if (flightPlanFolder.exists()){
-                flightPlanFolder.delete();
-            }else{
-                flightPlanFolder.createNewFile();
-            }
-            PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(flightPlanFolder.toString(), true)));
+//            if (flightPlanFolder.exists()){
+//                flightPlanFolder.delete();
+//                System.out.println("Deleted " + flightPlanFolder.toString());
+//            }else{
+//                flightPlanFolder.createNewFile();
+//                System.out.println("Created " + flightPlanFolder.toString());
+//            }
+            // Write the new settings on the Flight's flightPlan.txt
+            PrintWriter out = new PrintWriter(flightPlanFolder);
             out.flush();
             out.write("From:");
             out.write(From);
@@ -295,8 +301,6 @@ public class Controller {
         }catch (IOException e) {
 
         }
-
-
     }
 
 
@@ -367,8 +371,6 @@ public class Controller {
 
         System.out.println( "<<<<<<<<<<<<<<<<<  CURRENTLY AT FLIGHT NUMBER (("+ i+ ")) >>>>>>>>>>>>>>>>>");
         FlightPlanning.getInstance(layout).updateFlightPlanInfo();
-
-
     }
 
 
@@ -387,8 +389,6 @@ public class Controller {
         System.out.println( "<<<<<<<<<<<<<<<<<  CURRENTLY AT BLOCK NUMBER (("+ i+ ")) >>>>>>>>>>>>>>>>>");
         FlightPlanning.getInstance(layout).updateFlightPlanInfo();
         loadFlights();
-
-
     }
 
 
@@ -416,7 +416,6 @@ public class Controller {
 
 
     static public int getCurFlight(){
-
         return Current_Flight;
     }
 
@@ -436,18 +435,10 @@ public class Controller {
         return  curFolder;
 
     }
-
-
-
-
     static public void setPrimaryStage(Stage primaryStageNew){
         primaryStage = primaryStageNew;
     }
-
     static public Stage getPrimaryStage(){
         return primaryStage;
     }
-
-
-
 }

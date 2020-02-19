@@ -113,8 +113,6 @@ public class Settings {
 
                 kmlFilePath = file.toPath();
                 textKml.setText(kmlFilePath.getFileName().toString());
-
-
             }
 
         });
@@ -122,12 +120,8 @@ public class Settings {
         fileChooseBtnElevation.setOnAction((event) -> {
             File file = fileChooser.showOpenDialog(Main.getStage());
             if (file != null) {
-
                 elevFilePath = file.toPath();
-
-
             }
-
         });
 
         fileChooseBtn.setStyle("-fx-font-size:10");
@@ -272,13 +266,11 @@ public class Settings {
         listOfFlights.setTranslateX(220);
         listOfFlights.setTranslateY(50);
 
-
+        // Corresponds to Flight Plan Settings
         btnSettings.setOnAction((event) -> {
-            String filePath = System.getProperty("user.dir")+"/Data/"+Controller.getCurSurvey()+"/FlightPlan/plan_settings.txt";
+            File filePath = new File(System.getProperty("user.dir")+"/Data/"+Controller.getCurSurvey()+"/FlightPlan/plan_settings.txt");
             final Stage dialog = new Stage();
             items.clear();
-
-
 
             Text txtOvershoot = new Text("Overshoot Survey");
             Text txtOvershootBlock = new Text("Overshoot Block");
@@ -450,6 +442,7 @@ public class Settings {
                 Reader r = new InputStreamReader(ins, "UTF-8"); // leave charset out for default
                 BufferedReader br = new BufferedReader(r);
 
+                //Read everything to the settings
                 while ((s = br.readLine()) != null) {
                     if(s.startsWith("Direction:")){
                         System.out.println(s);
@@ -602,9 +595,9 @@ public class Settings {
                 public void handle(ActionEvent event) {
 
                     try {
-                        PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(filePath,false)));
+                        PrintWriter out = new PrintWriter(filePath);
                         out.flush();
-                        System.out.println(filePath);
+                        System.out.println(filePath.getAbsolutePath());
                         out.write("Direction:" + (Integer.parseInt(dir.getText().trim()) - 90) * -1+"\r\n");
                         out.write("Points:");
                         for(String itm : items){
@@ -694,8 +687,8 @@ public class Settings {
 
                                         String[] segs = str.split(",");
                                         //System.out.println(segs[1].trim()+" "+ segs[0].trim()+ " 0");
-                                        posLon.setText(segs[1].trim());
-                                        posLat.setText(segs[0].trim());
+                                        posLon.setText(segs[0].trim());
+                                        posLat.setText(segs[1].trim());
                                         btnAddPos.fire();
 
                                     }
@@ -772,7 +765,7 @@ public class Settings {
 
 
         });
-
+        //Corresponds to Create and Show plan
         showPlanOfFlight.setOnAction(new EventHandler<ActionEvent>(){
             @Override
             public void handle(ActionEvent event) {
@@ -783,13 +776,13 @@ public class Settings {
                 try {
 
                     Process p = Runtime.getRuntime().exec(command);
-                    p.waitFor();
+
+//                    p.waitFor();
                 }catch(Exception e){
 
                 }
-
+                System.out.println("P ran");
                CanvasFlightPlan canvasFlightPlan = new CanvasFlightPlan(1);
-
             }
         });
 

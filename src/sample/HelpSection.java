@@ -33,15 +33,9 @@ public class HelpSection {
 
 
     public static HelpSection getInstance(StackPane layout){
-
-
         if (single_instance == null)
             single_instance = new HelpSection(layout);
-
-
         return single_instance;
-
-
     }
 
     private void setText(){
@@ -51,8 +45,6 @@ public class HelpSection {
         passage.setStyle("-fx-font: 13 Courier;");
         passage.setX(-100);
         passage.setY(0);
-
-
     }
 
 

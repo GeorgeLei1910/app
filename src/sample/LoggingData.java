@@ -154,7 +154,7 @@ public class LoggingData {
             try{
             String path = System.getProperty("user.dir");
             path = path.replace('\\', '/');
-            String pathPython = path+ "/Package/pythontest.py";
+            String pathPython = path + "/Package/pythontest.py";
             String  pathFolder =  Controller.getCurDataFolder().replace('\\', '/');
 //            String command = "python " + pathPython;
             String command = "python " +pathPython+" -m process " + "-f " +pathFolder;

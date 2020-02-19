@@ -63,6 +63,7 @@ class FlightPlanning(object):
                          (114, 120), (120, 126), (126, 132), (132, 138), (138, 144), (144, 150),
                          (150, 156), (156, 162), (162, 168), (168, 174), (174, 180)]
 
+    # Makes a Two vector list of coordinates
     def coords(self, str):
         list = []
         x, _, y = str.partition(',')
@@ -72,6 +73,7 @@ class FlightPlanning(object):
         list.append(y)
         return list
 
+    # Iterates through list to see if lon is within the utmZone list above
     def findUtmZone(self, lon):
         for item in self.utmZones:
             if (item[0] <= lon and item[1] > lon):
@@ -79,6 +81,7 @@ class FlightPlanning(object):
 
         return -1
 
+    #
     def removeline(self, line):
         with open(self.filepath, "r") as f:
             lines = f.readlines()
@@ -191,6 +194,7 @@ class FlightPlanning(object):
         if (line.startswith('UTM:')):
             self.removeline(line)
 
+        #Created after clicking on "Create and Show Plan"
         with open(self.filepath, "a") as f:
             f.write('UTM:')
             for index, row in self.dfPolygan.iterrows():
@@ -205,7 +209,7 @@ class FlightPlanning(object):
         segs.clear()
         if (line.startswith('initUTM:')):
             self.removeline(line)
-
+        #Created after clicking on "Create and Show Plan"
         with open(self.filepath, "a") as f:
             f.write('initUTM:')
             self.converter = Proj(proj='utm', zone=self.findUtmZone(float(self.initPoint[0])), ellps='WGS84')
@@ -231,7 +235,9 @@ class FlightPlanning(object):
     def get_elevation_srtm(self, loc):
         return (10, 10)
 
+    # Gets elevation from Google API
     def get_elevation_google_api(self, loc):
+        #TODO: Ask Curtis to use their own elevation thing.
         url = 'https://maps.googleapis.com/maps/api/elevation/json?locations=' + loc + '&key=' + 'AIzaSyC6zMxKN6hULA2vpvTRaAgnVxmScK-VH3w'
         response = simplejson.load(urllib.request.urlopen(url))
         results = response['results'][0]
@@ -241,20 +247,27 @@ class FlightPlanning(object):
         return (elevation, resolution)
 
     def creatFlight(self):
+
+        # Creates flight txts for waypoints
         folderBlock = os.path.dirname(self.filepath)
         folderBlock = os.path.dirname(folderBlock)
         folderBlock = os.path.dirname(folderBlock)
+
+        #Files in flight_plan
         fileFlightWaypointsLL = folderBlock + "/flight_plan/WayPointsblocksLL.txt"
         fileFlightWaypoints = folderBlock + "/flight_plan/waypointsDataBlock.txt"
         fileFlightWaypointsTieLinesLL = folderBlock + "/flight_plan/WayPointsblocksTiesLL.txt"
         fileFlightWaypointsTieLines = folderBlock + "/flight_plan/waypointsDataBlockTieLines.txt"
 
+        #Files in flight folder
         filePointsFlights = os.path.dirname(self.filepath) + "/waypointsDataFlight.txt"
         filePointsFlightsLL = os.path.dirname(self.filepath) + "/waypointsDataFlightLL.txt"
         dfWayPointsLL = pd.read_csv(fileFlightWaypointsLL, sep=" ", header=None)
         dfWayPointsLL.columns = ["LON", "LAT", "elevation", "resolution", "index", "line"]
         dfWayPoints = pd.read_csv(fileFlightWaypoints, sep=" ", header=None)
         dfWayPoints.columns = ["utmX", "utmY", "elevation", "line", "index", "angle", "Block"]
+
+        #Reads through and records the values in flightplan.txt
         file = open(self.filepath, "r+")
         line = file.readline()
         segs = []
@@ -263,6 +276,7 @@ class FlightPlanning(object):
         from_tie_line = 0
         use_seperate_lines = 0
         to_tie_line = 0
+
         if (line.startswith('From:')):
             segs = line.split(":")
             if (len(segs[1]) > 1):
@@ -303,8 +317,8 @@ class FlightPlanning(object):
                         segs = segs[1].split(",")
 
         print(from_line, to_line)
-
         file.close()
+
 
         dfTemp = pd.DataFrame(columns=["utmX", "utmY", "elevation", "line", "index", "angle", "Block"])
         dfTempLL = pd.DataFrame(columns=["LON", "LAT", "elevation", "resolution", "index", "line"])
@@ -388,6 +402,7 @@ class FlightPlanning(object):
         lines = 1
         i = 0
         # f= open(os.path.dirname(self.filepath)+"/tempPoints.txt","w+")
+        # Draws the lines of the Flight Plan
         while (True):
             distance = polygon.exterior.distance(point)
             print("distance", distance)
@@ -997,7 +1012,6 @@ if __name__ == "__main__":
     io_args = parser.parse_args()
     arg1 = io_args.model
     filename = io_args.flight
-    # process_data("C:/Users/georg/OneDrive/University/COOP/Stratus/stratus29Jan20/app/Data/Survey_Africa1/Block4/Flight2/raw_data")
 
     proc = int(io_args.proc)
     if (int(io_args.range1) and int(io_args.range2)):

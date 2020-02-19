@@ -1,3 +1,7 @@
-From:
-To:
-applyOrNot:
+From:2
+To:3
+fromTie:1
+toTie:2
+useSeperateLines:0
+seperateLines:3
+applyOrNot:Applied
