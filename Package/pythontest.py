@@ -62,6 +62,7 @@ class FlightPlanning(object):
                          (66, 72), (72, 78), (78, 84), (84, 90), (90, 96), (96, 102), (102, 108), (108, 114),
                          (114, 120), (120, 126), (126, 132), (132, 138), (138, 144), (144, 150),
                          (150, 156), (156, 162), (162, 168), (168, 174), (174, 180)]
+        print("FlightPlanning object made")
 
     # Makes a Two vector list of coordinates
     def coords(self, str):
@@ -218,7 +219,6 @@ class FlightPlanning(object):
             strInitpointUtm = str(tup[0]) + "," + str(tup[1])
             f.write(strInitpointUtm)
             f.write('\n')
-
         file.close()
 
         print("Polygan Points: ", self.dfPolygan)
@@ -228,8 +228,10 @@ class FlightPlanning(object):
 
     def get_elevation(self, loc):
         if (self.elevation_type == 0):
+            print("Getting elevation on preset")
             return self.get_elevation_srtm(loc)
         else:
+            print("Getting elevation on Google")
             return self.get_elevation_google_api(loc)
 
     def get_elevation_srtm(self, loc):
@@ -244,6 +246,7 @@ class FlightPlanning(object):
         print(results)
         elevation = results['elevation']
         resolution = results['resolution']
+        print("Elevation: " + elevation + "  Resolution:" + resolution)
         return (elevation, resolution)
 
     def creatFlight(self):
@@ -370,7 +373,7 @@ class FlightPlanning(object):
         np.savetxt(filePointsFlightsLL, dfTempLL.values, fmt='%1.10f')
         np.savetxt(filePointsFlights, dfTemp.values, fmt='%1.10f')
         export_data(filePointsFlightsLL)
-
+    # Makes grid when "Create and Show Block" is pressed
     def makeGrid(self, type):
 
         self.wayPoints.drop(self.wayPoints.index, inplace=True)
@@ -402,7 +405,7 @@ class FlightPlanning(object):
         lines = 1
         i = 0
         # f= open(os.path.dirname(self.filepath)+"/tempPoints.txt","w+")
-        # Draws the lines of the Flight Plan
+        # Draws the flight lines of the Flight Plan
         while (True):
             distance = polygon.exterior.distance(point)
             print("distance", distance)
@@ -459,6 +462,7 @@ class FlightPlanning(object):
         else:
             file = os.path.dirname(self.filepath) + "/waypointsDataTieLine.txt"
         np.savetxt(file, self.wayPoints.values, fmt='%1.10f')
+
 
     def containsFolder(self, parentFolder, fname):
         for name in os.listdir(parentFolder):
@@ -1066,6 +1070,7 @@ if __name__ == "__main__":
         for name in os.listdir(os.path.dirname(filename)):
             if (name == "waypointsDataTieLine.txt" or name == "waypointsData.txt"):
                 os.remove(os.path.dirname(filename) + "/" + name)
+                print("removed " + name)
         flightPlanning = FlightPlanning(filename)
         flightPlanning.updateParams()
         flightPlanning.makeGrid(1)

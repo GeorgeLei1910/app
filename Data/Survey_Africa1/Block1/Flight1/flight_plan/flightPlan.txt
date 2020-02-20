@@ -1,4 +1,4 @@
-From:2
+From:1
 To:4
 fromTie:1
 toTie:2

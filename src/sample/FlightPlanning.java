@@ -155,6 +155,7 @@ public class FlightPlanning {
             }
         });
 
+        //Apply button runs python createFlight
         applyBtn.setOnAction((event) -> {
             applied.setText("Applied");
             String toUseSepereatLines = "0";
@@ -177,7 +178,7 @@ public class FlightPlanning {
                 //Python code runs here
                 Process p = Runtime.getRuntime().exec(command);
                 p.waitFor();
-                //Python code
+                //Python console log
                 BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(p.getOutputStream()));
                 BufferedReader reader = new BufferedReader(
                         new InputStreamReader(p.getInputStream()));

@@ -29,11 +29,7 @@ public class Settings {
     static private Text text;
     static private Text textKml;
     static private Text textElevation;
-    static private Button showPlanOfFlight;
-    static private Button showPlanOfTieFlight;
-    static private Button showPlanOfTieAndFlight;
-
-    static private Button fileChooseBtnElevation;
+    static private Button showPlanOfTieAndFlight, fileChooseBtnElevation, showPlanOfTieFlight, showPlanOfFlight;
     static private Path elevFilePath;
     static private Button Help;
 
@@ -290,8 +286,8 @@ public class Settings {
             dialog.initModality(Modality.APPLICATION_MODAL);
             dialog.initOwner(Controller.getPrimaryStage());
             Button btnShowFlight = new Button("choose start");
-            Text txtSpacing = new Text("Spacing");
-            Text txtLineSpacing = new Text("Line Spacing");
+            Text txtSpacing = new Text("Waypoint Spacing (m)");
+            Text txtLineSpacing = new Text("Line Spacing (m)");
             TextField txtFieldSpacing = new TextField();
             TextField txtFieldLineSpacing = new TextField();
             txtFieldSpacing.setMaxWidth(50);
@@ -335,9 +331,9 @@ public class Settings {
             posLonStart.setMaxWidth(50);
             posLatStart.setPrefWidth(50);
             posLatStart.setMaxWidth(50);
-            posLatStart.setTranslateX(-60);
+            posLatStart.setTranslateX(-120);
             posLatStart.setTranslateY(45);
-            posLonStart.setTranslateX(-120);
+            posLonStart.setTranslateX(-60);
             posLonStart.setTranslateY(45);
             textPositionStart.setTranslateX(-210);
             textPositionStart.setTranslateY(45);
@@ -690,33 +686,15 @@ public class Settings {
                                         posLon.setText(segs[0].trim());
                                         posLat.setText(segs[1].trim());
                                         btnAddPos.fire();
-
                                     }
                                     break;
                                 }
-
                             }
-
-
                             }catch (IOException e){
-
-
-
-
                         }
-
-
-
                     }
-
                 }
-
-
             });
-
-
-
-
 
             btnOK.setPrefWidth(80);
             btnCancel.setPrefWidth(80);
@@ -765,7 +743,7 @@ public class Settings {
 
 
         });
-        //Corresponds to Create and Show plan
+        //Corresponds to "Create and Show plan"
         showPlanOfFlight.setOnAction(new EventHandler<ActionEvent>(){
             @Override
             public void handle(ActionEvent event) {
@@ -775,9 +753,17 @@ public class Settings {
                         "/FlightPlan/plan_settings.txt";
                 try {
 
-                    Process p = Runtime.getRuntime().exec(command);
-
+//                    Process p = Runtime.getRuntime().exec(command);
 //                    p.waitFor();
+                    //Python console log
+//                    BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(p.getOutputStream()));
+//                    BufferedReader reader = new BufferedReader(
+//                            new InputStreamReader(p.getInputStream()));
+//                    String line;
+//                    while ((line = reader.readLine()) != null) {
+//                        System.out.println(line);
+//                    }
+//                    reader.close();
                 }catch(Exception e){
 
                 }

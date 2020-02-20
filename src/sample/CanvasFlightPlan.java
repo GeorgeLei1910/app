@@ -210,7 +210,11 @@ public class CanvasFlightPlan  {
             });
 
         }
+        System.out.println("After MinMax");
+
         showWaypoints();
+
+        System.out.println("After showWayPoints");
 
 
     }
@@ -224,6 +228,7 @@ public class CanvasFlightPlan  {
         double y = 0;
         Position minPosition = new Position(0,0);
         Position maxPosition = new Position(0,0);
+        System.out.println("showWayPoint Setup COmplete");
         try {
             String s;
             InputStream ins = new FileInputStream(planSettings);
@@ -236,10 +241,11 @@ public class CanvasFlightPlan  {
                      start = "Points";
                 if(s.startsWith(start)) {
                     String segments[] = s.split(":");
+                    System.out.println("Number of segments = " + segments.length);
                     for(int i = 1; i < segments.length; i++){
                         String posX = segments[i].split(",")[0];
                         String posY = segments[i].split(",")[1];
-
+                        System.out.println(posX + "   " + posY);
                         if(type != 1 && type != 2 && type != 3){
                             posX = posX.substring(1, posX.length());
                             posY = posY.substring(0, posY.length()-1);
@@ -250,12 +256,10 @@ public class CanvasFlightPlan  {
                         if(minPosition.getX() == 0 & minPosition.getY() == 0){
                             minPosition.setX(posx);
                             minPosition.setY(posy);
-
                         }
                         if(maxPosition.getX() == 0 & maxPosition.getY() == 0){
                             maxPosition.setX(posx);
                             maxPosition.setY(posy);
-
                         }
                         if(minPosition.getX() > posx)
                             minPosition.setX(posx);
@@ -294,8 +298,6 @@ public class CanvasFlightPlan  {
         if(this.type != -2){
             drawWaypoints( graphics_context, minPosition,  maxPosition );
         }
-
-
     }
 
 
