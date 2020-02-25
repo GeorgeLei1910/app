@@ -753,17 +753,17 @@ public class Settings {
                         "/FlightPlan/plan_settings.txt";
                 try {
 
-//                    Process p = Runtime.getRuntime().exec(command);
+                    Process p = Runtime.getRuntime().exec(command);
 //                    p.waitFor();
                     //Python console log
-//                    BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(p.getOutputStream()));
-//                    BufferedReader reader = new BufferedReader(
-//                            new InputStreamReader(p.getInputStream()));
-//                    String line;
-//                    while ((line = reader.readLine()) != null) {
-//                        System.out.println(line);
-//                    }
-//                    reader.close();
+                    BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(p.getOutputStream()));
+                    BufferedReader reader = new BufferedReader(
+                            new InputStreamReader(p.getInputStream()));
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        System.out.println(line);
+                    }
+                    reader.close();
                 }catch(Exception e){
 
                 }

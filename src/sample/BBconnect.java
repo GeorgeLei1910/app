@@ -6,9 +6,13 @@ import java.net.Socket;
 
 public class BBconnect {
     private static Socket socket= null;
+    // Connect Port
     private static int port1 = 5090;
+    // Start Port
     private static int port2 = 5091;
+    // Stop Port
     private static int port3 = 5092;
+    // Download Port
     private static int port4 = 5093;
     InetSocketAddress  endPoint1;
     InetSocketAddress  endPoint2;
@@ -27,7 +31,6 @@ public class BBconnect {
             endPoint2 = new InetSocketAddress(serverIP, port2);
             endPoint3 = new InetSocketAddress(serverIP, port3);
             endPoint4 = new InetSocketAddress(serverIP, port4);
-
     }
 
     //If instance is not created, then create instance
@@ -65,6 +68,8 @@ public class BBconnect {
         String response = "Error";
         try {
             socket = new Socket();
+
+
             socket.connect(endPoint, 8000);
             input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
@@ -79,8 +84,26 @@ public class BBconnect {
         }catch(IOException exception){
             exception.printStackTrace();
         }
-
         return response;
+    }
+
+    public int getState(){
+        int [] ports = new int [] {port2, port3, port4};
+        Socket testSocket;
+        int i = 0;
+        while(i < ports.length) {
+            try {
+                testSocket = new Socket(serverIP, ports[i]);
+                testSocket.close();
+            } catch (IOException ioe) {
+                System.out.println("Port " + ports[i] + " Closed");
+                i++;
+            }finally{
+                System.out.println("Port Open " + ports[i]);
+                return i;
+            }
+        }
+        return 0;
     }
 
 

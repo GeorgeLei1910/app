@@ -40,11 +40,11 @@ public class MainInterface {
         curSurveyName = new Text(Controller.getCurSurvey());
         buttonBlock.setStyle("-fx-font-size:16");
         buttonFlight.setStyle("-fx-font-size:10");
-        buttonLogData.setTranslateX(-105);
+        buttonLogData.setTranslateX(0);
         buttonLogData.setTranslateY(-230);
-        buttonDataQuality.setTranslateX(0);
+        buttonDataQuality.setTranslateX(110);
         buttonDataQuality.setTranslateY(-230);
-        buttonFlightPlan.setTranslateX(110);
+        buttonFlightPlan.setTranslateX(-100);
         buttonFlightPlan.setTranslateY(-230);
         buttonBlock.setTranslateX(0);
         buttonBlock.setTranslateY(250);

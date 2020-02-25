@@ -177,7 +177,7 @@ public class FlightPlanning {
             try {
                 //Python code runs here
                 Process p = Runtime.getRuntime().exec(command);
-                p.waitFor();
+//                p.waitFor();
                 //Python console log
                 BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(p.getOutputStream()));
                 BufferedReader reader = new BufferedReader(

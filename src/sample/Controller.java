@@ -10,9 +10,6 @@ import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.*;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-
 public class Controller {
     private static Controller single_instance = null;
     private static LocalDate date = LocalDate.now(); // Create a date object

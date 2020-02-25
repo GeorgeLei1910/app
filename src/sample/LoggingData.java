@@ -1,5 +1,7 @@
 package sample;
 
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.SftpException;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
@@ -36,7 +38,7 @@ public class LoggingData {
         ipAddressField.setPromptText("IP address");
         buttonStart =  new Button("Start");
         buttonStop = new Button("Stop");
-        openStates = new Button("Open States");
+        openStates = new Button("Reconnect");
         buttonConnect.setTranslateX(-100);
         buttonConnect.setTranslateY(-140);
         buttonDownload.setTranslateX(-150);
@@ -66,17 +68,12 @@ public class LoggingData {
         openStates.setTranslateY(-10);
 
 
-        buttonStart.setDisable(true);
+        buttonStart.setDisable(false);
         buttonStop.setDisable(true);
-        buttonDownload.setDisable(true);
+        buttonDownload.setDisable(false);
 
         openStates.setOnAction((event) -> {
-            buttonStop.setDisable(false);
-            buttonStart.setDisable(false);
-            buttonDownload.setDisable(false);
-            buttonConnect.setDisable(false);
-
-
+            int state = BBconnect.getInstance().getState();
         });
 
         // Connects to BeagleBone via Wifi (192.168.8.1) or USB (192.168.7.2)
@@ -84,7 +81,7 @@ public class LoggingData {
             BBconnect bbConnect = BBconnect.getInstance();
             if(bbConnect.connect(1).equals("Connected")){
                 //Disables and enables different stuff.
-                buttonDownload.setDisable(true);
+                buttonDownload.setDisable(false);
                 buttonStop.setDisable(true);
                 buttonStart.setDisable(false);
                 buttonConnect.setDisable(true);
@@ -108,41 +105,50 @@ public class LoggingData {
             if(bbConnect.connect(3).equals("Stop")){
                 buttonDownload.setDisable(false);
                 buttonConnect.setDisable(true);
-                buttonStart.setDisable(true);
+                buttonStart.setDisable(false);
                 buttonStop.setDisable(true);
             }
 
         });
 
         buttonDownload.setOnAction((event) -> {
-            File directory = new File(Controller.getCurDataFolder());
-            if(directory.isDirectory() && directory.list().length > 2){
-                Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.setTitle("Error");
-                alert.setHeaderText("Files already exist in this folder");
-                alert.setContentText("Either Empty this flight or choose or create another flight to download the data :)");
-                alert.showAndWait();
+//            File directory = new File(Controller.getCurDataFolder());
+//            if(directory.isDirectory() && directory.list().length > 2){
+//                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+//                alert.setTitle("Error");
+//                alert.setHeaderText("Files already exist in this folder");
+//                alert.setContentText("Either Empty this flight or choose or create another flight to download the data :)");
+//                alert.showAndWait();
+//
+//            }else if(Controller.getCurFlight() != 0){
+//                BBconnect bbConnect = BBconnect.getInstance();
+//                bbConnect.connect(4);
+//                buttonStart.setDisable(false);
+//                buttonStop.setDisable(true);
+//                buttonConnect.setDisable(true);
+//                buttonProcess.fire();
+//            }else{
+//                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+//                alert.setTitle("Flight Is not Set");
+//                alert.setHeaderText("Flight is not chosen");
+//                alert.setContentText("In order to download the data, you should provide a path (Flight number) " +
+//                        "so that we can place it there!");
+//                alert.showAndWait();
+//            }
 
-            }else if(Controller.getCurFlight() != 0){
-                BBconnect bbConnect = BBconnect.getInstance();
-                bbConnect.connect(4);
-                buttonStart.setDisable(true);
-                buttonStop.setDisable(true);
-                buttonDownload.setDisable(true);
-                buttonConnect.setDisable(false);
-                buttonProcess.fire();
-
-            }else{
-                Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.setTitle("Flight Is not Set");
-                alert.setHeaderText("Flight is not chosen");
-                alert.setContentText("In order to download the data, you should provide a path (Flight number) " +
-                        "so that we can place it there!");
-
-                alert.showAndWait();
-
-
+            // This is an FTP download, This not only not need the program to run, it can be faster than the method above.
+            // All methods are in the Class SFTPClient.
+            SFTPClient download = new SFTPClient();
+            try {
+                download.connect();
+                System.out.println("Connected");
+                download.download("/home/debian/stratus/build/Matter.csv", Controller.getCurDataFolder() + "\\Mav.csv");
+                download.disconnect();
+                System.out.println("Disconnected");
+            } catch (JSchException | SftpException e) {
+                e.printStackTrace();
             }
+
 
 
         });
