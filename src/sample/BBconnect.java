@@ -130,8 +130,13 @@ public class BBconnect {
         out.close();
         File dummyFile = new File(path+"/dummy.txt");
         dummyFile.delete();
+        long startTime = System.currentTimeMillis();
+        long fileStartTime = startTime, fileEndTime = startTime;
         while(!response.startsWith("END")){
             if(response.startsWith("Filename")) {
+                fileEndTime = System.currentTimeMillis();
+                System.out.println(" Took " + (fileEndTime - fileStartTime) + " ms");
+                fileStartTime = fileEndTime;
                 out.close();
                 String segments[] = response.split(": ");
                 String seg = segments[1];
@@ -140,13 +145,16 @@ public class BBconnect {
                 System.out.println("=======================================================>>>>>>>" + response + "\r\n");
 
             }else{
-                System.out.println("--->"+response+ "\n");
+//                System.out.println("--->"+response+ "\n");
                 out.write(response+ "\r\n");
             }
             response = input.readLine();
         }
         out.close();
+        System.out.println(" Took " + (fileEndTime - fileStartTime) + " ms");
         System.out.println("---->"+response+ "\r\n");
+        long endTime = System.currentTimeMillis();
+        System.out.println("Total Time: " + (endTime - startTime) + " ms");
 
     }
 

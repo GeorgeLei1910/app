@@ -73,7 +73,10 @@ public class LoggingData {
         buttonDownload.setDisable(false);
 
         openStates.setOnAction((event) -> {
-            int state = BBconnect.getInstance().getState();
+//            int state = BBconnect.getInstance().getState();
+            buttonDownload.setDisable(false);
+            buttonStart.setDisable(false);
+            buttonStop.setDisable(false);
         });
 
         // Connects to BeagleBone via Wifi (192.168.8.1) or USB (192.168.7.2)
@@ -140,17 +143,35 @@ public class LoggingData {
             // All methods are in the Class SFTPClient.
             SFTPClient download = new SFTPClient();
             try {
+                long startTime = System.currentTimeMillis();
+                String dest = "C:\\Users\\georg\\OneDrive\\University\\COOP\\Stratus\\stratus29Jan20\\testfolder\\Sample5\\";
                 download.connect();
                 System.out.println("Connected");
-                download.download("/home/debian/stratus/build/Matter.csv", Controller.getCurDataFolder() + "\\Mav.csv");
+                download.download("/home/debian/stratus/build/Mag.csv", dest + "Mag.csv");
+                long magDone = System.currentTimeMillis();
+                System.out.println("Mag.csv downloaded in " + (magDone - startTime) + " ms");
+                download.download("/home/debian/stratus/build/Mav.csv", dest + "Mav.csv");
+                long mavDone = System.currentTimeMillis();
+                System.out.println("Mav.csv downloaded in " + (mavDone - magDone) + " ms");
+                download.download("/home/debian/stratus/build/MavAtt.csv", dest + "MavAtt.csv");
+                long mavAttDone = System.currentTimeMillis();
+                System.out.println("MavAtt.csv downloaded in " + (mavAttDone - mavDone) + " ms");
+                download.download("/home/debian/stratus/build/MavLaser.csv", dest + "MavLaser.csv");
+                long mavLasDone = System.currentTimeMillis();
+                System.out.println("MavLaser.csv downloaded in " + (mavLasDone - mavAttDone) + " ms");
+                download.download("/home/debian/stratus/build/PiksiGPS.csv", dest + "PiksiGPS.csv");
+                long piksiDone = System.currentTimeMillis();
+                System.out.println("PiksiGPS.csv downloaded in " + (piksiDone - mavLasDone) + " ms");
+                download.download("/home/debian/stratus/build/PiksiGPSTime.csv", dest + "PiksiGPSTime.csv");
+                long piksiTimeDone = System.currentTimeMillis();
+                System.out.println("PiksiGPSTime.csv downloaded in " + (piksiTimeDone - piksiDone) + " ms");
                 download.disconnect();
+                long endTime = System.currentTimeMillis();
                 System.out.println("Disconnected");
+                System.out.println("Total Time used: " + (endTime - startTime));
             } catch (JSchException | SftpException e) {
                 e.printStackTrace();
             }
-
-
-
         });
 
 
