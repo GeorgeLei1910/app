@@ -20,7 +20,7 @@ public class BBconnect {
     InetSocketAddress  endPoint4;
     private static BufferedReader input = null;
     private static BufferedWriter writer = null;
-    private static String serverIP = "192.168.6.2";
+    private static String serverIP = "192.168.8.1";
 
 
     private static BBconnect single_instance = null;
@@ -98,40 +98,10 @@ public class BBconnect {
         return response;
     }
 
-    //Obsolete with SFTPClient
-    private static void getResponseDownload(BufferedReader input) throws IOException{
-        String response = input.readLine();
-        String path = Controller.getCurDataFolder();
-        PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(path+"/dummy.txt", true)));
-        out.close();
-        File dummyFile = new File(path+"/dummy.txt");
-        dummyFile.delete();
-        long startTime = System.currentTimeMillis();
-        long fileStartTime = startTime, fileEndTime = startTime;
-        while(!response.startsWith("END")){
-            if(response.startsWith("Filename")) {
-                fileEndTime = System.currentTimeMillis();
-                System.out.println(" Took " + (fileEndTime - fileStartTime) + " ms");
-                fileStartTime = fileEndTime;
-                out.close();
-                String segments[] = response.split(": ");
-                String seg = segments[1];
-                out = new PrintWriter(new BufferedWriter(new FileWriter(path +"/"+seg, true)));
-
-                System.out.println("=======================================================>>>>>>>" + response + "\r\n");
-
-            }else{
-//                System.out.println("--->"+response+ "\n");
-                out.write(response+ "\r\n");
-            }
-            response = input.readLine();
-        }
-        out.close();
-        System.out.println(" Took " + (fileEndTime - fileStartTime) + " ms");
-        System.out.println("---->"+response+ "\r\n");
-        long endTime = System.currentTimeMillis();
-        System.out.println("Total Time: " + (endTime - startTime) + " ms");
-
+    public String getIPAddress(){
+        return serverIP;
     }
-
+    public void setIPAddress(String newIP){
+        serverIP = newIP;
+    }
 }

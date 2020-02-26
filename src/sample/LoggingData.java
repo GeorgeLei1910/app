@@ -221,14 +221,9 @@ public class LoggingData {
         layout.getChildren().add(buttonDownload);
         layout.getChildren().add(buttonProcess);
         layout.getChildren().add(ipAddressField);
-        layout.getChildren().add(cbMag);
-        layout.getChildren().add(cbPiksi);
-        layout.getChildren().add(cbMav);
         layout.getChildren().add(buttonStart);
         layout.getChildren().add(buttonStop);
         layout.getChildren().add(openStates);
-
-
     }
 
 
@@ -237,9 +232,6 @@ public class LoggingData {
         layout.getChildren().remove(buttonDownload);
         layout.getChildren().remove(buttonProcess);
         layout.getChildren().remove(ipAddressField);
-        layout.getChildren().remove(cbMag);
-        layout.getChildren().remove(cbPiksi);
-        layout.getChildren().remove(cbMav);
         layout.getChildren().remove(buttonStart);
         layout.getChildren().remove(buttonStop);
         layout.getChildren().remove(openStates);
@@ -250,10 +242,8 @@ public class LoggingData {
         try(DirectoryStream<Path> dirStream = Files.newDirectoryStream(Paths.get(dir))) {
             return !dirStream.iterator().hasNext();
         }catch (IOException e){
-
             return false;
         }
-
     }
 
 
