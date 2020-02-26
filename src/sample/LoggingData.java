@@ -25,9 +25,6 @@ public class LoggingData {
     static private Button buttonConnect, buttonDownload, buttonProcess, buttonStart, buttonStop;
     static private TextField ipAddressField;
     static private StackPane layout;
-    static private CheckBox cbMag;
-    static private CheckBox cbPiksi;
-    static private CheckBox cbMav;
     static private Button openStates;
     private LoggingData(StackPane layout){
         this.layout = layout;
@@ -55,15 +52,6 @@ public class LoggingData {
         buttonStop.setTranslateX(-70);
         buttonStop.setTranslateY(0);
 
-        cbMag = new CheckBox("Magnetometer");
-        cbPiksi = new CheckBox("Piksi");
-        cbMav = new CheckBox("PixHawk");
-        cbMag.setTranslateX(-210);
-        cbPiksi.setTranslateX(-241);
-        cbMav.setTranslateX(-229);
-        cbMag.setTranslateY(-80);
-        cbPiksi.setTranslateY(-40);
-        cbMav.setTranslateY(0);
         openStates.setTranslateX(260);
         openStates.setTranslateY(-10);
 
@@ -74,6 +62,7 @@ public class LoggingData {
 
         openStates.setOnAction((event) -> {
 //            int state = BBconnect.getInstance().getState();
+            BBconnect bbconnect = BBconnect.getInstance();
             buttonDownload.setDisable(false);
             buttonStart.setDisable(false);
             buttonStop.setDisable(false);
@@ -89,7 +78,6 @@ public class LoggingData {
                 buttonStart.setDisable(false);
                 buttonConnect.setDisable(true);
             }
-
         });
 
         buttonStart.setOnAction((event) -> {
@@ -115,67 +103,68 @@ public class LoggingData {
         });
 
         buttonDownload.setOnAction((event) -> {
-//            File directory = new File(Controller.getCurDataFolder());
-//            if(directory.isDirectory() && directory.list().length > 2){
-//                Alert alert = new Alert(Alert.AlertType.INFORMATION);
-//                alert.setTitle("Error");
-//                alert.setHeaderText("Files already exist in this folder");
-//                alert.setContentText("Either Empty this flight or choose or create another flight to download the data :)");
-//                alert.showAndWait();
-//
-//            }else if(Controller.getCurFlight() != 0){
+            File directory = new File(Controller.getCurDataFolder());
+            if(directory.isDirectory() && directory.list().length > 2){
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Error");
+                alert.setHeaderText("Files already exist in this folder");
+                alert.setContentText("Either Empty this flight or choose or create another flight to download the data :)");
+                alert.showAndWait();
+
+            }else if(Controller.getCurFlight() != 0){
 //                BBconnect bbConnect = BBconnect.getInstance();
 //                bbConnect.connect(4);
+                // This is an FTP download, This not only not need the program to run, it can be faster than the method above.
+                // All methods are in the Class SFTPClient.
+                SFTPClient download = new SFTPClient();
+                try {
+                    long startTime = System.currentTimeMillis();
+                    String dest = Controller.getCurDataFolder();
+                    download.connect();
+                    System.out.println("Connected");
+                    System.out.println("Saving to " + dest);
+                    download.download("/home/debian/stratus/build/Mag.csv", dest + "\\Mag.csv");
+                    long magDone = System.currentTimeMillis();
+                    System.out.println("Mag.csv downloaded in " + (magDone - startTime) + " ms");
+                    download.download("/home/debian/stratus/build/Mav.csv", dest + "\\Mav.csv");
+                    long mavDone = System.currentTimeMillis();
+                    System.out.println("Mav.csv downloaded in " + (mavDone - magDone) + " ms");
+                    download.download("/home/debian/stratus/build/MavAtt.csv", dest + "\\MavAtt.csv");
+                    long mavAttDone = System.currentTimeMillis();
+                    System.out.println("MavAtt.csv downloaded in " + (mavAttDone - mavDone) + " ms");
+                    download.download("/home/debian/stratus/build/MavLaser.csv", dest + "\\MavLaser.csv");
+                    long mavLasDone = System.currentTimeMillis();
+                    System.out.println("MavLaser.csv downloaded in " + (mavLasDone - mavAttDone) + " ms");
+                    download.download("/home/debian/stratus/build/PiksiGPS.csv", dest + "\\PiksiGPS.csv");
+                    long piksiDone = System.currentTimeMillis();
+                    System.out.println("PiksiGPS.csv downloaded in " + (piksiDone - mavLasDone) + " ms");
+                    download.download("/home/debian/stratus/build/PiksiGPSTime.csv", dest + "\\PiksiGPSTime.csv");
+                    long piksiTimeDone = System.currentTimeMillis();
+                    System.out.println("PiksiGPSTime.csv downloaded in " + (piksiTimeDone - piksiDone) + " ms");
+                    download.disconnect();
+                    long endTime = System.currentTimeMillis();
+                    System.out.println("Disconnected");
+                    System.out.println("Total Time used: " + (endTime - startTime));
+                } catch (JSchException jsche) {
+                    jsche.printStackTrace();
+                } catch (SftpException sftpe){
+                    sftpe.printStackTrace();
+                }
 //                buttonStart.setDisable(false);
 //                buttonStop.setDisable(true);
 //                buttonConnect.setDisable(true);
-//                buttonProcess.fire();
-//            }else{
-//                Alert alert = new Alert(Alert.AlertType.INFORMATION);
-//                alert.setTitle("Flight Is not Set");
-//                alert.setHeaderText("Flight is not chosen");
-//                alert.setContentText("In order to download the data, you should provide a path (Flight number) " +
-//                        "so that we can place it there!");
-//                alert.showAndWait();
-//            }
-
-            // This is an FTP download, This not only not need the program to run, it can be faster than the method above.
-            // All methods are in the Class SFTPClient.
-            SFTPClient download = new SFTPClient();
-            try {
-                long startTime = System.currentTimeMillis();
-                String dest = "C:\\Users\\georg\\OneDrive\\University\\COOP\\Stratus\\stratus29Jan20\\testfolder\\Sample5\\";
-                download.connect();
-                System.out.println("Connected");
-                download.download("/home/debian/stratus/build/Mag.csv", dest + "Mag.csv");
-                long magDone = System.currentTimeMillis();
-                System.out.println("Mag.csv downloaded in " + (magDone - startTime) + " ms");
-                download.download("/home/debian/stratus/build/Mav.csv", dest + "Mav.csv");
-                long mavDone = System.currentTimeMillis();
-                System.out.println("Mav.csv downloaded in " + (mavDone - magDone) + " ms");
-                download.download("/home/debian/stratus/build/MavAtt.csv", dest + "MavAtt.csv");
-                long mavAttDone = System.currentTimeMillis();
-                System.out.println("MavAtt.csv downloaded in " + (mavAttDone - mavDone) + " ms");
-                download.download("/home/debian/stratus/build/MavLaser.csv", dest + "MavLaser.csv");
-                long mavLasDone = System.currentTimeMillis();
-                System.out.println("MavLaser.csv downloaded in " + (mavLasDone - mavAttDone) + " ms");
-                download.download("/home/debian/stratus/build/PiksiGPS.csv", dest + "PiksiGPS.csv");
-                long piksiDone = System.currentTimeMillis();
-                System.out.println("PiksiGPS.csv downloaded in " + (piksiDone - mavLasDone) + " ms");
-                download.download("/home/debian/stratus/build/PiksiGPSTime.csv", dest + "PiksiGPSTime.csv");
-                long piksiTimeDone = System.currentTimeMillis();
-                System.out.println("PiksiGPSTime.csv downloaded in " + (piksiTimeDone - piksiDone) + " ms");
-                download.disconnect();
-                long endTime = System.currentTimeMillis();
-                System.out.println("Disconnected");
-                System.out.println("Total Time used: " + (endTime - startTime));
-            } catch (JSchException | SftpException e) {
-                e.printStackTrace();
+                buttonProcess.fire();
+            }else{
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Flight Is not Set");
+                alert.setHeaderText("Flight is not chosen");
+                alert.setContentText("In order to download the data, you should provide a path (Flight number) " +
+                        "so that we can place it there!");
+                alert.showAndWait();
             }
+
+
         });
-
-
-
 
         buttonProcess.setOnAction((event) -> {
             try{
@@ -210,8 +199,6 @@ public class LoggingData {
 
             }
             System.out.println(">>>>>>>>>>>>>>>>> The Raw data processed and Saved Successfully");
-
-
         });
     }
 
@@ -219,8 +206,6 @@ public class LoggingData {
     {
         if (single_instance == null)
             single_instance = new LoggingData(layout);
-
-
         return single_instance;
     }
 
@@ -258,8 +243,6 @@ public class LoggingData {
         layout.getChildren().remove(buttonStart);
         layout.getChildren().remove(buttonStop);
         layout.getChildren().remove(openStates);
-
-
     }
 
 

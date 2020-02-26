@@ -87,29 +87,6 @@ public class BBconnect {
         return response;
     }
 
-    public int getState(){
-        int [] ports = new int [] {port2, port3, port4};
-        Socket testSocket;
-        int i = 0;
-        while(i < ports.length) {
-            try {
-                testSocket = new Socket(serverIP, ports[i]);
-                testSocket.close();
-            } catch (IOException ioe) {
-                System.out.println("Port " + ports[i] + " Closed");
-                i++;
-            }finally{
-                System.out.println("Port Open " + ports[i]);
-                return i;
-            }
-        }
-        return 0;
-    }
-
-
-
-
-
 
     private static String getResponse(BufferedReader input) throws IOException{
         String response = input.readLine();
@@ -119,10 +96,9 @@ public class BBconnect {
         }
         System.out.println("---->"+response);
         return response;
-
     }
 
-
+    //Obsolete with SFTPClient
     private static void getResponseDownload(BufferedReader input) throws IOException{
         String response = input.readLine();
         String path = Controller.getCurDataFolder();
