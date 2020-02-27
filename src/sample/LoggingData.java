@@ -13,6 +13,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.*;
+import java.net.ConnectException;
+import java.net.SocketTimeoutException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -33,8 +35,8 @@ public class LoggingData {
         buttonProcess = new Button("Process Data");
         ipAddressField = new TextField();
         ipAddressField.setPromptText("IP address");
-        buttonStart =  new Button("Start");
-        buttonStop = new Button("Stop");
+        buttonStart =  new Button("Start Logging");
+        buttonStop = new Button("Stop Logging");
         openStates = new Button("Reconnect");
         buttonConnect.setTranslateX(-100);
         buttonConnect.setTranslateY(-140);
@@ -55,10 +57,9 @@ public class LoggingData {
         openStates.setTranslateX(260);
         openStates.setTranslateY(-10);
 
-
-        buttonStart.setDisable(false);
+        buttonStart.setDisable(true);
         buttonStop.setDisable(true);
-        buttonDownload.setDisable(false);
+        buttonDownload.setDisable(true);
 
         openStates.setOnAction((event) -> {
 //            int state = BBconnect.getInstance().getState();
@@ -71,35 +72,81 @@ public class LoggingData {
         // Connects to BeagleBone via Wifi (192.168.8.1) or USB (192.168.7.2)
         buttonConnect.setOnAction((event) -> {
             BBconnect bbConnect = BBconnect.getInstance();
-            if(bbConnect.connect(1).equals("Connected")){
-                //Disables and enables different stuff.
-                buttonDownload.setDisable(false);
-                buttonStop.setDisable(true);
-                buttonStart.setDisable(false);
-                buttonConnect.setDisable(true);
+            String connection = null;
+            try {
+                connection = bbConnect.connect(1);
+                if(connection.contains("Logger On")){
+                    //Disables and enables different stuff.
+                    buttonDownload.setDisable(true);
+                    buttonStop.setDisable(false);
+                    buttonStart.setDisable(true);
+                }else if(connection.contains("Logger Off")){
+                    buttonDownload.setDisable(false);
+                    buttonStop.setDisable(true);
+                    buttonStart.setDisable(false);
+                }
+            } catch (SocketTimeoutException e) {
+                e.printStackTrace();
+                disconnectedAlert();
             }
+
         });
 
         buttonStart.setOnAction((event) -> {
-            BBconnect bbConnect = BBconnect.getInstance();
-            if(bbConnect.connect(2).equals("Start")){
-                buttonDownload.setDisable(true);
-                buttonConnect.setDisable(true);
-                buttonStop.setDisable(false);
-                buttonStart.setDisable(true);
-            }
 
+            File directory = new File(Controller.getCurDataFolder());
+            if(directory.isDirectory() && directory.list().length > 2){
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Error");
+                alert.setHeaderText("Files already exist in this folder");
+                alert.setContentText("Either Empty this flight or choose or create another flight to download the data :)");
+                alert.showAndWait();
+
+            }else if(Controller.getCurFlight() != 0){
+//                BBconnect bbConnect = BBconnect.getInstance();
+//                bbConnect.connect(4);
+                // This is an FTP download, This not only not need the program to run, it can be faster than the method above.
+                // All methods are in the Class SFTPClient.
+                SFTPClient download = new SFTPClient();
+                try {
+                    BBconnect bbConnect = BBconnect.getInstance();
+                    if(bbConnect.connect(2).equals("Start")){
+                        buttonDownload.setDisable(true);
+                        buttonStop.setDisable(false);
+                        buttonStart.setDisable(true);
+                        //To make sure it does not show
+                    }else{
+                        disconnectedAlert();
+                    }
+                    buttonConnect.fire();
+                    buttonConnect.fire();
+                    buttonConnect.fire();
+                }catch (SocketTimeoutException ste){
+                    buttonStart.setDisable(false);
+                    buttonStop.setDisable(true);
+                    buttonConnect.setDisable(true);
+                }
+            }else{
+                flightNotChosenAlert();
+            }
         });
 
         buttonStop.setOnAction((event) -> {
             BBconnect bbConnect = BBconnect.getInstance();
-            if(bbConnect.connect(3).equals("Stop")){
-                buttonDownload.setDisable(false);
-                buttonConnect.setDisable(true);
-                buttonStart.setDisable(false);
-                buttonStop.setDisable(true);
+            try {
+                if(bbConnect.connect(3).equals("Stop")){
+                    buttonDownload.setDisable(false);
+                    buttonStart.setDisable(false);
+                    buttonStop.setDisable(true);
+                    //To loop the PlaneServer
+                    buttonConnect.fire();
+                    buttonConnect.fire();
+                }else{
+                    disconnectedAlert();
+                }
+            } catch (SocketTimeoutException e) {
+                e.printStackTrace();
             }
-
         });
 
         buttonDownload.setOnAction((event) -> {
@@ -145,25 +192,23 @@ public class LoggingData {
                     long endTime = System.currentTimeMillis();
                     System.out.println("Disconnected");
                     System.out.println("Total Time used: " + (endTime - startTime));
+                    buttonProcess.fire();
                 } catch (JSchException jsche) {
                     jsche.printStackTrace();
+                    disconnectedAlert();
                 } catch (SftpException sftpe){
                     sftpe.printStackTrace();
+                } catch (ConnectException ce){
+                    ce.printStackTrace();
+                    disconnectedAlert();
                 }
 //                buttonStart.setDisable(false);
 //                buttonStop.setDisable(true);
 //                buttonConnect.setDisable(true);
-                buttonProcess.fire();
+
             }else{
-                Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.setTitle("Flight Is not Set");
-                alert.setHeaderText("Flight is not chosen");
-                alert.setContentText("In order to download the data, you should provide a path (Flight number) " +
-                        "so that we can place it there!");
-                alert.showAndWait();
+                flightNotChosenAlert();
             }
-
-
         });
 
         buttonProcess.setOnAction((event) -> {
@@ -202,19 +247,11 @@ public class LoggingData {
         });
     }
 
-    public static LoggingData getInstance(StackPane layout)
-    {
+    public static LoggingData getInstance(StackPane layout){
         if (single_instance == null)
             single_instance = new LoggingData(layout);
         return single_instance;
     }
-
-
-
-
-
-
-
 
     public void showElements(){
         layout.getChildren().add(buttonConnect);
@@ -244,6 +281,25 @@ public class LoggingData {
         }catch (IOException e){
             return false;
         }
+    }
+    private void disconnectedAlert(){
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Error");
+        alert.setHeaderText("Disconnected");
+        alert.setContentText("Your UAV is disconnected. Either:\n 1. Your UAV is off \n 2. Your UAV is on but you are not connected to its wifi");
+        alert.showAndWait();
+        buttonConnect.setDisable(false);
+        buttonStart.setDisable(true);
+        buttonStop.setDisable(true);
+        buttonDownload.setDisable(true);
+    }
+    private void flightNotChosenAlert(){
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Flight Is not Set");
+        alert.setHeaderText("Flight is not chosen");
+        alert.setContentText("In order to download the data, you should provide a path (Flight number) " +
+                "so that we can place it there!");
+        alert.showAndWait();
     }
 
 

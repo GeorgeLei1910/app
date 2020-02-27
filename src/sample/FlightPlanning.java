@@ -126,18 +126,77 @@ public class FlightPlanning {
             String srcPath = Controller.getCurDataFolder();
             File folder = new File(srcPath);
             String parFolder = folder.getParentFile().getName();
+            String s = "", from= "", to= "", isSeparate= "", line= "", isApplied= "";
             String filePath = folder.getParent() + "/flight_plan/waypoints.txt";
+            InputStream ins = null;
+            try{
+                String fpPath = System.getProperty("user.dir")+ Controller.getPathToFlight() +"/flight_plan/flightPlan.txt";
+                System.out.println(fpPath);
+                ins = new FileInputStream(fpPath);
+                Reader r = new InputStreamReader(ins, "UTF-8"); // leave charset out for default
+                BufferedReader br = new BufferedReader(r);
+                System.out.println(filePath);
+                while ((s = br.readLine()) != null) {
+                    if(s.startsWith("From:")){
+                        String segments[] = s.split(":");
+                        if(segments.length > 1){
+                            String seg = segments[1];
+                            from = seg;
+                        }
+                    }
+                    if(s.startsWith("To:")) {
+                        String segments[] = s.split(":");
+                        if(segments.length > 1) {
+                            String seg = segments[1];
+                            to = seg;
+                        }
+                    }if(s.startsWith("useSeperateLines:")){
+                        String segments[] = s.split(":");
+                        if(segments.length > 1){
+                            String seg = segments[1];
+                            isSeparate = seg;
+                        }
+                    }if(s.startsWith("seperateLines:")){
+                        String segments[] = s.split(":");
+                        if(segments.length > 1){
+                            String seg = segments[1];
+                            line = seg;
+                        }
+                    }
+                    if(s.startsWith("applyOrNot:")){
+                        String segments[] = s.split(":");
+                        if(segments.length > 1){
+                            String seg = segments[1];
+                            isApplied = seg;
+                        }
+                    }
+                }
+            }catch (Exception e){
+                lineFromTxt.setText("");
+                lineToTxt.setText("");
+                lineTieFromTxt.setText("");
+                lineTieToTxt.setText("");
+                applied.setText("not applied");
+                e.printStackTrace();
+            }
+
             if(parFolder.startsWith("Flight")) {
                 Path src = Paths.get(filePath);
                 System.out.println(src);
                 String[] surveyName = Controller.getCurSurvey().split("_");
-                String destPath = curPath+"/S"+surveyName[1]+"-B"+Controller.getCurBlock()+"-F"+Controller.getCurFlight()+ "-waypoints.txt";
+
+                String destPath = "";
+                if(isSeparate.equals("0")){
+                    destPath = curPath + Controller.getPrefixToFlight() + "-L"+ from + "L"+ to +"-waypoints.txt";
+                }else{
+                    destPath = curPath + Controller.getPrefixToFlight()+ "-L"+ line + "-waypoints.txt";
+                }
                 Path dest = Paths.get(destPath);
                 System.out.println(dest);
             try{
                 Files.copy(src, dest, StandardCopyOption.REPLACE_EXISTING);
 
-                }catch (IOException e){
+                }catch (Exception e){
 
                 }
             }
@@ -168,8 +227,7 @@ public class FlightPlanning {
                     Controller.getCurFlight());
 
             String path = System.getProperty("user.dir");
-            String createFlightFilePath = path + "/Data/"+Controller.getCurSurvey()+"/Block"+Controller.getCurBlock()+
-                    "/Flight"+Controller.getCurFlight()+"/flight_plan/flightPlan.txt";
+            String createFlightFilePath = path + Controller.getPathToFlight() +"/flight_plan/flightPlan.txt";
 
             String pathPython = path + "/Package/pythontest.py";
             String command = "python " + pathPython + " -m CreateFlight -f " + createFlightFilePath;

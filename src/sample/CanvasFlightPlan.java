@@ -85,12 +85,13 @@ public class CanvasFlightPlan  {
 
         this.type = type;
         String path = System.getProperty("user.dir").replace('\\', '/') + "/Data/" + Current_Survey;
-        planSettingsFile = path +"/FlightPlan/plan_settings.txt";
-        wayPointsFile = path + "/FlightPlan/waypointsData.txt";
-        wayPointsTieFile = path + "/FlightPlan/waypointsDataTieLine.txt";
+        // All in the Survey/FlightPlan Folder
+        planSettingsFile = path +"/FlightPlan" + Controller.getPrefixToSurvey() + "-plan_settings.txt";
+        wayPointsFile = path + "/FlightPlan" + Controller.getPrefixToSurvey() +"-waypointsData.txt";
+        wayPointsTieFile = path + "/FlightPlan"+ Controller.getPrefixToSurvey() + "-waypointsDataTieLine.txt";
+
 
         path += "/Block" + Current_Block;
-
         planSettingsFileBlock = path + "/flight_plan/flightPalnBlock.txt";
         wayPointsFileBlock = path + "/flight_plan/waypointsDataBlock.txt";
         wayPointsFileBlockTie = path + "/flight_plan/waypointsDataBlockTieLines.txt";
@@ -228,7 +229,7 @@ public class CanvasFlightPlan  {
         double y = 0;
         Position minPosition = new Position(0,0);
         Position maxPosition = new Position(0,0);
-        System.out.println("showWayPoint Setup COmplete");
+        System.out.println("showWayPoint Setup Complete");
         try {
             String s;
             InputStream ins = new FileInputStream(planSettings);
@@ -478,7 +479,7 @@ public class CanvasFlightPlan  {
 
 
         });
-
+        //Create BLock Plan on the
         createBlocksPlan.setOnAction((event) -> {
             createBlocksPlan.setDisable(true);
 
@@ -486,7 +487,8 @@ public class CanvasFlightPlan  {
             while(it.hasNext()){
                 Map.Entry<Integer, ArrayList<Position>> pair = (Map.Entry) it.next();
                 try{
-                    String fileFlightPlanBlock = System.getProperty("user.dir")+"/Data/"+Current_Survey+"/Block"+pair.getKey()+"/flight_plan/flightPalnBlock.txt";
+                    String fileFlightPlanBlock = System.getProperty("user.dir")+"/Data/"+ Current_Survey+"/Block"+pair.getKey()+"/flight_plan" + Controller.getPrefixToSurvey() +
+                            "-B" + pair.getKey() +"-flightPalnBlock.txt";
                     PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(fileFlightPlanBlock,false)));
                     out.flush();
                     out.write("Points:");
@@ -499,14 +501,12 @@ public class CanvasFlightPlan  {
                     out.close();
                 }catch(Exception e) {
 
-
                 }
                 String path = System.getProperty("user.dir");
                 String pathPython = path + "/Package/pythontest.py";
                 String command = "python " + pathPython + " -m FlightPlanBlocks -f " + planSettingsFile;
                 GraphingThread graphingThread = new GraphingThread(command);
                 graphingThread.showGraph();
-
 
             }
         });
@@ -592,7 +592,7 @@ public class CanvasFlightPlan  {
 
 
     private String mergeTwoFiles(String file1, String file2) throws IOException{
-        String outputFile = System.getProperty("user.dir")+"/Data/"+Current_Survey+"/FlightPlan/waypointsMerged.txt";
+        String outputFile = System.getProperty("user.dir")+"/Data/"+Current_Survey+"/FlightPlan" + Controller.getPrefixToSurvey() + "-waypointsMerged.txt";
         PrintWriter pw = new PrintWriter(System.getProperty("user.dir")+"/Data/"+Current_Survey+"/FlightPlan/waypointsMerged.txt");
 
         // BufferedReader object for file1.txt

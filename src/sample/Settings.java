@@ -63,11 +63,11 @@ public class Settings {
         comboBox = new ComboBox(Controller.getSurveys());
         buttonBack.setTranslateX(-330);
         buttonBack.setTranslateY(-260);
-        btnSettings = new Button("Flight Plan Settings");
+        btnSettings = new Button("Survey Plan Settings");
         btnSettings.setTranslateX(-240);
         btnSettings.setTranslateY(-50);
 
-        showPlanOfFlight = new Button("Create and Show Plan");
+        showPlanOfFlight = new Button("Create and Show Survey Plan");
         showPlanOfFlight.setTranslateX(-270);
         showPlanOfFlight.setTranslateY(0);
 
@@ -264,7 +264,7 @@ public class Settings {
 
         // Corresponds to Flight Plan Settings
         btnSettings.setOnAction((event) -> {
-            File filePath = new File(System.getProperty("user.dir")+"/Data/"+Controller.getCurSurvey()+"/FlightPlan/plan_settings.txt");
+            File filePath = new File(System.getProperty("user.dir")+ Controller.getPathToSurvey() + "/FlightPlan" + Controller.getPrefixToSurvey() + "-plan_settings.txt");
             final Stage dialog = new Stage();
             items.clear();
 
@@ -747,10 +747,11 @@ public class Settings {
         showPlanOfFlight.setOnAction(new EventHandler<ActionEvent>(){
             @Override
             public void handle(ActionEvent event) {
-                String path = System.getProperty("user.dir");
-                String pathPython = path + "/Package/pythontest.py";
+                String path = System.getProperty("user.dir").replace('\\', '/') ;
+                String pathPython = path.replace('\\', '/') + "/Package/pythontest.py";
                 String command = "python " +pathPython+" -m FlightPlan" + " -f "+ path + "/Data/"+Controller.getCurSurvey() +
-                        "/FlightPlan/plan_settings.txt";
+                        "/FlightPlan" + Controller.getPrefixToSurvey() + "-plan_settings.txt";
+                System.out.println(command);
                 try {
 
                     Process p = Runtime.getRuntime().exec(command);
@@ -785,9 +786,7 @@ public class Settings {
         showPlanOfTieAndFlight.setOnAction(new EventHandler<ActionEvent>(){
             @Override
             public void handle(ActionEvent event) {
-
                 CanvasFlightPlan canvasFlightPlan1 = new CanvasFlightPlan(3);
-
             }
         });
 

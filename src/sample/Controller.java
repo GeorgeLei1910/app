@@ -27,6 +27,7 @@ public class Controller {
     private static int Current_Block = 0;
     private static String Current_Survey = "";
     private static int Current_Flight = 0;
+    private static int [] Current_Lines = new int[] {0, 0};
     private static Stage primaryStage;
     private static String Curr_BlockName;
     private static StackPane layout;
@@ -90,18 +91,8 @@ public class Controller {
         return single_instance;
     }
 
-    public static ObservableList<String> getBlocks(){
-        return blocks;
-    }
 
-
-    public static ObservableList<String> getFlights(){
-        return flights;
-    }
-
-    public static ObservableList<String> getSurveys(){ return surveys; }
-
-
+    //Add Stuff
     public static String addBlocks(){
         if(Current_Survey == "")
         {
@@ -155,6 +146,7 @@ public class Controller {
         return nameOfSurvey;
     }
 
+    // Load Files
     private static void loadFlights(){
         flights.clear();
         flights.add("");
@@ -257,7 +249,6 @@ public class Controller {
 
         }
     }
-
     // When apply is clicked on
     static public void updateFilePlanSetting(String From, String To,String FromTie, String ToTie,String useSep, String seperateLines, String applyOrNot,int curFlight){
         File flightPlanFolder = new File(curFlightFolder+"/Data/" + Current_Survey+"/Block" +
@@ -302,9 +293,8 @@ public class Controller {
 
 
 
-
+    //Create Stuff
     static private void createFlightFolder(String i){
-
         File flightFolder = new File(curFlightFolder+"/Data/" + Current_Survey + "/Block" + Current_Block + "/Flight"+i);
         flightFolder.mkdirs();
         File rawDataFolder = new File(curFlightFolder+"/Data/" + Current_Survey+"/Block" + Current_Block + "/Flight"+i+"/raw_data");
@@ -314,14 +304,10 @@ public class Controller {
         File flightPlanFolder = new File(curFlightFolder+"/Data/" + Current_Survey+"/Block" +Current_Block + "/Flight"+ i+"/flight_plan");
         flightPlanFolder.mkdirs();
         updateFilePlanSetting("", "", "","","" ,"","",Integer.parseInt(i));
-
-
     }
 
 
     static private void createBlockFolder(String i){
-
-
         File flightFolder = new File(curFlightFolder+"/Data/"+ Current_Survey + "/Block" + i);
         flightFolder.mkdirs();
         File rawDataFolder = new File(curFlightFolder+"/Data/" + Current_Survey+"/Block" + i+"/raw_data");
@@ -330,12 +316,9 @@ public class Controller {
         figuresFolder.mkdirs();
         File flightPlanFolder = new File(curFlightFolder+"/Data/" + Current_Survey+"/Block" + i+"/flight_plan");
         flightPlanFolder.mkdirs();
-
-
     }
 
     static private void createSurveyFolder(){
-
         try{
         File  roundFolder = new File(curFlightFolder+"/Data/" + Current_Survey);
         File  baseMagFolder = new File(curFlightFolder+"/Data/"+Current_Survey+"/BaseMag" );
@@ -348,13 +331,17 @@ public class Controller {
         rawDataFolderSurvey.mkdirs();
         JobPlanFile.createNewFile();
         }catch(IOException e){
-
-
         }
-
     }
-
-
+    //
+    static public void setCurSurveyFolder(String name){
+        Current_Survey = name;
+        setCurBlockFolder(0, "");
+        System.out.println( "<<<<<<<<<<<<<<<<<  CURRENTLY AT SURVEY NUMBER (("+ name+ ")) >>>>>>>>>>>>>>>>>");
+        MainInterface.getInstance(layout).updateMainInterface(Current_Survey);
+        FlightPlanning.getInstance(layout).updateFlightPlanInfo();
+        loadBlocks();
+    }
 
 
 
@@ -388,35 +375,16 @@ public class Controller {
         loadFlights();
     }
 
+    //Accessors
+    static public String getCurSurvey(){    return Current_Survey;}
+    static public int getCurBlock(){        return Current_Block;}
+    static public int getCurFlight(){       return Current_Flight;}
 
-    static public void setCurSurveyFolder(String name){
+    public static ObservableList<String> getBlocks(){ return blocks; }
+    public static ObservableList<String> getFlights(){ return flights; }
+    public static ObservableList<String> getSurveys(){ return surveys; }
 
-        Current_Survey = name;
-        setCurBlockFolder(0, "");
-        System.out.println( "<<<<<<<<<<<<<<<<<  CURRENTLY AT SURVEY NUMBER (("+ name+ ")) >>>>>>>>>>>>>>>>>");
-        MainInterface.getInstance(layout).updateMainInterface(Current_Survey);
-        FlightPlanning.getInstance(layout).updateFlightPlanInfo();
-        loadBlocks();
-
-
-    }
-
-    static public int getCurBlock(){
-
-        return Current_Block;
-    }
-
-    static public String getCurSurvey(){
-
-        return Current_Survey;
-    }
-
-
-    static public int getCurFlight(){
-        return Current_Flight;
-    }
-
-
+    static public Stage getPrimaryStage(){ return primaryStage; }
 
     public static String getCurDataFolder(){
         String curFolder = "";
@@ -427,7 +395,6 @@ public class Controller {
             curFolder = curFlightFolder + "/Data/" + Current_Survey + "/Block" + Current_Block  + "/raw_data";
         }else{
             curFolder = curFlightFolder + "/Data/" + Current_Survey + "/raw_data";
-
         }
         return  curFolder;
 
@@ -435,7 +402,32 @@ public class Controller {
     static public void setPrimaryStage(Stage primaryStageNew){
         primaryStage = primaryStageNew;
     }
-    static public Stage getPrimaryStage(){
-        return primaryStage;
+    //Gets the file prefix of sth.
+    public static String getPrefixToSurvey(){
+        String [] surveyName = getCurSurvey().split("_");
+        return "/S"+surveyName[1];
+    }
+    public static String getPrefixToBlock(){
+        String [] surveyName = getCurSurvey().split("_");
+        return "/S"+surveyName[1] +"-B"+Controller.getCurBlock();
+    }
+    public static String getPrefixToFlight(){
+        String [] surveyName = getCurSurvey().split("_");
+        return "/S"+surveyName[1] +"-B"+Controller.getCurBlock() + "-F"+Controller.getCurFlight();
+    }
+
+    //Gets the String for the Path to Each folder
+    public static String getPathToSurvey(){
+        return "/Data/"+getCurSurvey();
+    }
+    public static String getPathToBlock(){
+        return "/Data/"+getCurSurvey()+"/Block"+getCurBlock();
+    }
+    public static String getPathToFlight(){
+        return "/Data/"+getCurSurvey()+"/Block"+getCurBlock()+"/Flight"+getCurFlight();
+    }
+
+    private static void updateLines(){
+
     }
 }

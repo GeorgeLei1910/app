@@ -3,6 +3,7 @@ package sample;
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 
 public class BBconnect {
     private static Socket socket= null;
@@ -41,10 +42,10 @@ public class BBconnect {
     }
 
     // connects to the Beaglebone
-    public String connect(int typeOfConn){
+    public String connect(int typeOfConn) throws SocketTimeoutException {
         InetSocketAddress endPoint = null;
         switch (typeOfConn){
-            // Connected
+            // Status if Logging or not.
             case 1: {
                 endPoint = endPoint1;
                 break;
@@ -68,20 +69,25 @@ public class BBconnect {
         String response = "Error";
         try {
             socket = new Socket();
-
-
-            socket.connect(endPoint, 8000);
+            socket.connect(endPoint, 3000);
             input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
 
-            if(typeOfConn == 4){
-                getResponseDownload(input);
 
+            if(typeOfConn == 1){
+                response = getStatus(input);
             }else{
                 response = getResponse(input);
             }
             socket.close();
 
-        }catch(IOException exception){
+        }catch(SocketTimeoutException ste){
+            ste.printStackTrace();
+            response = "Disconnected";
+            System.out.println(response);
+            throw new SocketTimeoutException();
+        }
+        catch(IOException exception){
             exception.printStackTrace();
         }
         return response;
@@ -92,9 +98,13 @@ public class BBconnect {
         String response = input.readLine();
         while(response == null){
             response = input.readLine();
-
         }
         System.out.println("---->"+response);
+        return response;
+    }
+    private static String getStatus(BufferedReader input) throws IOException{
+        String response = input.readLine();
+        System.out.println(response.contains("Logger On"));
         return response;
     }
 

@@ -29,11 +29,17 @@ import urllib
 
 LARGE_NUMBER = 1000000000000000000
 print("These are the arguments")
-#Class for flight planning
+
+
+# Class for flight planning
 class FlightPlanning(object):
     def __init__(self, filepath):
         self.Clockwise = 1
         self.filepath = filepath
+        self.surveyName = ""
+        self.blockName = ""
+        self.flightName = ""
+
         self.elevation_type = 0
         self.dfPolygan = pd.DataFrame(columns=['LON', 'LAT'])
         self.dfPolyganUTM = pd.DataFrame(columns=['UTMX', 'UTMY'])
@@ -62,6 +68,10 @@ class FlightPlanning(object):
                          (66, 72), (72, 78), (78, 84), (84, 90), (90, 96), (96, 102), (102, 108), (108, 114),
                          (114, 120), (120, 126), (126, 132), (132, 138), (138, 144), (144, 150),
                          (150, 156), (156, 162), (162, 168), (168, 174), (174, 180)]
+        print(filepath)
+        print("Survey Name: " + self.surveyName)
+        print("Block Name: " + self.blockName)
+        print("Flight Name: " + self.flightName)
         print("FlightPlanning object made")
 
     # Makes a Two vector list of coordinates
@@ -90,7 +100,7 @@ class FlightPlanning(object):
             for lineNew in lines:
                 if lineNew != line:
                     f.write(lineNew)
-
+    # Updates parameters in the plan_settings.txt in the Survey/FlightPlan folder
     def updateParams(self):
         file = open(self.filepath, "r+")
         line = file.readline()
@@ -195,7 +205,7 @@ class FlightPlanning(object):
         if (line.startswith('UTM:')):
             self.removeline(line)
 
-        #Created after clicking on "Create and Show Plan"
+        # Created after clicking on "Create and Show Plan"
         with open(self.filepath, "a") as f:
             f.write('UTM:')
             for index, row in self.dfPolygan.iterrows():
@@ -210,7 +220,7 @@ class FlightPlanning(object):
         segs.clear()
         if (line.startswith('initUTM:')):
             self.removeline(line)
-        #Created after clicking on "Create and Show Plan"
+        # Written/Created after clicking on "Create and Show Plan"
         with open(self.filepath, "a") as f:
             f.write('initUTM:')
             self.converter = Proj(proj='utm', zone=self.findUtmZone(float(self.initPoint[0])), ellps='WGS84')
@@ -239,7 +249,7 @@ class FlightPlanning(object):
 
     # Gets elevation from Google API
     def get_elevation_google_api(self, loc):
-        #TODO: Ask Curtis to use their own elevation thing.
+        # TODO: Ask Curtis to use their own elevation thing.
         url = 'https://maps.googleapis.com/maps/api/elevation/json?locations=' + loc + '&key=' + 'AIzaSyC6zMxKN6hULA2vpvTRaAgnVxmScK-VH3w'
         response = simplejson.load(urllib.request.urlopen(url))
         results = response['results'][0]
@@ -255,14 +265,18 @@ class FlightPlanning(object):
         folderBlock = os.path.dirname(self.filepath)
         folderBlock = os.path.dirname(folderBlock)
         folderBlock = os.path.dirname(folderBlock)
+        #Get the initial of the file
+        print(folderBlock)
+        ss = folderBlock.split('/')
+        print(ss)
 
-        #Files in flight_plan
-        fileFlightWaypointsLL = folderBlock + "/flight_plan/WayPointsblocksLL.txt"
+        # Files in flight_plan
+        fileFlightWaypointsLL = folderBlock + "/flight_plan/" +"WayPointsblocksLL.txt"
         fileFlightWaypoints = folderBlock + "/flight_plan/waypointsDataBlock.txt"
         fileFlightWaypointsTieLinesLL = folderBlock + "/flight_plan/WayPointsblocksTiesLL.txt"
         fileFlightWaypointsTieLines = folderBlock + "/flight_plan/waypointsDataBlockTieLines.txt"
 
-        #Files in flight folder
+        # Files in flight folder
         filePointsFlights = os.path.dirname(self.filepath) + "/waypointsDataFlight.txt"
         filePointsFlightsLL = os.path.dirname(self.filepath) + "/waypointsDataFlightLL.txt"
         dfWayPointsLL = pd.read_csv(fileFlightWaypointsLL, sep=" ", header=None)
@@ -270,7 +284,7 @@ class FlightPlanning(object):
         dfWayPoints = pd.read_csv(fileFlightWaypoints, sep=" ", header=None)
         dfWayPoints.columns = ["utmX", "utmY", "elevation", "line", "index", "angle", "Block"]
 
-        #Reads through and records the values in flightplan.txt
+        # Reads through and records the values in flightplan.txt
         file = open(self.filepath, "r+")
         line = file.readline()
         segs = []
@@ -322,7 +336,6 @@ class FlightPlanning(object):
         print(from_line, to_line)
         file.close()
 
-
         dfTemp = pd.DataFrame(columns=["utmX", "utmY", "elevation", "line", "index", "angle", "Block"])
         dfTempLL = pd.DataFrame(columns=["LON", "LAT", "elevation", "resolution", "index", "line"])
         step = 1
@@ -373,9 +386,10 @@ class FlightPlanning(object):
         np.savetxt(filePointsFlightsLL, dfTempLL.values, fmt='%1.10f')
         np.savetxt(filePointsFlights, dfTemp.values, fmt='%1.10f')
         export_data(filePointsFlightsLL)
+
     # Makes grid when "Create and Show Block" is pressed
     def makeGrid(self, type):
-
+        # Type 1 is flight lines, Type 2 is tie lines
         self.wayPoints.drop(self.wayPoints.index, inplace=True)
         print(self.dfPolyganUTM.values)
         exterior = [[float(val[0]), float(val[1])] for val in self.dfPolyganUTM.values]
@@ -406,6 +420,7 @@ class FlightPlanning(object):
         i = 0
         # f= open(os.path.dirname(self.filepath)+"/tempPoints.txt","w+")
         # Draws the flight lines of the Flight Plan
+        # Too many lines can Freeze up the app.
         while (True):
             distance = polygon.exterior.distance(point)
             print("distance", distance)
@@ -457,12 +472,18 @@ class FlightPlanning(object):
                 point = Point(x, y)
                 distance = polygon.exterior.distance(point)
                 straight = True
-        if (type == 1):
-            file = os.path.dirname(self.filepath) + "/waypointsData.txt"
-        else:
-            file = os.path.dirname(self.filepath) + "/waypointsDataTieLine.txt"
-        np.savetxt(file, self.wayPoints.values, fmt='%1.10f')
+        ss = self.filepath.split('/')
+        print(ss)
+        for x in ss:
+            if("Survey" in x):
+                self.surveyName = x[7:]
+                print(self.surveyName)
 
+        if (type == 1):
+            file = os.path.dirname(self.filepath) + "/S" + self.surveyName + "-waypointsData.txt"
+        else:
+            file = os.path.dirname(self.filepath) + "/S" + self.surveyName  + "-waypointsDataTieLine.txt"
+        np.savetxt(file, self.wayPoints.values, fmt='%1.10f')
 
     def containsFolder(self, parentFolder, fname):
         for name in os.listdir(parentFolder):
@@ -551,11 +572,22 @@ class FlightPlanning(object):
         surveyPlanFolder = os.path.dirname(self.filepath)
         surveyFolder = os.path.dirname(surveyPlanFolder)
         # print("surveyPlanFolder", surveyFolder)
+        ss = self.filepath.split('/')
+        print(ss)
+        for x in ss:
+            if("Survey" in x):
+                self.surveyName = x[7:]
+                print(self.surveyName)
+            if("Block" in x):
+                self.blockName = x[5:]
+                print(self.blockName)
+
+        prefix = "/S" + self.surveyName + "-B" + self.blockName
         for name in os.listdir(surveyFolder):
             if name.startswith("Block") and self.containsFolder(surveyFolder, name):
                 exterior = []
                 try:
-                    filePoints = open(surveyFolder + "/" + name + "/flight_plan/flightPalnBlock.txt", "r+")
+                    filePoints = open(surveyFolder + "/" + name + "/flight_plan" + prefix +"flightPalnBlock.txt", "r+")
                     line = filePoints.readline()
                     if (line.startswith('Points:')):
                         segs = line.split(":")
@@ -570,11 +602,11 @@ class FlightPlanning(object):
                     continue
         print(dfListOfBlock)
         if (type == 1):
-            dfWayPoints = pd.read_csv(surveyPlanFolder + "/waypointsData.txt", sep=" ", header=None)
+            dfWayPoints = pd.read_csv(surveyPlanFolder + "/S" + self.surveyName + "-waypointsData.txt", sep=" ", header=None)
             dataFilename = "waypointsDataBlock.txt"
             using_angle = self.dirAngle
         else:
-            dfWayPoints = pd.read_csv(surveyPlanFolder + "/waypointsDataTieLine.txt", sep=" ", header=None)
+            dfWayPoints = pd.read_csv(surveyPlanFolder + "/S" + self.surveyName +  "/waypointsDataTieLine.txt", sep=" ", header=None)
             dataFilename = "waypointsDataBlockTieLines.txt"
             using_angle = self.dirAngle + 90
         dfWayPoints.columns = ["utmX", "utmY", "elevation", "line", "index", "angle"]
@@ -666,7 +698,8 @@ class FlightPlanning(object):
             np.savetxt(filePointsBlock, df.values, fmt='%1.10f')
             self.UTMtoLL(filePointsBlock, type)
 
-#Class for Quality Check
+
+# Class for Quality Check
 class QualityCheck(object):
     # Initialized QualityCheck Object
     def __init__(self, filepath):
@@ -675,7 +708,7 @@ class QualityCheck(object):
 
     # Loads the 6 csv files to
     def load_data(self, type):
-        #IF using data_from_UAV.csv, go to load_data_processed()
+        # IF using data_from_UAV.csv, go to load_data_processed()
         if (type == 1):
             self.load_data_processed()
         else:
@@ -718,7 +751,7 @@ class QualityCheck(object):
     def saveShowFig(self, profileName, yAxis, xAxisName, yAxisName, colour, format, *positional_parameters,
                     **keyword_parameters):
 
-        #plot figure
+        # plot figure
         plt.figure(figsize=(8, 6))
         fig = plt.gcf()
         fig.canvas.set_window_title(profileName)
@@ -1068,7 +1101,7 @@ if __name__ == "__main__":
         export_data(filename)
     if arg1 == "FlightPlan":
         for name in os.listdir(os.path.dirname(filename)):
-            if (name == "waypointsDataTieLine.txt" or name == "waypointsData.txt"):
+            if name.__contains__("waypointsDataTieLine.txt") or name.__contains__("waypointsData.txt"):
                 os.remove(os.path.dirname(filename) + "/" + name)
                 print("removed " + name)
         flightPlanning = FlightPlanning(filename)

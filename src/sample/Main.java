@@ -14,10 +14,7 @@ public class Main extends Application {
         super.init();
         System.out.println("Inside init() method! Perform necessary initializations here.");
     }
-
     static private Stage stage;
-
-
 
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -30,7 +27,6 @@ public class Main extends Application {
         Scene scene = new Scene(layout, 800, 600);
         layout.setStyle("-fx-background-color: #474747;");
 
-
         MainInterface mainInterface =  MainInterface.getInstance(layout);
         mainInterface.showElements(layout);
         primaryStage.setTitle("Interface");
@@ -39,19 +35,10 @@ public class Main extends Application {
         String curFolder = System.getProperty("user.dir");
         File dataFolder = new File(curFolder + "/Data");
         dataFolder.mkdirs();
-
-
-
-
-
-
     }
     static public Stage getStage(){
         return stage;
-
     }
-
-
 
     public static void main(String[] args) {
         System.out.println(System.getProperty("user.dir"));

@@ -14,8 +14,6 @@ public class GraphingThread extends Thread {
         super("my Graphing thread");
 
         this.command =  command;
-
-
     }
 
     public void run()
@@ -24,7 +22,6 @@ public class GraphingThread extends Thread {
             //ProcessBuilder pb = new ProcessBuilder("python", "/Users/faridfaraji/Desktop/side_projects/Stratus_project/SoftwareFolder/Package/pythontest.py" ,"-m", "FourthDiff");
             //Process process = pb.start();
             //process.waitFor();
-
             Process p = Runtime.getRuntime().exec(command);
             p.waitFor();
         }catch(Exception e){
@@ -35,8 +32,6 @@ public class GraphingThread extends Thread {
 
     public void showGraph(){
         start();
-
-
     }
 
 
