@@ -2,7 +2,11 @@ package sample;
 
 import com.jcraft.jsch.*;
 
+import java.lang.reflect.Array;
 import java.net.ConnectException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Vector;
 
 public class SFTPClient {
 
@@ -38,6 +42,21 @@ public class SFTPClient {
         ChannelSftp sftpChannel = (ChannelSftp) channel;
         sftpChannel.get(source, destination);
         sftpChannel.exit();
+    }
+    public ArrayList<String> listDataFiles() throws JSchException, SftpException {
+        Channel channel = session.openChannel("sftp");
+        channel.connect();
+        ChannelSftp sftpChannel = (ChannelSftp) channel;
+        sftpChannel.cd("/home/debian/stratus/build/datafiles");
+        Vector filelist = sftpChannel.ls("/home/debian/stratus/build/datafiles");
+        ArrayList<String> listOfDirectories = new ArrayList<String>();
+        for(int i = 0; i < filelist.size(); i++){
+            ChannelSftp.LsEntry entry = (ChannelSftp.LsEntry) filelist.get(i);
+            if(entry.getFilename().contains("-")) {
+                listOfDirectories.add(entry.getFilename());
+            }
+        }
+        return listOfDirectories;
     }
 
     public void disconnect() {

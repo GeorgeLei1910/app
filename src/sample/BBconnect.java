@@ -1,6 +1,8 @@
 package sample;
 
+import javax.naming.ldap.Control;
 import java.io.*;
+import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
@@ -20,7 +22,7 @@ public class BBconnect {
     InetSocketAddress  endPoint3;
     InetSocketAddress  endPoint4;
     private static BufferedReader input = null;
-    private static BufferedWriter writer = null;
+    private static PrintWriter writer = null;
     private static String serverIP = "192.168.8.1";
 
 
@@ -42,7 +44,7 @@ public class BBconnect {
     }
 
     // connects to the Beaglebone
-    public String connect(int typeOfConn) throws SocketTimeoutException {
+    public String connect(int typeOfConn) throws SocketTimeoutException, ConnectException {
         InetSocketAddress endPoint = null;
         switch (typeOfConn){
             // Status if Logging or not.
@@ -69,27 +71,37 @@ public class BBconnect {
         String response = "Error";
         try {
             socket = new Socket();
+
             socket.connect(endPoint, 3000);
+
             input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+            writer = new PrintWriter(socket.getOutputStream(),true);
 
-
-            if(typeOfConn == 1){
-                response = getStatus(input);
-            }else{
-                response = getResponse(input);
+            switch (typeOfConn){
+                case 1: response = getStatus(input);
+                    break;
+                case 2:
+                    response = getResponse(input);
+                    System.out.println(Controller.getPrefixToFlight());
+                    writer.print(Controller.getPrefixToFlight() + "\n");
+                    break;
+                case 3: response = getResponse(input);
+                    break;
             }
+
             socket.close();
 
+        }catch(ConnectException ce){
+            throw new ConnectException();
         }catch(SocketTimeoutException ste){
             ste.printStackTrace();
             response = "Disconnected";
             System.out.println(response);
             throw new SocketTimeoutException();
-        }
-        catch(IOException exception){
+        }catch(IOException exception){
             exception.printStackTrace();
         }
+        System.out.println(response);
         return response;
     }
 
@@ -104,7 +116,6 @@ public class BBconnect {
     }
     private static String getStatus(BufferedReader input) throws IOException{
         String response = input.readLine();
-        System.out.println(response.contains("Logger On"));
         return response;
     }
 

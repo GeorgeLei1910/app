@@ -252,7 +252,7 @@ public class Controller {
     // When apply is clicked on
     static public void updateFilePlanSetting(String From, String To,String FromTie, String ToTie,String useSep, String seperateLines, String applyOrNot,int curFlight){
         File flightPlanFolder = new File(curFlightFolder+"/Data/" + Current_Survey+"/Block" +
-                Current_Block + "/Flight"+ Controller.getCurFlight()+"/flight_plan/flightPlan.txt");
+                Current_Block + "/Flight"+ getCurFlight()+"/flight_plan"+ getPrefixToFlight() +"-flightPlan.txt");
         try {
 //            if (flightPlanFolder.exists()){
 //                flightPlanFolder.delete();

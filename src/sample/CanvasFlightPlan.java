@@ -92,26 +92,28 @@ public class CanvasFlightPlan  {
 
 
         path += "/Block" + Current_Block;
-        planSettingsFileBlock = path + "/flight_plan/flightPalnBlock.txt";
-        wayPointsFileBlock = path + "/flight_plan/waypointsDataBlock.txt";
-        wayPointsFileBlockTie = path + "/flight_plan/waypointsDataBlockTieLines.txt";
+        planSettingsFileBlock = path + "/flight_plan" + Controller.getPrefixToBlock() + "-flightPalnBlock.txt";
+        wayPointsFileBlock = path + "/flight_plan" + Controller.getPrefixToBlock() + "-waypointsDataBlock.txt";
+        wayPointsFileBlockTie = path + "/flight_plan" + Controller.getPrefixToBlock() + "-waypointsDataBlockTieLines.txt";
+        planSettingsFileFlight = path + "/flight_plan" + Controller.getPrefixToBlock() + "-flightPalnBlock.txt";
 
-        planSettingsFileFlight = path + "/flight_plan/flightPalnBlock.txt";
-        wayPointsFileFlight = path + "/Flight"+Current_Flight+"/flight_plan/waypointsDataFlight.txt";
+        wayPointsFileFlight = path + "/Flight"+Current_Flight+"/flight_plan"+ Controller.getPrefixToFlight() +"-waypointsDataFlight.txt";
 
-        System.out.println(planSettingsFile);
+/*        System.out.println(planSettingsFile);
         System.out.println(wayPointsFile);
         System.out.println(wayPointsTieFile);
         System.out.println(planSettingsFileBlock);
         System.out.println(wayPointsFileBlock);
         System.out.println(wayPointsFileBlockTie);
-        System.out.println(planSettingsFile);
+        System.out.println(planSettingsFile);*/
 
         switch(type){
             case -1:
                 color = Color.NAVY;
                 planSettings = planSettingsFileFlight;
+                System.out.println(planSettings);
                 wayPoints = wayPointsFileFlight;
+                System.out.println(wayPoints);
             break;
             case 0:
                 color = Color.RED;
@@ -482,12 +484,13 @@ public class CanvasFlightPlan  {
         //Create BLock Plan on the
         createBlocksPlan.setOnAction((event) -> {
             createBlocksPlan.setDisable(true);
-
+            int blockno = 0;
             Iterator it = polsPositions.entrySet().iterator();
             while(it.hasNext()){
                 Map.Entry<Integer, ArrayList<Position>> pair = (Map.Entry) it.next();
+                blockno = pair.getKey();
                 try{
-                    String fileFlightPlanBlock = System.getProperty("user.dir")+"/Data/"+ Current_Survey+"/Block"+pair.getKey()+"/flight_plan" + Controller.getPrefixToSurvey() +
+                    String fileFlightPlanBlock = System.getProperty("user.dir")+"/Data/"+ Current_Survey+"/Block"+ blockno +"/flight_plan" + Controller.getPrefixToSurvey() +
                             "-B" + pair.getKey() +"-flightPalnBlock.txt";
                     PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(fileFlightPlanBlock,false)));
                     out.flush();
@@ -504,7 +507,8 @@ public class CanvasFlightPlan  {
                 }
                 String path = System.getProperty("user.dir");
                 String pathPython = path + "/Package/pythontest.py";
-                String command = "python " + pathPython + " -m FlightPlanBlocks -f " + planSettingsFile;
+                String command = "python " + pathPython + " -m FlightPlanBlocks -f " + planSettingsFile + " -b " + blockno;
+                System.out.println(command);
                 GraphingThread graphingThread = new GraphingThread(command);
                 graphingThread.showGraph();
 
@@ -560,7 +564,6 @@ public class CanvasFlightPlan  {
         return mousePos;
     }
 
-
     public void setInitPosition(TextField f1, TextField f2){
         double h = maxPosition.getX() - minPosition.getX();
         double v = maxPosition.getY() - minPosition.getY();
@@ -593,8 +596,7 @@ public class CanvasFlightPlan  {
 
     private String mergeTwoFiles(String file1, String file2) throws IOException{
         String outputFile = System.getProperty("user.dir")+"/Data/"+Current_Survey+"/FlightPlan" + Controller.getPrefixToSurvey() + "-waypointsMerged.txt";
-        PrintWriter pw = new PrintWriter(System.getProperty("user.dir")+"/Data/"+Current_Survey+"/FlightPlan/waypointsMerged.txt");
-
+        PrintWriter pw = new PrintWriter(outputFile);
         // BufferedReader object for file1.txt
         BufferedReader br = new BufferedReader(new FileReader(file1));
 

@@ -5,6 +5,7 @@ import javafx.scene.Scene;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.Control;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.StackPane;
 import javafx.scene.text.Text;
@@ -130,7 +131,7 @@ public class FlightPlanning {
             String filePath = folder.getParent() + "/flight_plan/waypoints.txt";
             InputStream ins = null;
             try{
-                String fpPath = System.getProperty("user.dir")+ Controller.getPathToFlight() +"/flight_plan/flightPlan.txt";
+                String fpPath = System.getProperty("user.dir")+ Controller.getPathToFlight() +"/flight_plan"+ Controller.getPrefixToFlight() + "-flightPlan.txt";
                 System.out.println(fpPath);
                 ins = new FileInputStream(fpPath);
                 Reader r = new InputStreamReader(ins, "UTF-8"); // leave charset out for default
@@ -226,8 +227,8 @@ public class FlightPlanning {
                     "Applied",
                     Controller.getCurFlight());
 
-            String path = System.getProperty("user.dir");
-            String createFlightFilePath = path + Controller.getPathToFlight() +"/flight_plan/flightPlan.txt";
+            String path = System.getProperty("user.dir").replace('\\', '/');
+            String createFlightFilePath = path + Controller.getPathToFlight() +"/flight_plan" + Controller.getPrefixToFlight() + "-flightPlan.txt";
 
             String pathPython = path + "/Package/pythontest.py";
             String command = "python " + pathPython + " -m CreateFlight -f " + createFlightFilePath;
@@ -294,7 +295,7 @@ public class FlightPlanning {
 
         try{
             String filePath = System.getProperty("user.dir")+"/Data/" + Controller.getCurSurvey()+"/Block" +
-                    Controller.getCurBlock() + "/Flight"+ Controller.getCurFlight()+"/flight_plan/flightPlan.txt";
+                    Controller.getCurBlock() + "/Flight"+ Controller.getCurFlight()+"/flight_plan" + Controller.getPrefixToFlight() +"-flightPlan.txt";
             System.out.println(filePath);
             String s;
             InputStream ins = new FileInputStream(filePath);

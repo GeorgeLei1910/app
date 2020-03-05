@@ -29,7 +29,7 @@ public class Settings {
     static private Text text;
     static private Text textKml;
     static private Text textElevation;
-    static private Button showPlanOfTieAndFlight, fileChooseBtnElevation, showPlanOfTieFlight, showPlanOfFlight;
+    static private Button showPlanOfTieAndFlight, fileChooseBtnElevation, showPlanOfTieFlight, showPlanOfSurvey;
     static private Path elevFilePath;
     static private Button Help;
 
@@ -37,7 +37,7 @@ public class Settings {
     static private ListView<String> listOfBlocks;
     static private ListView<String> listOfFlights;
 
-    ObservableList<String> items =FXCollections.observableArrayList ();
+    ObservableList<String> items = FXCollections.observableArrayList ();
 
     private Settings(StackPane layout){
         text = new Text();
@@ -67,9 +67,9 @@ public class Settings {
         btnSettings.setTranslateX(-240);
         btnSettings.setTranslateY(-50);
 
-        showPlanOfFlight = new Button("Create and Show Survey Plan");
-        showPlanOfFlight.setTranslateX(-270);
-        showPlanOfFlight.setTranslateY(0);
+        showPlanOfSurvey = new Button("Create and Show Survey Plan");
+        showPlanOfSurvey.setTranslateX(-270);
+        showPlanOfSurvey.setTranslateY(0);
 
         showPlanOfTieFlight = new Button("Show Tie Plan");
         showPlanOfTieFlight.setTranslateX(-270);
@@ -229,13 +229,6 @@ public class Settings {
 
                     }
                 });
-
-
-
-
-
-
-
             }
         });
 
@@ -262,7 +255,7 @@ public class Settings {
         listOfFlights.setTranslateX(220);
         listOfFlights.setTranslateY(50);
 
-        // Corresponds to Flight Plan Settings
+        // Corresponds to Survey Plan Settings
         btnSettings.setOnAction((event) -> {
             File filePath = new File(System.getProperty("user.dir")+ Controller.getPathToSurvey() + "/FlightPlan" + Controller.getPrefixToSurvey() + "-plan_settings.txt");
             final Stage dialog = new Stage();
@@ -568,9 +561,7 @@ public class Settings {
             btnCancel.setOnAction(new EventHandler<ActionEvent>(){
                 @Override
                 public void handle(ActionEvent event) {
-
                     dialog.close();
-
                 }
             });
 
@@ -578,10 +569,8 @@ public class Settings {
             btnDelete.setOnAction(new EventHandler<ActionEvent>(){
                 @Override
                 public void handle(ActionEvent event) {
-
                     items.remove(list.getSelectionModel().getSelectedItem());
                     list.setItems(items);
-
                 }
             });
 
@@ -652,12 +641,9 @@ public class Settings {
             btnShowFlight.setOnAction(new EventHandler<ActionEvent>(){
                 @Override
                 public void handle(ActionEvent event) {
-
                     CanvasFlightPlan canvasFlightPlan = new CanvasFlightPlan(-2);
                     canvasFlightPlan.setInitPosition(posLonStart, posLatStart);
                     }
-
-
             });
 
 
@@ -738,13 +724,11 @@ public class Settings {
             posLat.getParent().requestFocus();
             posLon.getParent().requestFocus();
             dialog.setScene(dialogScene);
-            dialog.setTitle("Flight Plan Settings " + Controller.getCurSurvey());
+            dialog.setTitle("Survey Plan Settings " + Controller.getCurSurvey());
             dialog.show();
-
-
         });
         //Corresponds to "Create and Show plan"
-        showPlanOfFlight.setOnAction(new EventHandler<ActionEvent>(){
+        showPlanOfSurvey.setOnAction(new EventHandler<ActionEvent>(){
             @Override
             public void handle(ActionEvent event) {
                 String path = System.getProperty("user.dir").replace('\\', '/') ;
@@ -813,7 +797,7 @@ public class Settings {
         layout.getChildren().add(btnSettings);
         layout.getChildren().add(text);
         layout.getChildren().add(fileChooseBtn);
-        layout.getChildren().add(showPlanOfFlight);
+        layout.getChildren().add(showPlanOfSurvey);
         layout.getChildren().add(textElevation);
         layout.getChildren().add(Help);
 
@@ -837,7 +821,7 @@ public class Settings {
         layout.getChildren().remove(btnSettings);
         layout.getChildren().remove(text);
         layout.getChildren().remove(fileChooseBtn);
-        layout.getChildren().remove(showPlanOfFlight);
+        layout.getChildren().remove(showPlanOfSurvey);
         layout.getChildren().remove(textElevation);
         layout.getChildren().remove(Help);
 
