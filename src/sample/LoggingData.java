@@ -29,6 +29,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Optional;
 
 
 public class LoggingData {
@@ -102,10 +103,13 @@ public class LoggingData {
                     buttonStop.setDisable(false);
                     buttonStart.setDisable(true);
                     buttonDownload.setDisable(true);
+                    buttonLatest.setDisable(true);
+
                 }else if(connection.contains("Logger Off")){
                     buttonStop.setDisable(true);
                     buttonStart.setDisable(false);
                     buttonDownload.setDisable(false);
+                    buttonLatest.setDisable(false);
                 }
                 if(shouldLoad){
                     getFilesFromServer();
@@ -115,10 +119,6 @@ public class LoggingData {
                     buttonLatest.setDisable(true);
                     buttonDownload.setDisable(true);
                     latestTime.setText("No Files in Record");
-                }else{
-                    buttonLatest.setDisable(false);
-                    buttonDownload.setDisable(false);
-                    latestTime.setText("Most Recent File:\n" + allfolders.get(0));
                 }
 //                buttonConnect.setDisable(true);
             } catch (ConnectException | SocketTimeoutException ce){
@@ -133,19 +133,11 @@ public class LoggingData {
 
         buttonStart.setOnAction((event) -> {
             File directory = new File(Controller.getCurDataFolder());
-            if(directory.isDirectory() && directory.list().length > 2){
-                Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.setTitle("Error");
-                alert.setHeaderText("Files already exist in this folder");
-                alert.setContentText("Either Empty this flight or choose or create another flight to download the data :)");
-                alert.showAndWait();
 
-            }else if(Controller.getCurFlight() != 0){
 //                BBconnect bbConnect = BBconnect.getInstance();
 //                bbConnect.connect(4);
                 // This is an FTP download, This not only not need the program to run, it can be faster than the method above.
                 // All methods are in the Class SFTPClient.
-
                 try {
                     BBconnect bbConnect = BBconnect.getInstance();
                     if(bbConnect.connect(2).contains("Start")){
@@ -156,13 +148,10 @@ public class LoggingData {
                         disconnectedAlert();
                     }
 
-                }catch (ConnectException | SocketTimeoutException ce){
+                }catch (ConnectException | SocketTimeoutException ce) {
                     ce.printStackTrace();
                     disconnectedAlert();
                 }
-            }else{
-                flightNotChosenAlert();
-            }
         });
 
         buttonStop.setOnAction((event) -> {
@@ -183,36 +172,47 @@ public class LoggingData {
         });
 
         buttonLatest.setOnAction(event -> {
-            for(String fn : filenames){
-                String orig = "/home/debian/stratus/build/datafiles/" + allfolders.get(0) + "/" + allfolders.get(0) + "-" + fn;
-                String dest = "C:\\Users\\georg\\OneDrive\\University\\COOP\\Stratus\\stratus29Jan20\\testfolder\\Sample5\\" + allfolders.get(0) + "-" + fn;
-                System.out.println("Copying from: " + orig);
-                System.out.println("Copying to: " + dest);
-                try {
-                    download.download(orig, dest);
-                } catch (JSchException e) {
-                    e.printStackTrace();
-                } catch (SftpException e) {
-                    e.printStackTrace();
-                }finally {
-                    System.out.println("Saved");
+            if(Controller.getCurFlight() != 0) {
+                int write = 0;
+                File directory = new File(Controller.getCurDataFolder());
+                if (directory.isDirectory() && directory.listFiles().length > 0) {
+                    write = overwriteWarning(directory);
                 }
+                if(write != 0) {
+                    for (String fn : filenames) {
+                        String orig = "/home/debian/stratus/build/datafiles/" + listOfFiles.get(0) + "/" + listOfFiles.get(0) + "-" + fn;
+                        String dest = Controller.getCurDataFolder() + "\\" + listOfFiles.get(0).replace(":", "") + "-" + fn;
+
+                        System.out.println("Copying from: " + orig);
+                        System.out.println("Copying to: " + dest);
+                        try {
+                            download.download(orig, dest);
+                        } catch (JSchException e) {
+                            e.printStackTrace();
+                        } catch (SftpException e) {
+                            e.printStackTrace();
+                        } finally {
+                            System.out.println("Saved");
+                        }
+                    }
+                }
+            }else{
+                flightNotChosenAlert();
             }
         });
 
         buttonDownload.setOnAction(event -> {
             File directory = new File(Controller.getCurDataFolder());
-            if(directory.isDirectory() && directory.list().length > 2){
-                Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.setTitle("Error");
-                alert.setHeaderText("Files already exist in this folder");
-                alert.setContentText("Either Empty this flight or choose or create another flight to download the data :)");
-                alert.showAndWait();
-
-            }else if(Controller.getCurFlight() != 0){
+            if(Controller.getCurFlight() != 0){
+                if(directory.list().length > 0) {
+                    Alert alert = new Alert(Alert.AlertType.WARNING);
+                    alert.setTitle("Data files exist");
+                    alert.setHeaderText("You have data files in this flight");
+                    alert.setContentText("Proceed if you want to overwrite the previous data\nOtherwise click \"Cancel\" on the next window");
+                    alert.showAndWait();
+                }
                //  This is an FTP download, This not only not need the program to run, it can be faster than the method above.
                //   All methods are in the Class SFTPClient.
-
                 final Stage dialog = new Stage();
 //                    listOfFiles.setItems();
                 Button downloadFiles = new Button("Download Files"), cancel = new Button("Cancel");
@@ -222,6 +222,12 @@ public class LoggingData {
                 downloadableFiles.setTranslateX(-150);
                 downloadFiles.setTranslateX(0);
                 cancel.setTranslateX(150);
+
+                downloadableFiles.setDisable(false);
+                downloadFiles.setDisable(false);
+                cancel.setDisable(false);
+
+//                downloadFiles.disableProperty().bind(downloadableFiles.valueProperty().isNull());
 
                 dialog.initModality(Modality.APPLICATION_MODAL);
                 dialog.initOwner(Controller.getPrimaryStage());
@@ -237,33 +243,34 @@ public class LoggingData {
                 popUpLayout.getChildren().add(cancel);
 
                 cancel.setOnAction(event1 -> {
-                    download.disconnect();
                     dialog.close();
                 });
 
                 downloadFiles.setOnAction(event1 -> {
+                    int write = 1;
                     String filename = downloadableFiles.getValue().toString();
-                    for(String fn : filenames){
-                        String orig = "/home/debian/stratus/build/datafiles/" + filename + "/" + allfolders.get(0) + "-" + fn;
-                        String dest = Controller.getCurDataFolder() + "\\" + filename + "-" + fn;
-                        System.out.println("Copying from: " + orig);
-                        System.out.println("Copying to: " + dest);
-                        try {
-                            download.download(orig, dest);
-                        } catch (JSchException e) {
-                            e.printStackTrace();
-                        } catch (SftpException e) {
-                            e.printStackTrace();
-                        } finally {
-                            System.out.println("Saved");
+                    String orig = "/home/debian/stratus/build/datafiles/" + filename + "/" + filename;
+                    String dest = Controller.getCurDataFolder() + "\\" + filename.replace(":", "");
+                    if (directory.isDirectory() && directory.listFiles().length > 0) {
+                        write = overwriteWarning(directory);
+                    }
+                    if (write != 0) {
+                        for (String fn : filenames) {
+                            System.out.println("Copying from: " + orig + "-" + fn);
+                            System.out.println("Copying to: " + dest + "-" + fn);
+                            try {
+                                download.download(orig + "-" + fn, dest + "-" + fn);
+                            } catch (JSchException e) {
+                                e.printStackTrace();
+                            } catch (SftpException e) {
+                                e.printStackTrace();
+                            } finally {
+                                System.out.println("Saved");
+                            }
                         }
                     }
+
                 });
-
-                //                buttonStart.setDisable(false);
-//                buttonStop.setDisable(true);
-//                buttonConnect.setDisable(true);
-
             }else{
                 flightNotChosenAlert();
             }
@@ -377,6 +384,24 @@ public class LoggingData {
         alert.setContentText("There are no records of Data Yet.\n To make new data logging sessions, click on Start Logging in the main interface");
         alert.showAndWait();
     }
+    private int overwriteWarning(File directory){
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("Overwrite");
+        alert.setHeaderText("The flight you chose already has data.");
+        alert.setContentText("Do you want to overwrite that data?");
+
+        ButtonType buttonOverwrite = new ButtonType("Overwrite");
+        ButtonType buttonTypeCancel = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+
+        alert.getButtonTypes().setAll(buttonOverwrite, buttonTypeCancel);
+
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.get() == buttonOverwrite){
+            for(File delf : directory.listFiles()) delf.delete();
+            return 1;
+        }
+        return 0;
+    }
 
     private void getFilesFromServer(){
         try {
@@ -394,13 +419,15 @@ public class LoggingData {
             }
             System.out.println(earliest);
             System.out.println(allfolders.size());
-
+            listOfFiles.clear();
             if (earliest == 0) {
                 for (int i = allfolders.size() - 1; i >= 0; i--) listOfFiles.add(allfolders.get(i));
             }else{
                 for(int i = earliest - 1; i >= 0; i--) listOfFiles.add(allfolders.get(i));
                 for(int i = allfolders.size() - 1; i >= earliest; i--) listOfFiles.add(allfolders.get(i));
             }
+            latestTime.setText("Most Recent File:\n" + listOfFiles.get(0));
+
         } catch (JSchException e) {
             e.printStackTrace();
             disconnectedAlert();
