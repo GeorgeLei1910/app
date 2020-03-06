@@ -14,7 +14,7 @@ public class SFTPClient {
 
     private String privateKeyPath;
 
-    public void connect() throws JSchException, ConnectException {
+    public void connect(String text) throws JSchException, ConnectException {
         JSch jsch = new JSch();
 
         // Uncomment the line below if the FTP server requires certificate
@@ -22,7 +22,7 @@ public class SFTPClient {
 //        session = jsch.getSession("192.168.8.1");
 
         // Uncomment the two lines below if the FTP server requires password
-        session = jsch.getSession("debian", "192.168.8.1", 22);
+        session = jsch.getSession("debian", text, 22);
         session.setPassword("temppwd");
         session.setConfig("StrictHostKeyChecking", "no");
         session.connect(3000);

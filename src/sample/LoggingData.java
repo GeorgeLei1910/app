@@ -68,6 +68,7 @@ public class LoggingData {
         ipAddressField.setMaxWidth(100);
         ipAddressField.setTranslateX(-230);
         ipAddressField.setTranslateY(-140);
+        ipAddressField.setText("192.168.8.1");
 
         buttonStart.setTranslateX(-70);
         buttonStart.setTranslateY(-80);
@@ -96,7 +97,9 @@ public class LoggingData {
             BBconnect bbConnect = BBconnect.getInstance();
             String connection = null;
             try {
-                download.connect();
+
+                download.connect(ipAddressField.getText());
+                bbConnect.setIPAddress(ipAddressField.getText());
                 connection = bbConnect.connect(1);
                 if(connection.contains("Logger On")){
                     //Disables and enables different stuff.
@@ -124,7 +127,7 @@ public class LoggingData {
             } catch (ConnectException | SocketTimeoutException ce){
                 ce.printStackTrace();
                 download.disconnect();
-                disconnectedAlert();
+                AllAlerts.disconnectedAlert();
             } catch (JSchException e) {
                 e.printStackTrace();
                 download.disconnect();
@@ -145,12 +148,12 @@ public class LoggingData {
                             buttonConnect.fire();
                         }
                     }else{
-                        disconnectedAlert();
+                        AllAlerts.disconnectedAlert();
                     }
 
                 }catch (ConnectException | SocketTimeoutException ce) {
                     ce.printStackTrace();
-                    disconnectedAlert();
+                    AllAlerts.disconnectedAlert();
                 }
         });
 
@@ -163,11 +166,11 @@ public class LoggingData {
                         buttonConnect.fire();
                     }
                 }else{
-                    disconnectedAlert();
+                    AllAlerts.disconnectedAlert();
                 }
             } catch (ConnectException | SocketTimeoutException ce){
                 ce.printStackTrace();
-                disconnectedAlert();
+                AllAlerts.disconnectedAlert();
             }
         });
 
@@ -176,7 +179,7 @@ public class LoggingData {
                 int write = 0;
                 File directory = new File(Controller.getCurDataFolder());
                 if (directory.isDirectory() && directory.listFiles().length > 0) {
-                    write = overwriteWarning(directory);
+                    write = AllAlerts.overwriteWarning(directory);
                 }
                 if(write != 0) {
                     for (String fn : filenames) {
@@ -197,7 +200,7 @@ public class LoggingData {
                     }
                 }
             }else{
-                flightNotChosenAlert();
+                AllAlerts.flightNotChosenAlert();
             }
         });
 
@@ -252,7 +255,7 @@ public class LoggingData {
                     String orig = "/home/debian/stratus/build/datafiles/" + filename + "/" + filename;
                     String dest = Controller.getCurDataFolder() + "\\" + filename.replace(":", "");
                     if (directory.isDirectory() && directory.listFiles().length > 0) {
-                        write = overwriteWarning(directory);
+                        write = AllAlerts.overwriteWarning(directory);
                     }
                     if (write != 0) {
                         for (String fn : filenames) {
@@ -272,7 +275,7 @@ public class LoggingData {
 
                 });
             }else{
-                flightNotChosenAlert();
+                AllAlerts.flightNotChosenAlert();
             }
 
         });
@@ -351,56 +354,12 @@ public class LoggingData {
             return false;
         }
     }
-    private void disconnectedAlert(){
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Error");
-        alert.setHeaderText("Disconnected");
-        alert.setContentText("Your UAV is disconnected. Either:\n 1. Your UAV is off \n 2. Your UAV is on but you are not connected to its wifi");
-        alert.showAndWait();
+
+    private void disableDisconnected(){
         buttonConnect.setDisable(false);
         buttonStart.setDisable(true);
         buttonStop.setDisable(true);
         buttonDownload.setDisable(true);
-    }
-    private void flightNotChosenAlert(){
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Flight Is not Set");
-        alert.setHeaderText("Flight is not chosen");
-        alert.setContentText("In order to download the data, you should provide a path (Flight number) " +
-                "so that we can place it there!");
-        alert.showAndWait();
-    }
-    private void folderNotChosenAlert(){
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("No Folder Chosen");
-        alert.setHeaderText("Folder");
-        alert.setContentText("In order to download the data, you should select the folder on the drop down bar");
-        alert.showAndWait();
-    }
-    private void noFilesOnBBAlert(){
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("No Files on UAV");
-        alert.setHeaderText("Nothing is recorded yet");
-        alert.setContentText("There are no records of Data Yet.\n To make new data logging sessions, click on Start Logging in the main interface");
-        alert.showAndWait();
-    }
-    private int overwriteWarning(File directory){
-        Alert alert = new Alert(Alert.AlertType.WARNING);
-        alert.setTitle("Overwrite");
-        alert.setHeaderText("The flight you chose already has data.");
-        alert.setContentText("Do you want to overwrite that data?");
-
-        ButtonType buttonOverwrite = new ButtonType("Overwrite");
-        ButtonType buttonTypeCancel = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
-
-        alert.getButtonTypes().setAll(buttonOverwrite, buttonTypeCancel);
-
-        Optional<ButtonType> result = alert.showAndWait();
-        if (result.get() == buttonOverwrite){
-            for(File delf : directory.listFiles()) delf.delete();
-            return 1;
-        }
-        return 0;
     }
 
     private void getFilesFromServer(){
@@ -430,10 +389,10 @@ public class LoggingData {
 
         } catch (JSchException e) {
             e.printStackTrace();
-            disconnectedAlert();
+            AllAlerts.disconnectedAlert();
         } catch (SftpException e) {
             e.printStackTrace();
-            disconnectedAlert();
+            AllAlerts.disconnectedAlert();
         }
     }
 }
