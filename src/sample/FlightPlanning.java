@@ -1,11 +1,21 @@
 package sample;
 
 import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Font;
 import javafx.scene.text.Text;
+import javafx.stage.FileChooser;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -23,9 +33,12 @@ public class FlightPlanning {
     private static Button btnShowBlkPlan, buttonExport, applyBtn, showFlightPlan;
     static private GraphicsContext graphics_context;
     private static String planSettingsFile;
-    private static Text currentFlight, arrow, applied, txtTie;
+    private static Text currentFlight, textKml, applied, txtTie;
     private static TextField lineFromTxt, lineToTxt, lineTieFromTxt, lineTieToTxt, seperateLines;
     private static CheckBox cbUseSeperateLines;
+    static private Path kmlFilePath;
+
+    private static ObservableList<String> items = FXCollections.observableArrayList ();
 
     private static ComboBox listSurveys, listBlocks, listFlights;
     private static Button createSurvey, createBlock, createFlight;
@@ -95,54 +108,19 @@ public class FlightPlanning {
         buttonExport.setTranslateY(40);
         buttonExport.setStyle("-fx-font: 13 Courier;");
 
-        lineFromTxt = new TextField();
-        lineToTxt = new TextField();
-
-        lineFromTxt.setTranslateX(-120);
-        lineFromTxt.setTranslateY(-70);
-        lineFromTxt.setMaxWidth(30);
-        lineFromTxt.setText("From Line");
-
-        lineToTxt.setTranslateX(-90);
-        lineToTxt.setTranslateY(-70);
-        lineToTxt.setMaxWidth(30);
-        lineToTxt.setText("To Line");
+        lineFromTxt = new TextField(); lineToTxt = new TextField();
+        lineTieFromTxt = new TextField(); lineTieToTxt = new TextField();
+        cbUseSeperateLines = new CheckBox("Use Single Line\n(Separate Line)"); seperateLines = new TextField();
 
 
-        lineTieFromTxt = new TextField();
-        lineTieFromTxt.setTranslateX(-10);
-        lineTieFromTxt.setTranslateY(-70);
-        lineTieFromTxt.setMaxWidth(30);
-        lineTieFromTxt.setText("");
-
-
-        lineTieToTxt = new TextField();
-        lineTieToTxt.setTranslateX(20);
-        lineTieToTxt.setTranslateY(-70);
-        lineTieToTxt.setMaxWidth(30);
 
 
         showFlightPlan = new Button("Show Flight Plan");
         showFlightPlan.setTranslateY(0);
         showFlightPlan.setTranslateX(-200);
 
-
-        seperateLines = new TextField();
-        seperateLines.setMaxWidth(130);
-        seperateLines.setTranslateX(-40);
-        seperateLines.setTranslateY(-30);
-        cbUseSeperateLines = new CheckBox("Seperate lines");
-        cbUseSeperateLines.setTranslateX(-220);
-        cbUseSeperateLines.setTranslateY(-30);
-
-        arrow = new Text("--->");
-        arrow.setTranslateX(65);
-        arrow.setTranslateY(-70);
-
         applyBtn = new Button("apply");
-        applyBtn.setTranslateX(150);
-        applyBtn.setTranslateY(-70);
-        applyBtn.setMaxWidth(60);
+        applyBtn.setTranslateX(150); applyBtn.setTranslateY(-70); applyBtn.setMaxWidth(60);
 
         applied = new Text("Not Applied");
         applied.setTranslateX(270);
@@ -153,6 +131,599 @@ public class FlightPlanning {
         txtTie.setTranslateX(-45);
         txtTie.setTranslateY(-70);
         txtTie.setStyle("-fx-font: 13 Courier;");
+
+        //Bind Buttons to Activation
+        editSurvey.disableProperty().bind(listSurveys.valueProperty().isNull());
+        showSurvey.disableProperty().bind(listSurveys.valueProperty().isNull());
+        listBlocks.disableProperty().bind(listSurveys.valueProperty().isNull());
+        createBlock.disableProperty().bind(listBlocks.valueProperty().isNull());
+        editBlock.disableProperty().bind(listBlocks.valueProperty().isNull());
+        showBlock.disableProperty().bind(listBlocks.valueProperty().isNull());
+        listFlights.disableProperty().bind(listBlocks.valueProperty().isNull());
+        createFlight.disableProperty().bind(listFlights.valueProperty().isNull());
+        editFlight.disableProperty().bind(listFlights.valueProperty().isNull());
+        showFlight.disableProperty().bind(listFlights.valueProperty().isNull());
+
+        
+        listSurveys.setOnAction(event -> {
+            String str = listSurveys.getValue().toString();
+            Controller.setCurSurveyFolder(str);
+            System.out.println(Controller.getCurSurvey());
+        });
+        listBlocks.setOnAction(event -> {
+            String str = listBlocks.getValue().toString();
+            Controller.setCurBlockFolder(0, str);
+            System.out.println(Controller.getCurSurvey());
+        });
+        listFlights.setOnAction(event -> {
+            String str = listFlights.getValue().toString();
+            Controller.setCurFlightFolder(0);
+            System.out.println(Controller.getCurSurvey());
+        });
+
+        showSurvey.setOnAction(event -> {
+            String path = System.getProperty("user.dir").replace('\\', '/') ;
+            String pathPython = path.replace('\\', '/') + "/Package/pythontest.py";
+            String command = "python " +pathPython+" -m FlightPlan" + " -f "+ path + "/Data/"+Controller.getCurSurvey() +
+                    "/FlightPlan" + Controller.getPrefixToSurvey() + "-plan_settings.txt";
+            System.out.println(command);
+            try {
+                Process p = Runtime.getRuntime().exec(command);
+                Controller.pythonConsole(p);
+//                    p.waitFor();
+                //Python console log
+            }catch(Exception e){
+
+            }
+            System.out.println("P ran");
+            CanvasFlightPlan canvasFlightPlan = new CanvasFlightPlan(1);
+        });
+
+        createSurvey.setOnAction(event -> {
+            final Stage dialog = new Stage();
+
+            TextField name = new TextField();
+            name.setMaxWidth(200);
+            name.setPrefWidth(200);
+            name.setTranslateX(0);
+            name.setTranslateY(-10);
+
+            Button ok = new Button("OK");
+            ok.setTranslateX(40);
+            ok.setTranslateY(50);
+            ok.setPrefWidth(60);
+            Button cancel = new Button("Cancel");
+            cancel.setTranslateX(-40);
+            cancel.setTranslateY(50);
+
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.initOwner(Controller.getPrimaryStage());
+            StackPane popUpLayout =  new StackPane();
+            popUpLayout.setStyle("-fx-background-color: #474747;");
+            Scene popUpScene = new Scene(popUpLayout, 400, 150);
+            dialog.setScene(popUpScene);
+            dialog.setTitle("Name The Survey");
+            dialog.show();
+
+            popUpLayout.getChildren().add(name);
+            popUpLayout.getChildren().add(ok);
+            popUpLayout.getChildren().add(cancel);
+
+            ok.setOnAction(event1 -> {
+                String nameOfSurvey = name.getText();
+                if(!nameOfSurvey.equals("")) listSurveys.setValue(Controller.addSurvey(nameOfSurvey));
+                dialog.close();
+            });
+            cancel.setOnAction(event1 -> {
+                dialog.close();
+            });
+        });
+        editSurvey.setOnAction(event -> {
+            File filePath = new File(System.getProperty("user.dir")+ Controller.getPathToSurvey() + "/FlightPlan" + Controller.getPrefixToSurvey() + "-plan_settings.txt");
+            final Stage dialog = new Stage();
+            items.clear();
+
+            Text txtOvershoot = new Text("Overshoot Survey");
+            Text txtOvershootBlock = new Text("Overshoot Block");
+            TextField fieldOvershoot = new TextField();
+            TextField fieldOvershootBlock = new TextField();
+            txtOvershoot.setTranslateX(-205);
+            txtOvershoot.setTranslateY(-100);
+            txtOvershootBlock.setTranslateX(-210);
+            txtOvershootBlock.setTranslateY(-70);
+            fieldOvershoot.setTranslateX(-100);
+            fieldOvershoot.setTranslateY(-100);
+            fieldOvershootBlock.setTranslateX(-100);
+            fieldOvershootBlock.setTranslateY(-70);
+            fieldOvershoot.setMaxWidth(50);
+            fieldOvershootBlock.setMaxWidth(50);
+
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.initOwner(Controller.getPrimaryStage());
+            Button btnShowFlight = new Button("choose start");
+            Text txtSpacing = new Text("Waypoint Spacing (m)");
+            Text txtLineSpacing = new Text("Line Spacing (m)");
+            TextField txtFieldSpacing = new TextField();
+            TextField txtFieldLineSpacing = new TextField();
+            txtFieldSpacing.setMaxWidth(50);
+            txtFieldLineSpacing.setMaxWidth(50);
+            txtSpacing.setTranslateX(-200);
+            txtSpacing.setTranslateY(-170);
+            txtFieldSpacing.setTranslateX(-110);
+            txtFieldSpacing.setTranslateY(-170);
+            txtFieldLineSpacing.setTranslateX(-110);
+            txtFieldLineSpacing.setTranslateY(-140);
+            txtLineSpacing.setTranslateX(-220);
+            txtLineSpacing.setTranslateY(-140);
+            btnShowFlight.setTranslateX(15);
+            btnShowFlight.setTranslateY(45);
+            StackPane popUplayout =  new StackPane();
+            Scene dialogScene = new Scene(popUplayout, 600, 500);
+            Text textPosition = new Text("Position: ");
+            Text textPositionStart = new Text("Starting Position: ");
+            TextField posLon = new TextField();
+            TextField posLat = new TextField();
+            TextField posLatStart = new TextField();
+            TextField posLonStart = new TextField();
+            posLon.setPromptText("Lon");
+            posLat.setPromptText("Lat");
+            posLon.setPrefWidth(50);
+            posLon.setMaxWidth(50);
+            posLat.setPrefWidth(50);
+            posLat.setMaxWidth(50);
+            posLat.setTranslateX(-180);
+            posLat.setTranslateY(-30);
+            posLon.setTranslateX(-120);
+            posLon.setTranslateY(-30);
+            textPosition.setTranslateX(-240);
+            textPosition.setTranslateY(-30);
+
+
+
+            posLonStart.setPromptText("Lon");
+            posLatStart.setPromptText("Lat");
+            posLonStart.setPrefWidth(50);
+            posLonStart.setMaxWidth(50);
+            posLatStart.setPrefWidth(50);
+            posLatStart.setMaxWidth(50);
+            posLatStart.setTranslateX(-120);
+            posLatStart.setTranslateY(45);
+            posLonStart.setTranslateX(-60);
+            posLonStart.setTranslateY(45);
+            textPositionStart.setTranslateX(-210);
+            textPositionStart.setTranslateY(45);
+
+
+            Text txtArrow = new Text("--->");
+            txtArrow.setTranslateX(-60);
+            txtArrow.setTranslateY(-30);
+
+            Button btnDelete = new Button("Delete Selected");
+            Button btnAddPos = new Button("ADD");
+            btnAddPos.setTranslateX(-20);
+            btnAddPos.setTranslateY(-30);
+            ListView<String> list = new ListView<String>();
+            list.setMaxHeight(160);
+            list.setMaxWidth(150);
+            list.setItems(items);
+            list.setTranslateX(165);
+            list.setTranslateY(50);
+            btnDelete.setTranslateX(165);
+            btnDelete.setTranslateY(145);
+            Text text = new Text("Direction in degrees");
+            text.setTranslateX(-170);
+            text.setTranslateY(-210);
+            Button btnOK = new Button("OK");
+            Button btnCancel = new Button("Cancel");
+            TextField dir = new TextField();
+            dir.setTranslateX(-70);
+            dir.setTranslateY(-210);
+            dir.setPrefWidth(50);
+            dir.setMaxWidth(50);
+            btnOK.setTranslateX(60);
+            btnOK.setTranslateY(210);
+            btnCancel.setTranslateX(-60);
+            btnCancel.setTranslateY(210);
+            dir.getText();
+
+            CheckBox chbDir = new CheckBox("Clockwise planning");
+            CheckBox chbGoogleApi = new CheckBox("Google API for elevation");
+
+            chbDir.setTranslateX(-200);
+            chbDir.setTranslateY(80);
+
+            chbGoogleApi.setTranslateX(-190);
+            chbGoogleApi.setTranslateY(100);
+
+            Button useKMLFile = new Button("Load KML file");
+            useKMLFile.setTranslateX(165);
+            useKMLFile.setTranslateY(-50);
+
+            Text elevText = new Text("Elevation Buffer");
+            elevText.setTranslateX(-200);
+            elevText.setTranslateY(140);
+
+            TextField elevTxtField = new TextField();
+            elevTxtField.setTranslateX(-120);
+            elevTxtField.setTranslateY(140);
+            elevTxtField.setMaxWidth(50);
+
+
+            Rectangle rectangle = new Rectangle(300, -100, 255, 160);
+            rectangle.setFill(Color.TRANSPARENT);
+
+            rectangle.setArcWidth(15);
+
+            rectangle.setStroke(Color.BLACK);
+            rectangle.setStrokeWidth(1.5);
+            rectangle.setTranslateX(160);
+            rectangle.setTranslateY(-150);
+
+
+            Text tieLineTxt = new Text("Tie-Line Spacing");
+            tieLineTxt.setTranslateX(100);
+            tieLineTxt.setTranslateY(-190);
+            TextField tieSpaceField = new TextField();
+            tieSpaceField.setTranslateX(190);
+            tieSpaceField.setTranslateY(-190);
+            tieSpaceField.setMaxWidth(50);
+
+            Text tieLineTxtStart = new Text("Start Position");
+            tieLineTxtStart.setTranslateX(90);
+            tieLineTxtStart.setTranslateY(-135);
+            TextField tieSpaceFieldStartLon = new TextField();
+            tieSpaceFieldStartLon.setTranslateX(165);
+            tieSpaceFieldStartLon.setTranslateY(-135);
+            TextField tieSpaceFieldStartLat = new TextField();
+            tieSpaceFieldStartLat.setTranslateX(210);
+            tieSpaceFieldStartLat.setTranslateY(-135);
+            tieSpaceFieldStartLat.setMaxWidth(40);
+            tieSpaceFieldStartLon.setMaxWidth(40);
+
+            Button btnChooseStartTie = new Button("choose start");
+            btnChooseStartTie.setTranslateX(135);
+            btnChooseStartTie.setTranslateY(-100);
+
+
+            try{
+
+                String s;
+                InputStream ins = new FileInputStream(filePath);
+                Reader r = new InputStreamReader(ins, "UTF-8"); // leave charset out for default
+                BufferedReader br = new BufferedReader(r);
+
+                //Read everything to the settings
+                while ((s = br.readLine()) != null) {
+                    if(s.startsWith("Direction:")){
+                        System.out.println(s);
+
+                        String segments[] = s.split(":");
+                        if(segments.length > 1){
+                            String seg = segments[1];
+                            Integer angle = (Integer.parseInt(seg.trim()) - 90 )* -1;
+                            dir.setText(angle.toString());
+                        }
+                    }if(s.startsWith("Points:")){
+                        System.out.println(s);
+
+                        String segments[] = s.split(":");
+                        for(int i = 1; i < segments.length ; i++)
+                            items.add(segments[i]);
+                    }if(s.startsWith("Start:")){
+                        System.out.println(s);
+
+                        String[] segments = s.split(":");
+                        System.out.println(segments.length);
+                        if(segments.length > 1){
+                            String[] newSegs = segments[1].split(",");
+                            if(newSegs.length > 0){
+                                System.out.println(newSegs.length);
+                                posLonStart.setText(newSegs[0]);
+                                posLatStart.setText(newSegs[1]);
+                            }
+                        }
+
+                    }
+                    if(s.startsWith("Spacing:")) {
+                        System.out.println(s);
+                        String segments[] = s.split(":");
+                        if(segments.length > 1){
+                            String seg = segments[1];
+                            txtFieldSpacing.setText(seg);
+                        }
+
+                    }if(s.startsWith("LineSpacing:")){
+                        System.out.println(s);
+                        String segments[] = s.split(":");
+                        if(segments.length > 1){
+                            String seg = segments[1];
+                            txtFieldLineSpacing.setText(seg);}
+
+                    }
+                    if(s.startsWith("OvershootSurvey:")){
+                        System.out.println(s);
+                        String segments[] = s.split(":");
+                        if(segments.length > 1){
+                            String seg = segments[1];
+                            fieldOvershoot.setText(seg);}
+
+                    }
+                    if(s.startsWith("OvershootBlock:")){
+                        System.out.println(s);
+                        String segments[] = s.split(":");
+                        if(segments.length > 1){
+                            String seg = segments[1];
+                            fieldOvershootBlock.setText(seg);}
+
+                    }
+                    if(s.startsWith("ElevationBuffer:")){
+                        //System.out.println(s);
+                        String segments[] = s.split(":");
+                        if(segments.length > 1){
+                            String seg = segments[1];
+                            elevTxtField.setText(seg);}
+                    }
+                    if(s.startsWith("Clockwise:")) {
+                        System.out.println(s);
+                        String segments[] = s.split(":");
+                        if (segments.length > 1) {
+                            String seg = segments[1];
+                            if (seg.equals("1"))
+                                chbDir.setSelected(true);
+                        }
+                    }
+                    if(s.startsWith("Elevation:")){
+                        System.out.println(s);
+                        String segments[] = s.split(":");
+                        String seg = segments[1];
+                        System.out.println("-----)))))>"+seg.equals("1"));
+                        if(seg.equals("1"))
+                            chbGoogleApi.setSelected(true);
+
+                    }if(s.startsWith("TieLineSpacing:")) {
+                        System.out.println(s);
+                        String segments[] = s.split(":");
+                        String seg = segments[1];
+                        tieSpaceField.setText(seg);
+                    }if(s.startsWith("TieStart:")){
+                        System.out.println(s);
+                        String[] segments = s.split(":");
+                        System.out.println(segments.length);
+                        if(segments.length > 1){
+                            String[] newSegs = segments[1].split(",");
+                            if(newSegs.length > 0){
+                                System.out.println(newSegs.length);
+                                tieSpaceFieldStartLon.setText(newSegs[0]);
+                                tieSpaceFieldStartLat.setText(newSegs[1]);
+                            }
+                        }
+                        break;
+                    }
+                }
+            }catch (Exception e) {
+                System.err.println(e.getMessage()); // handle exception
+            }
+
+
+            btnChooseStartTie.setOnAction(event14 -> {
+                if(items.size() < 3){
+                    AllAlerts.noSurveyBoundary();
+                }else {
+                    CanvasFlightPlan canvasFlightPlan = new CanvasFlightPlan(-2);
+                    canvasFlightPlan.setInitPosition(tieSpaceFieldStartLon, tieSpaceFieldStartLat);
+                }
+            });
+            btnShowFlight.setOnAction(event13 -> {
+                if(items.size() < 3){
+                    AllAlerts.noSurveyBoundary();
+                }else {
+                    CanvasFlightPlan canvasFlightPlan = new CanvasFlightPlan(-2);
+                    canvasFlightPlan.setInitPosition(posLonStart, posLatStart);
+                }
+            });
+
+            btnCancel.setOnAction(event15 -> dialog.close());
+            btnDelete.setOnAction(event16 -> {
+                items.remove(list.getSelectionModel().getSelectedItem());
+                list.setItems(items);
+            });
+            btnOK.setOnAction(event17 -> {
+                try {
+                    PrintWriter out = new PrintWriter(filePath);
+                    out.flush();
+                    System.out.println(filePath.getAbsolutePath());
+                    out.write("Direction:" + (Integer.parseInt(dir.getText().trim()) - 90) * -1+"\r\n");
+                    out.write("Points:");
+                    for(String itm : items){
+                        out.write( itm + ":");
+                        System.out.println(itm);
+                    }
+                    out.write(   "\r\n");
+                    if(posLonStart.getText().length() > 0 && posLatStart.getText().length() > 0){
+                        out.write("Start:"+posLonStart.getText().trim()+","+ posLatStart.getText().trim() + "\r\n");
+                    }else{
+                        out.write(   "Start:\r\n");
+                    }
+                    out.write("Spacing:"+txtFieldSpacing.getText().trim());
+                    out.write(   "\r\n");
+                    out.write("LineSpacing:"+txtFieldLineSpacing.getText().trim());
+                    out.write(   "\r\n");
+                    out.write("OvershootSurvey:"+fieldOvershoot.getText().trim());
+                    out.write(   "\r\n");
+                    out.write("OvershootBlock:"+fieldOvershootBlock.getText().trim());
+                    out.write(   "\r\n");
+                    out.write("ElevationBuffer:"+elevTxtField.getText().trim());
+                    out.write(   "\r\n");
+                    out.write("Clockwise:"+((chbDir.isSelected()) ? "1" : "-1"));
+                    out.write(   "\r\n");
+                    out.write("Elevation:"+((chbGoogleApi.isSelected()) ? "1" : "0"));
+                    out.write(   "\r\n");
+                    out.write("TieLineSpacing:"+tieSpaceField.getText().trim());
+                    out.write(   "\r\n");
+                    if(tieSpaceFieldStartLat.getText().length() > 0 && tieSpaceFieldStartLon.getText().length() > 0){
+                        out.write("TieStart:"+tieSpaceFieldStartLon.getText()+","+ tieSpaceFieldStartLat.getText() + "\r\n");
+                    }else{
+                        out.write(   "TieStart:\r\n");
+                    }
+                    out.close();
+
+                }catch(Exception e){
+
+                }
+                dialog.close();
+            });
+
+            btnAddPos.setOnAction(event18 -> {
+                if((posLon.getText().matches("^-?[0-9]\\d*(\\.\\d+)?$")) &&
+                    posLat.getText().matches("^-?[0-9]\\d*(\\.\\d+)?$")){
+                    items.add(posLat.getText() +","+ posLon.getText());
+                }
+            });
+
+            useKMLFile.setOnAction(event12 -> {
+                FileChooser fileChooser = new FileChooser();
+                File file = fileChooser.showOpenDialog(Main.getStage());
+                if (file != null) {
+                    kmlFilePath = file.toPath();
+//                    textKml.setText(kmlFilePath.getFileName().toString());
+                }
+                if(kmlFilePath != null){
+                    System.out.println("ergerv");
+                    try{
+                        file = new File(kmlFilePath.toString());
+                        String s;
+                        InputStream ins = new FileInputStream(file);
+                        Reader r = new InputStreamReader(ins, "UTF-8"); // leave charset out for default
+                        BufferedReader br = new BufferedReader(r);
+
+                        while ((s = br.readLine()) != null) {
+                            s = s.trim();
+                            if(s.substring(0,4).matches("^-?[0-9]\\d*(\\.\\d+)?$")){
+                                list.getItems().clear();
+                                items.clear();
+                                String[] cords = s.split(",0");
+                                for(String str : cords){
+
+                                    String[] segs = str.split(",");
+                                    //System.out.println(segs[1].trim()+" "+ segs[0].trim()+ " 0");
+                                    posLon.setText(segs[0].trim());
+                                    posLat.setText(segs[1].trim());
+                                    btnAddPos.fire();
+                                }
+                                break;
+                            }
+                        }
+                    }catch (IOException e){
+                    }
+                }
+            });
+
+
+            btnOK.setPrefWidth(80);
+            btnCancel.setPrefWidth(80);
+            popUplayout.getChildren().add(text);
+            popUplayout.getChildren().add(btnCancel);
+            popUplayout.getChildren().add(btnOK);
+            popUplayout.getChildren().add(dir);
+            popUplayout.getChildren().add(list);
+            popUplayout.getChildren().add(textPosition);
+            popUplayout.getChildren().add(posLat);
+            popUplayout.getChildren().add(posLon);
+            popUplayout.getChildren().add(btnDelete);
+            popUplayout.getChildren().add(txtArrow);
+            popUplayout.getChildren().add(btnAddPos);
+            popUplayout.getChildren().add(btnShowFlight);
+            popUplayout.getChildren().add(posLonStart);
+            popUplayout.getChildren().add(posLatStart);
+            popUplayout.getChildren().add(textPositionStart);
+            popUplayout.getChildren().add(txtSpacing);
+            popUplayout.getChildren().add(txtFieldSpacing);
+            popUplayout.getChildren().add(fieldOvershoot);
+            popUplayout.getChildren().add(fieldOvershootBlock);
+            popUplayout.getChildren().add(txtOvershoot);
+            popUplayout.getChildren().add(txtOvershootBlock);
+            popUplayout.getChildren().add(chbGoogleApi);
+            popUplayout.getChildren().add(chbDir);
+            popUplayout.getChildren().add(txtFieldLineSpacing);
+            popUplayout.getChildren().add(txtLineSpacing);
+            popUplayout.getChildren().add(useKMLFile);
+            popUplayout.getChildren().add(elevText);
+            popUplayout.getChildren().add(elevTxtField);
+            popUplayout.getChildren().add(rectangle);
+            popUplayout.getChildren().add(tieLineTxt);
+            popUplayout.getChildren().add(tieSpaceField);
+            popUplayout.getChildren().add(tieLineTxtStart);
+            popUplayout.getChildren().add(tieSpaceFieldStartLat);
+            popUplayout.getChildren().add(tieSpaceFieldStartLon);
+            popUplayout.getChildren().add(btnChooseStartTie);
+
+            posLat.getParent().requestFocus();
+            posLon.getParent().requestFocus();
+            dialog.setScene(dialogScene);
+            dialog.setTitle("Survey Plan Settings " + Controller.getCurSurvey());
+            dialog.show();
+        });
+
+        editFlight.setOnAction(event -> {
+//            updateFlightPlanInfo();
+            final Stage dialog = new Stage();
+//                downloadFiles.disableProperty().bind(downloadableFiles.valueProperty().isNull());
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.initOwner(Controller.getPrimaryStage());
+            StackPane popUpLayout = new StackPane();
+            popUpLayout.setStyle("-fx-background-color: #474747;");
+            Scene popUpScene = new Scene(popUpLayout, 400, 200);
+            dialog.setScene(popUpScene);
+            dialog.setTitle("Edit Flight: " + Controller.getCurFlight());
+            dialog.show();
+
+            Text txtFlight, txtTie, from, to;
+//            TextField lineFromTxt, lineToTxt, lineTieFromTxt, lineTieToTxt, seperateLines;
+            Button efOK, efCancel;
+//            CheckBox cbUseSeperateLines;
+
+            txtFlight = new Text("Flight Lines"); txtTie = new Text("Tie Lines");
+            from = new Text("From"); to = new Text("To");
+
+            efOK = new Button("OK (Apply)"); efCancel = new Button("Cancel");
+
+            txtFlight.setFill(Color.WHITE); txtTie.setFill(Color.WHITE); from.setFill(Color.WHITE); to.setFill(Color.WHITE);
+            cbUseSeperateLines.setTextFill(Color.WHITE);
+
+            from.setTranslateX(-50); from.setTranslateY(-80); to.setTranslateX(50); to.setTranslateY(-80);
+            txtFlight.setTranslateX(-150); txtFlight.setTranslateY(-40); txtTie.setTranslateX(-150);
+            lineFromTxt.setTranslateX(-50); lineFromTxt.setTranslateY(-40); lineToTxt.setTranslateX(50); lineToTxt.setTranslateY(-40);
+            lineTieFromTxt.setTranslateX(-50); lineTieToTxt.setTranslateX(50);
+            cbUseSeperateLines.setTranslateX(-100); cbUseSeperateLines.setTranslateY(40);
+            seperateLines.setTranslateX(50); seperateLines.setTranslateY(40);
+
+            lineFromTxt.setMaxWidth(50); lineToTxt.setMaxWidth(50);
+            lineTieFromTxt.setMaxWidth(50); lineTieToTxt.setMaxWidth(50); seperateLines.setMaxWidth(50);
+
+            efOK.setTranslateX(-50); efOK.setTranslateY(80); efCancel.setTranslateX(50); efCancel.setTranslateY(80);
+            efOK.setMaxWidth(90); efCancel.setMaxWidth(90);
+
+            popUpLayout.getChildren().add(from);
+            popUpLayout.getChildren().add(to);
+            popUpLayout.getChildren().add(txtFlight);
+            popUpLayout.getChildren().add(txtTie);
+            popUpLayout.getChildren().add(lineFromTxt);
+            popUpLayout.getChildren().add(lineToTxt);
+            popUpLayout.getChildren().add(lineTieFromTxt);
+            popUpLayout.getChildren().add(lineTieToTxt);
+            popUpLayout.getChildren().add(cbUseSeperateLines);
+            popUpLayout.getChildren().add(seperateLines);
+            popUpLayout.getChildren().add(efOK);
+            popUpLayout.getChildren().add(efCancel);
+
+            efCancel.setOnAction(event1 -> {
+                dialog.close();
+            });
+            efOK.setOnAction(event1 -> {
+                applyBtn.fire();
+            });
+        });
+
 
         // Sets function of Buttons
         // Show Block Plan of the flight
@@ -281,16 +852,9 @@ public class FlightPlanning {
             try {
                 //Python code runs here
                 Process p = Runtime.getRuntime().exec(command);
+                Controller.pythonConsole(p);
 //                p.waitFor();
                 //Python console log
-                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(p.getOutputStream()));
-                BufferedReader reader = new BufferedReader(
-                        new InputStreamReader(p.getInputStream()));
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    System.out.println(line);
-                }
-                reader.close();
             }catch(Exception e){
 
             }
@@ -432,38 +996,62 @@ public class FlightPlanning {
     }
     // Puts elements when Flight Planning tab is selected
     public void showElements(){
-        layout.getChildren().add(btnShowBlkPlan);
-        layout.getChildren().add(currentFlight);
-        layout.getChildren().add(lineFromTxt);
-        layout.getChildren().add(lineToTxt);
-        layout.getChildren().add(applyBtn);
-        layout.getChildren().add(arrow);
-        layout.getChildren().add(applied);
-        layout.getChildren().add(showFlightPlan);
-        layout.getChildren().add(buttonExport);
-        layout.getChildren().add(lineTieFromTxt);
-        layout.getChildren().add(lineTieToTxt);
-        layout.getChildren().add(txtTie);
-        layout.getChildren().add(cbUseSeperateLines);
-        layout.getChildren().add(seperateLines);
+//        layout.getChildren().add(btnShowBlkPlan);
+//        layout.getChildren().add(currentFlight);
+//        layout.getChildren().add(lineFromTxt);
+//        layout.getChildren().add(lineToTxt);
+//        layout.getChildren().add(applyBtn);
+//        layout.getChildren().add(arrow);
+//        layout.getChildren().add(applied);
+//        layout.getChildren().add(showFlightPlan);
+//        layout.getChildren().add(buttonExport);
+//        layout.getChildren().add(lineTieFromTxt);
+//        layout.getChildren().add(lineTieToTxt);
+//        layout.getChildren().add(txtTie);
+//        layout.getChildren().add(cbUseSeperateLines);
+//        layout.getChildren().add(seperateLines);
+        layout.getChildren().add(listFlights);
+        layout.getChildren().add(listBlocks);
+        layout.getChildren().add(listSurveys);
+        layout.getChildren().add(createFlight);
+        layout.getChildren().add(createBlock);
+        layout.getChildren().add(createSurvey);
+        layout.getChildren().add(editFlight);
+        layout.getChildren().add(editBlock);
+        layout.getChildren().add(editSurvey);
+        layout.getChildren().add(showFlight);
+        layout.getChildren().add(showBlock);
+        layout.getChildren().add(showSurvey);
     }
     // Removes the buttons and stuff when Pane transitions
     public void removeElements(){
-        layout.getChildren().remove(btnShowBlkPlan);
-        layout.getChildren().remove(currentFlight);
-        layout.getChildren().remove(lineFromTxt);
-        layout.getChildren().remove(lineToTxt);
-        layout.getChildren().remove(applyBtn);
-        layout.getChildren().remove(arrow);
-        layout.getChildren().remove(applied);
-        layout.getChildren().remove(showFlightPlan);
-        layout.getChildren().remove(buttonExport);
-        layout.getChildren().remove(lineTieFromTxt);
-        layout.getChildren().remove(lineTieToTxt);
-        layout.getChildren().remove(txtTie);
-        layout.getChildren().remove(cbUseSeperateLines);
-        layout.getChildren().remove(seperateLines);
-
+//        layout.getChildren().remove(btnShowBlkPlan);
+//        layout.getChildren().remove(currentFlight);
+//        layout.getChildren().remove(lineFromTxt);
+//        layout.getChildren().remove(lineToTxt);
+//        layout.getChildren().remove(applyBtn);
+//        layout.getChildren().remove(arrow);
+//        layout.getChildren().remove(applied);
+//        layout.getChildren().remove(showFlightPlan);
+//        layout.getChildren().remove(buttonExport);
+//        layout.getChildren().remove(lineTieFromTxt);
+//        layout.getChildren().remove(lineTieToTxt);
+//        layout.getChildren().remove(txtTie);
+//        layout.getChildren().remove(cbUseSeperateLines);
+//        layout.getChildren().remove(seperateLines);
+        layout.getChildren().remove(listFlights);
+        layout.getChildren().remove(listBlocks);
+        layout.getChildren().remove(listSurveys);
+        layout.getChildren().remove(createFlight);
+        layout.getChildren().remove(createBlock);
+        layout.getChildren().remove(createSurvey);
+        layout.getChildren().remove(editFlight);
+        layout.getChildren().remove(editBlock);
+        layout.getChildren().remove(editSurvey);
+        layout.getChildren().remove(showFlight);
+        layout.getChildren().remove(showBlock);
+        layout.getChildren().remove(showSurvey);
     }
 
+    public static ObservableList getCoordinates(){return items;}
 }

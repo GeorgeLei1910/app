@@ -233,7 +233,7 @@ public class LoggingData {
                 downloadFiles.setDisable(false);
                 cancel.setDisable(false);
 
-//                downloadFiles.disableProperty().bind(downloadableFiles.valueProperty().isNull());
+                downloadFiles.disableProperty().bind(downloadableFiles.valueProperty().isNull());
 
                 dialog.initModality(Modality.APPLICATION_MODAL);
                 dialog.initOwner(Controller.getPrimaryStage());

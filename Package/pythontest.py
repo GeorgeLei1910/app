@@ -55,7 +55,7 @@ class FlightPlanning(object):
                 break
 
         self.elevation_type = 0
-        self.dfPolygan = pd.DataFrame(columns=['LON', 'LAT'])
+        self.dfPolygan = pd.DataFrame(columns=['LAT','LON'])
         self.dfPolyganUTM = pd.DataFrame(columns=['UTMX', 'UTMY'])
         self.dirAngle = 0
         self.initPoint = np.array([])
@@ -224,7 +224,7 @@ class FlightPlanning(object):
             f.write('UTM:')
             for index, row in self.dfPolygan.iterrows():
                 self.converter = Proj(proj='utm', zone=self.findUtmZone(float(row['LON'])), ellps='WGS84')
-                self.dfPolyganUTM.loc[len(self.dfPolyganUTM)] = self.converter(row['LON'], row['LAT'])
+                self.dfPolyganUTM.loc[len(self.dfPolyganUTM)] = self.converter(row['LAT'], row['LON'])
                 string = str(self.dfPolyganUTM.iloc[index]['UTMX']) + "," + str(
                     self.dfPolyganUTM.iloc[index]['UTMY']) + ":"
                 f.write(string)

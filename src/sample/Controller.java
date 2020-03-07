@@ -312,7 +312,7 @@ public class Controller {
         File  baseMagFolder = new File(curFlightFolder+"/Data/"+Current_Survey+"/BaseMag" );
         File  flightPlanJobFolder = new File(curFlightFolder+"/Data/"+Current_Survey+"/FlightPlan" );
         File  rawDataFolderSurvey = new File(curFlightFolder+"/Data/"+Current_Survey+"/raw_data" );
-        File  JobPlanFile = new File(curFlightFolder+"/Data/"+Current_Survey+"/FlightPlan/plan_settings.txt" );
+        File  JobPlanFile = new File(curFlightFolder+"/Data/"+Current_Survey+"/FlightPlan/"+ getPrefixToSurvey() +"-plan_settings.txt" );
         roundFolder.mkdirs();
         baseMagFolder.mkdirs();
         flightPlanJobFolder.mkdirs();
@@ -414,6 +414,16 @@ public class Controller {
     public static String getPathToFlight(){
         return "/Data/"+getCurSurvey()+"/Block"+getCurBlock()+"/Flight"+getCurFlight();
     }
+
+    public static void pythonConsole(Process p) throws IOException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
+        String line;
+        while ((line = reader.readLine()) != null) {
+            System.out.println(line);
+        }
+        reader.close();
+    }
+
 
     private static void updateLines(){
 

@@ -19,10 +19,11 @@ import java.nio.file.Path;
 public class Settings {
 
     private static Settings single_instance = null;
-    static private Button buttonBack, buttonSurvey;
+    static private Button buttonBack;
+    static Button buttonSurvey;
     static private Rectangle rectangle = new Rectangle(0, 140, 700, 450);
     static private ComboBox comboBox;
-    static private Button btnSettings;
+    static public Button btnSettings;
     static private FileChooser fileChooser;
     static private Button fileChooseBtn;
     static private Path kmlFilePath;
@@ -36,6 +37,8 @@ public class Settings {
     static private ListView<String> listOfFlights;
 
     ObservableList<String> items = FXCollections.observableArrayList ();
+
+
 
     private Settings(StackPane layout){
         text = new Text();
@@ -99,20 +102,22 @@ public class Settings {
         comboBox.setPrefWidth(134);
         comboBox.setMaxWidth(134);
 
-        fileChooser = new FileChooser();
+
         fileChooseBtn = new Button("....");
+
         fileChooseBtn.setOnAction((event) -> {
+            FileChooser fileChooser = new FileChooser();
             File file = fileChooser.showOpenDialog(Main.getStage());
             if (file != null) {
-
                 kmlFilePath = file.toPath();
                 textKml.setText(kmlFilePath.getFileName().toString());
             }
-
         });
+
         fileChooseBtnElevation = new Button("....");
         fileChooseBtnElevation.setOnAction((event) -> {
-            File file = fileChooser.showOpenDialog(Main.getStage());
+            FileChooser fileChooser2 = new FileChooser();
+            File file = fileChooser2.showOpenDialog(Main.getStage());
             if (file != null) {
                 elevFilePath = file.toPath();
             }
@@ -169,62 +174,46 @@ public class Settings {
 
 
 
-        buttonSurvey.setOnAction(new EventHandler<ActionEvent>(){
-            @Override
-            public void handle(ActionEvent event) {
-                final Stage dialog = new Stage();
+        buttonSurvey.setOnAction(event -> {
+            final Stage dialog = new Stage();
 
-                TextField name = new TextField();
-                name.setMaxWidth(200);
-                name.setPrefWidth(200);
-                name.setTranslateX(0);
-                name.setTranslateY(-10);
+            TextField name = new TextField();
+            name.setMaxWidth(200);
+            name.setPrefWidth(200);
+            name.setTranslateX(0);
+            name.setTranslateY(-10);
 
-                Button ok = new Button("OK");
-                ok.setTranslateX(40);
-                ok.setTranslateY(50);
-                ok.setPrefWidth(60);
-                Button cancel = new Button("Cancel");
-                cancel.setTranslateX(-40);
-                cancel.setTranslateY(50);
+            Button ok = new Button("OK");
+            ok.setTranslateX(40);
+            ok.setTranslateY(50);
+            ok.setPrefWidth(60);
+            Button cancel = new Button("Cancel");
+            cancel.setTranslateX(-40);
+            cancel.setTranslateY(50);
 
 
-                dialog.initModality(Modality.APPLICATION_MODAL);
-                dialog.initOwner(Controller.getPrimaryStage());
-                StackPane popUpLayout =  new StackPane();
-                popUpLayout.setStyle("-fx-background-color: #474747;");
-                Scene popUpScene = new Scene(popUpLayout, 400, 150);
-                dialog.setScene(popUpScene);
-                dialog.setTitle("Name The Survey");
-                dialog.show();
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.initOwner(Controller.getPrimaryStage());
+            StackPane popUpLayout =  new StackPane();
+            popUpLayout.setStyle("-fx-background-color: #474747;");
+            Scene popUpScene = new Scene(popUpLayout, 400, 150);
+            dialog.setScene(popUpScene);
+            dialog.setTitle("Name The Survey");
+            dialog.show();
 
+            popUpLayout.getChildren().add(name);
+            popUpLayout.getChildren().add(ok);
+            popUpLayout.getChildren().add(cancel);
 
-                popUpLayout.getChildren().add(name);
-                popUpLayout.getChildren().add(ok);
-                popUpLayout.getChildren().add(cancel);
+            ok.setOnAction(event1 -> {
+                String nameOfSurvey = name.getText();
+                if(!nameOfSurvey.equals("")) comboBox.setValue(Controller.addSurvey(nameOfSurvey));
+                dialog.close();
+            });
 
-                ok.setOnAction(new EventHandler<ActionEvent>(){
-                    @Override
-                    public void handle(ActionEvent event) {
-                        String nameOfSurvey = name.getText();
-                        if(!nameOfSurvey.equals("")){
-
-                            comboBox.setValue(Controller.addSurvey(nameOfSurvey));
-                        }
-                        dialog.close();
-
-                    }
-                });
-
-                cancel.setOnAction(new EventHandler<ActionEvent>(){
-                    @Override
-                    public void handle(ActionEvent event) {
-
-                        dialog.close();
-
-                    }
-                });
-            }
+            cancel.setOnAction(event1 -> {
+                dialog.close();
+            });
         });
 
 
@@ -367,7 +356,6 @@ public class Settings {
             chbGoogleApi.setTranslateX(-190);
             chbGoogleApi.setTranslateY(100);
 
-
             Button useKMLFile = new Button("Load KML file");
             useKMLFile.setTranslateX(165);
             useKMLFile.setTranslateY(-50);
@@ -432,7 +420,7 @@ public class Settings {
 
                         String segments[] = s.split(":");
                         if(segments.length > 1){
-                        String seg = segments[1];
+                            String seg = segments[1];
                             Integer angle = (Integer.parseInt(seg.trim()) - 90 )* -1;
                             dir.setText(angle.toString());
                         }
@@ -532,93 +520,66 @@ public class Settings {
                         }
                         break;
                     }
-
-
                 }
-            }catch (Exception e)
-            {
+            }catch (Exception e) {
                 System.err.println(e.getMessage()); // handle exception
             }
 
 
-            btnChooseStartTie.setOnAction(new EventHandler<ActionEvent>(){
-                @Override
-                public void handle(ActionEvent event) {
-
-                    CanvasFlightPlan canvasFlightPlan = new CanvasFlightPlan(-2);
-                    canvasFlightPlan.setInitPosition(tieSpaceFieldStartLon, tieSpaceFieldStartLat);
-
-                }
+            btnChooseStartTie.setOnAction(event14 -> {
+                CanvasFlightPlan canvasFlightPlan = new CanvasFlightPlan(-2);
+                canvasFlightPlan.setInitPosition(tieSpaceFieldStartLon, tieSpaceFieldStartLat);
             });
-
-
-            btnCancel.setOnAction(new EventHandler<ActionEvent>(){
-                @Override
-                public void handle(ActionEvent event) {
-                    dialog.close();
-                }
+            btnCancel.setOnAction(event15 -> dialog.close());
+            btnDelete.setOnAction(event16 -> {
+                items.remove(list.getSelectionModel().getSelectedItem());
+                list.setItems(items);
             });
-
-
-            btnDelete.setOnAction(new EventHandler<ActionEvent>(){
-                @Override
-                public void handle(ActionEvent event) {
-                    items.remove(list.getSelectionModel().getSelectedItem());
-                    list.setItems(items);
-                }
-            });
-
-
-            btnOK.setOnAction(new EventHandler<ActionEvent>(){
-                @Override
-                public void handle(ActionEvent event) {
-
-                    try {
-                        PrintWriter out = new PrintWriter(filePath);
-                        out.flush();
-                        System.out.println(filePath.getAbsolutePath());
-                        out.write("Direction:" + (Integer.parseInt(dir.getText().trim()) - 90) * -1+"\r\n");
-                        out.write("Points:");
-                        for(String itm : items){
+            btnOK.setOnAction(event17 -> {
+                try {
+                    PrintWriter out = new PrintWriter(filePath);
+                    out.flush();
+                    System.out.println(filePath.getAbsolutePath());
+                    out.write("Direction:" + (Integer.parseInt(dir.getText().trim()) - 90) * -1+"\r\n");
+                    out.write("Points:");
+                    for(String itm : items){
                         out.write( itm + ":");
-                            System.out.println(itm);
-
-                        }
-                        out.write(   "\r\n");
-                        if(posLonStart.getText().length() > 0 && posLatStart.getText().length() > 0){
-                            out.write("Start:"+posLonStart.getText().trim()+","+ posLatStart.getText().trim() + "\r\n");
-                        }else{
-                            out.write(   "Start:\r\n");
-                        }
-                        out.write("Spacing:"+txtFieldSpacing.getText().trim());
-                        out.write(   "\r\n");
-                        out.write("LineSpacing:"+txtFieldLineSpacing.getText().trim());
-                        out.write(   "\r\n");
-                        out.write("OvershootSurvey:"+fieldOvershoot.getText().trim());
-                        out.write(   "\r\n");
-                        out.write("OvershootBlock:"+fieldOvershootBlock.getText().trim());
-                        out.write(   "\r\n");
-                        out.write("ElevationBuffer:"+elevTxtField.getText().trim());
-                        out.write(   "\r\n");
-                        out.write("Clockwise:"+((chbDir.isSelected()) ? "1" : "-1"));
-                        out.write(   "\r\n");
-                        out.write("Elevation:"+((chbGoogleApi.isSelected()) ? "1" : "0"));
-                        out.write(   "\r\n");
-                        out.write("TieLineSpacing:"+tieSpaceField.getText().trim());
-                        out.write(   "\r\n");
-                        if(tieSpaceFieldStartLat.getText().length() > 0 && tieSpaceFieldStartLon.getText().length() > 0){
-                            out.write("TieStart:"+tieSpaceFieldStartLon.getText()+","+ tieSpaceFieldStartLat.getText() + "\r\n");
-                        }else{
-                            out.write(   "TieStart:\r\n");
-                        }
-                        out.close();
-                    }catch(Exception e){
-
+                        System.out.println(itm);
                     }
-
-                    dialog.close();
+                    out.write(   "\r\n");
+                    if(posLonStart.getText().length() > 0 && posLatStart.getText().length() > 0){
+                        out.write("Start:"+posLonStart.getText().trim()+","+ posLatStart.getText().trim() + "\r\n");
+                    }else{
+                        out.write(   "Start:\r\n");
+                    }
+                    out.write("Spacing:"+txtFieldSpacing.getText().trim());
+                    out.write(   "\r\n");
+                    out.write("LineSpacing:"+txtFieldLineSpacing.getText().trim());
+                    out.write(   "\r\n");
+                    out.write("OvershootSurvey:"+fieldOvershoot.getText().trim());
+                    out.write(   "\r\n");
+                    out.write("OvershootBlock:"+fieldOvershootBlock.getText().trim());
+                    out.write(   "\r\n");
+                    out.write("ElevationBuffer:"+elevTxtField.getText().trim());
+                    out.write(   "\r\n");
+                    out.write("Clockwise:"+((chbDir.isSelected()) ? "1" : "-1"));
+                    out.write(   "\r\n");
+                    out.write("Elevation:"+((chbGoogleApi.isSelected()) ? "1" : "0"));
+                    out.write(   "\r\n");
+                    out.write("TieLineSpacing:"+tieSpaceField.getText().trim());
+                    out.write(   "\r\n");
+                    if(tieSpaceFieldStartLat.getText().length() > 0 && tieSpaceFieldStartLon.getText().length() > 0){
+                        out.write("TieStart:"+tieSpaceFieldStartLon.getText()+","+ tieSpaceFieldStartLat.getText() + "\r\n");
+                    }else{
+                        out.write(   "TieStart:\r\n");
+                    }
+                    out.close();
+                }catch(Exception e){
 
                 }
+
+                dialog.close();
+
             });
 
             btnAddPos.setOnAction(new EventHandler<ActionEvent>(){
@@ -626,52 +587,52 @@ public class Settings {
                 public void handle(ActionEvent event) {
                     if((posLon.getText().matches("^-?[0-9]\\d*(\\.\\d+)?$")) &&
                             posLat.getText().matches("^-?[0-9]\\d*(\\.\\d+)?$")){
-                    items.add("(" +posLon.getText() +","+ posLat.getText() +")");
+                        items.add("(" +posLon.getText() +","+ posLat.getText() +")");
                     }
 
                 }
             });
 
-            btnShowFlight.setOnAction(new EventHandler<ActionEvent>(){
-                @Override
-                public void handle(ActionEvent event) {
-                    CanvasFlightPlan canvasFlightPlan = new CanvasFlightPlan(-2);
-                    canvasFlightPlan.setInitPosition(posLonStart, posLatStart);
-                    }
+            btnShowFlight.setOnAction(event13 -> {
+                CanvasFlightPlan canvasFlightPlan = new CanvasFlightPlan(-2);
+                canvasFlightPlan.setInitPosition(posLonStart, posLatStart);
             });
 
 
-            useKMLFile.setOnAction(new EventHandler<ActionEvent>(){
-                @Override
-                public void handle(ActionEvent event) {
-                    if(kmlFilePath != null){
-                        System.out.println("ergerv");
-                        try{
-                            File file = new File(kmlFilePath.toString());
-                            String s;
-                            InputStream ins = new FileInputStream(file);
-                            Reader r = new InputStreamReader(ins, "UTF-8"); // leave charset out for default
-                            BufferedReader br = new BufferedReader(r);
+            useKMLFile.setOnAction(event12 -> {
+                FileChooser fileChooser = new FileChooser();
+                File file = fileChooser.showOpenDialog(Main.getStage());
+                if (file != null) {
+                    kmlFilePath = file.toPath();
+                    textKml.setText(kmlFilePath.getFileName().toString());
+                }
+                if(kmlFilePath != null){
+                    System.out.println("ergerv");
+                    try{
+                        file = new File(kmlFilePath.toString());
+                        String s;
+                        InputStream ins = new FileInputStream(file);
+                        Reader r = new InputStreamReader(ins, "UTF-8"); // leave charset out for default
+                        BufferedReader br = new BufferedReader(r);
 
-                            while ((s = br.readLine()) != null) {
-                                s = s.trim();
-                                if(s.substring(0,4).matches("^-?[0-9]\\d*(\\.\\d+)?$")){
-                                    list.getItems().clear();
-                                    items.clear();
-                                    String[] cords = s.split(",0");
-                                    for(String str : cords){
+                        while ((s = br.readLine()) != null) {
+                            s = s.trim();
+                            if(s.substring(0,4).matches("^-?[0-9]\\d*(\\.\\d+)?$")){
+                                list.getItems().clear();
+                                items.clear();
+                                String[] cords = s.split(",0");
+                                for(String str : cords){
 
-                                        String[] segs = str.split(",");
-                                        //System.out.println(segs[1].trim()+" "+ segs[0].trim()+ " 0");
-                                        posLon.setText(segs[0].trim());
-                                        posLat.setText(segs[1].trim());
-                                        btnAddPos.fire();
-                                    }
-                                    break;
+                                    String[] segs = str.split(",");
+                                    //System.out.println(segs[1].trim()+" "+ segs[0].trim()+ " 0");
+                                    posLon.setText(segs[0].trim());
+                                    posLat.setText(segs[1].trim());
+                                    btnAddPos.fire();
                                 }
+                                break;
                             }
-                            }catch (IOException e){
                         }
+                    }catch (IOException e){
                     }
                 }
             });
@@ -714,7 +675,6 @@ public class Settings {
             popUplayout.getChildren().add(tieSpaceFieldStartLon);
             popUplayout.getChildren().add(btnChooseStartTie);
 
-
             posLat.getParent().requestFocus();
             posLon.getParent().requestFocus();
             dialog.setScene(dialogScene);
@@ -731,18 +691,10 @@ public class Settings {
                         "/FlightPlan" + Controller.getPrefixToSurvey() + "-plan_settings.txt";
                 System.out.println(command);
                 try {
-
                     Process p = Runtime.getRuntime().exec(command);
+                    Controller.pythonConsole(p);
 //                    p.waitFor();
                     //Python console log
-                    BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(p.getOutputStream()));
-                    BufferedReader reader = new BufferedReader(
-                            new InputStreamReader(p.getInputStream()));
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        System.out.println(line);
-                    }
-                    reader.close();
                 }catch(Exception e){
 
                 }
@@ -754,9 +706,7 @@ public class Settings {
         showPlanOfTieFlight.setOnAction(new EventHandler<ActionEvent>(){
             @Override
             public void handle(ActionEvent event) {
-
                 CanvasFlightPlan canvasFlightPlan1 = new CanvasFlightPlan(2);
-
             }
         });
 

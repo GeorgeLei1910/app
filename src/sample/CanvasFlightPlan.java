@@ -1,5 +1,6 @@
 package sample;
 
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
@@ -79,7 +80,15 @@ public class CanvasFlightPlan  {
         }
     }
 
-
+    /*
+        Canvas Flight Types:
+        -2 = Survey Settings select Start
+        -1 = Show Flight Plan
+        0 = Show Block Plan
+        1 = Show Survey Plan (Flight Lines only)
+        2 = Show Survey Plan (Tie Lines only)
+        3 = Show Survey Plan (Flight and Tie Lines)
+     */
 
     public  CanvasFlightPlan(int type) {
 
@@ -209,9 +218,7 @@ public class CanvasFlightPlan  {
                 partitionStage.setHeight(320);
                 layout.getChildren().remove(btnPartition);
                 partitionSettings(layout, scene);
-
             });
-
         }
         System.out.println("After MinMax");
 
@@ -233,63 +240,77 @@ public class CanvasFlightPlan  {
         Position maxPosition = new Position(0,0);
         System.out.println("showWayPoint Setup Complete");
         try {
-            String s;
-            InputStream ins = new FileInputStream(planSettings);
-            Reader r = new InputStreamReader(ins, "UTF-8"); // leave charset out for default
-            BufferedReader br = new BufferedReader(r);
 
-            while ((s = br.readLine()) != null) {
-                String start = "UTM:";
-                if(type != 1 && type != 2 && type != 3)
-                     start = "Points";
-                if(s.startsWith(start)) {
-                    String segments[] = s.split(":");
-                    System.out.println("Number of segments = " + segments.length);
-                    for(int i = 1; i < segments.length; i++){
-                        String posX = segments[i].split(",")[0];
-                        String posY = segments[i].split(",")[1];
-                        System.out.println(posX + "   " + posY);
-                        if(type != 1 && type != 2 && type != 3){
-                            posX = posX.substring(1, posX.length());
-                            posY = posY.substring(0, posY.length()-1);
-                        }
-                        System.out.println("-------> "+posX +","+ posY);
-                        double posx = Double.parseDouble(posX);
-                        double posy = Double.parseDouble(posY);
-                        if(minPosition.getX() == 0 & minPosition.getY() == 0){
-                            minPosition.setX(posx);
-                            minPosition.setY(posy);
-                        }
-                        if(maxPosition.getX() == 0 & maxPosition.getY() == 0){
-                            maxPosition.setX(posx);
-                            maxPosition.setY(posy);
-                        }
-                        if(minPosition.getX() > posx)
-                            minPosition.setX(posx);
-                        if(minPosition.getY() > posy)
-                            minPosition.setY(posy);
-                        if(maxPosition.getX() < posx)
-                            maxPosition.setX(posx);
-                        if(maxPosition.getY() < posy)
-                            maxPosition.setY(posy);
 
-                        posList.add(new Position(posx, posy));
+            ObservableList<String> coords = FlightPlanning.getCoordinates();
+            String start = "UTM:";
+            if(type != 1 && type != 2 && type != 3)
+                start = "Points";
+            String segments[] = new String[0];
+            String s = "";
+
+            if(type != -2){
+                InputStream ins = new FileInputStream(planSettings);
+                Reader r = new InputStreamReader(ins, "UTF-8"); // leave charset out for default
+                BufferedReader br = new BufferedReader(r);
+                while ((s = br.readLine()) != null) {
+                    if (s.startsWith(start)){
+                        segments = new String[s.split(":").length];
+                        segments = s.split(":");
+                        break;
                     }
-                    this.minPosition = minPosition;
-                    this.maxPosition = maxPosition;
-                    convertPosition(posList, minPosition, maxPosition);
-                    break;
+                }
+            }else{
+                segments = new String[coords.size()];
+                for(int i = 0; i < segments.length; i++){
+                    segments[i] = coords.get(i);
                 }
             }
 
-                }catch (IOException e){
+            System.out.println("Number of segments = " + segments.length);
+            for(int i = 0; i < segments.length; i++){
+                String posX = segments[i].split(",")[1];
+                String posY = segments[i].split(",")[0];
+                System.out.println(posX + "   " + posY);
+                //Dunno what this is for but ok.
+//                if(type != 1 && type != 2 && type != 3){
+//                    posX = posX.substring(1, posX.length());
+//                    posY = posY.substring(0, posY.length()-1);
+//                }
+                System.out.println("-------> "+posX +","+ posY);
+                double posx = Double.parseDouble(posX);
+                double posy = Double.parseDouble(posY);
+                if(minPosition.getX() == 0 & minPosition.getY() == 0){
+                    minPosition.setX(posx);
+                    minPosition.setY(posy);
+                }
+                if(maxPosition.getX() == 0 & maxPosition.getY() == 0){
+                    maxPosition.setX(posx);
+                    maxPosition.setY(posy);
+                }
+                if(minPosition.getX() > posx)
+                    minPosition.setX(posx);
+                if(minPosition.getY() > posy)
+                    minPosition.setY(posy);
+                if(maxPosition.getX() < posx)
+                    maxPosition.setX(posx);
+                if(maxPosition.getY() < posy)
+                    maxPosition.setY(posy);
+                posList.add(new Position(posx, posy));
+            }
+            this.minPosition = minPosition;
+            this.maxPosition = maxPosition;
+            convertPosition(posList, minPosition, maxPosition);
+
+        }catch (IOException e){
 
         }
 
+        //Y then X because Lat is Y and Lon is X
         for(Position p : polygon){
             graphics_context.setFill(Color.BLUE);
             System.out.println(p.getX()+","+p.getY());
-            graphics_context.fillOval( p.getX(),p.getY(), 10, 10 );
+            graphics_context.fillOval( p.getX() ,p.getY(), 10, 10 );
         }
         int size = polygon.size();
         for(int i = 0; i < polygon.size(); i++) {
@@ -322,7 +343,6 @@ public class CanvasFlightPlan  {
         double minY = minPosition.getY();
         DecimalFormat numberFormat = new DecimalFormat("#.0");
         try {
-
             String s;
             InputStream ins = new FileInputStream(wayPoints);
             Reader r = new InputStreamReader(ins, "UTF-8"); // leave charset out for default
@@ -340,8 +360,6 @@ public class CanvasFlightPlan  {
                 gc.fillOval( x, y, 2, 2 );
                 x_init = x;
                 y_init = y;
-
-
             }
             while ((s = br.readLine()) != null){
                 String segments[] = s.split(" ");
@@ -445,8 +463,6 @@ public class CanvasFlightPlan  {
             createBlock_mode_off.setDisable(false);
 
             scene.addEventHandler(javafx.scene.input.MouseEvent.MOUSE_CLICKED, eventHandlerScene);
-
-
         });
 
 
@@ -579,8 +595,8 @@ public class CanvasFlightPlan  {
                          double yP = (b - yPos -offsetY)*v/(b-2*offsetY)+ minPosition.getY();
 
                         f1.setText(Double.toString(xP));
-                         f2.setText(Double.toString(yP));
-
+                        f2.setText(Double.toString(yP));
+                        System.out.println("Current Starting Point: " + yP + "     " + xP);
 
                     }catch(NullPointerException nullE){
 
@@ -588,9 +604,6 @@ public class CanvasFlightPlan  {
                 };
 
         this.SCENE.addEventHandler(javafx.scene.input.MouseEvent.MOUSE_CLICKED, eventHandlerScene);
-
-
-
     }
 
 

@@ -69,4 +69,12 @@ public class AllAlerts {
         alert.setContentText("No files were downloaded.\nEither Beaglebone is disconnected, or files were not found");
         alert.showAndWait();
     }
+
+    public static void noSurveyBoundary(){
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Not Enough Points");
+        alert.setHeaderText("You don't have enough coordinates in your survey");
+        alert.setContentText("Add at least Three points in the \"Position\" section and try again");
+        alert.showAndWait();
+    }
 }

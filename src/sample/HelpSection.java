@@ -21,13 +21,10 @@ public class HelpSection {
         buttonSettings.setTranslateX(-330);
         buttonSettings.setTranslateY(-260);
         this.layout = layout;
-        buttonSettings.setOnAction(new EventHandler<ActionEvent>(){
-            @Override
-            public void handle(ActionEvent event) {
-                removeElems();
-                Settings settings = Settings.getInstance(layout);
-                settings.showElements(layout);
-            }
+        buttonSettings.setOnAction(event -> {
+            removeElems();
+            Settings settings = Settings.getInstance(layout);
+            settings.showElements(layout);
         });
     }
 
