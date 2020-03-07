@@ -255,6 +255,7 @@ public class CanvasFlightPlan  {
                 BufferedReader br = new BufferedReader(r);
                 while ((s = br.readLine()) != null) {
                     if (s.startsWith(start)){
+                        s = s.substring(4);
                         segments = new String[s.split(":").length];
                         segments = s.split(":");
                         break;
@@ -336,7 +337,7 @@ public class CanvasFlightPlan  {
     }
 
 
-    private void drawWaypoints(GraphicsContext gc,Position minPosition, Position maxPosition ){
+    private void drawWaypoints(GraphicsContext gc, Position minPosition, Position maxPosition ){
         double h = maxPosition.getX() - minPosition.getX();
         double v = maxPosition.getY() - minPosition.getY();
         double minX = minPosition.getX();
@@ -354,9 +355,9 @@ public class CanvasFlightPlan  {
             if((s = br.readLine()) != null){
                 String segments[] = s.split(" ");
                 gc.setFill(Color.BLACK);
-                double x = ((a-2*offsetX)/h) * (Double.parseDouble(segments[0])-minX)+offsetX;
-                double y = b-(((b-2*offsetY)/v)*(Double.parseDouble(segments[1])-minY)+offsetY);
-                prevPos = new Position(Double.parseDouble(segments[0]), Double.parseDouble(segments[1]));
+                double x = ((a-2*offsetX)/h) * (Double.parseDouble(segments[1])-minX)+offsetX;
+                double y = b-(((b-2*offsetY)/v)*(Double.parseDouble(segments[0])-minY)+offsetY);
+                prevPos = new Position(Double.parseDouble(segments[1]), Double.parseDouble(segments[0]));
                 gc.fillOval( x, y, 2, 2 );
                 x_init = x;
                 y_init = y;
@@ -364,8 +365,8 @@ public class CanvasFlightPlan  {
             while ((s = br.readLine()) != null){
                 String segments[] = s.split(" ");
                 gc.setFill(Color.BLACK);
-                double posX1 = Double.parseDouble(segments[0]);
-                double posY2 = Double.parseDouble(segments[1]);
+                double posX1 = Double.parseDouble(segments[1]);
+                double posY2 = Double.parseDouble(segments[0]);
                 newPos = new Position(posX1, posY2);
                 totalDistance += newPos.distance(prevPos);
                 prevPos = newPos;

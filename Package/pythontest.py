@@ -207,6 +207,7 @@ class FlightPlanning(object):
                 self.tie_init_point = np.append(self.tie_init_point, self.coords((segs[1])[0:len(segs[1]) - 1]))
                 self.tie_init_point = [float(val) for val in self.tie_init_point]
                 self.converter = Proj(proj='utm', zone=self.findUtmZone(float(self.tie_init_point[0])), ellps='WGS84')
+                print(self.tie_init_point[0])
                 tup = self.converter(self.tie_init_point[0], self.tie_init_point[1])
                 self.tie_init_point = np.array([tup[0], tup[1]])
                 self.tie_line = 1 and self.tie_line1
@@ -224,7 +225,8 @@ class FlightPlanning(object):
             f.write('UTM:')
             for index, row in self.dfPolygan.iterrows():
                 self.converter = Proj(proj='utm', zone=self.findUtmZone(float(row['LON'])), ellps='WGS84')
-                self.dfPolyganUTM.loc[len(self.dfPolyganUTM)] = self.converter(row['LAT'], row['LON'])
+                print(row['LON'])
+                self.dfPolyganUTM.loc[len(self.dfPolyganUTM)] = self.converter(row['LON'], row['LAT'])
                 string = str(self.dfPolyganUTM.iloc[index]['UTMX']) + "," + str(
                     self.dfPolyganUTM.iloc[index]['UTMY']) + ":"
                 f.write(string)
