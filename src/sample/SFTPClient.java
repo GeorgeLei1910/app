@@ -2,6 +2,7 @@ package sample;
 
 import com.jcraft.jsch.*;
 
+import java.io.FileNotFoundException;
 import java.lang.reflect.Array;
 import java.net.ConnectException;
 import java.util.ArrayList;
@@ -11,8 +12,6 @@ import java.util.Vector;
 public class SFTPClient {
 
     private Session session = null;
-
-    private String privateKeyPath;
 
     public void connect(String text) throws JSchException, ConnectException {
         JSch jsch = new JSch();

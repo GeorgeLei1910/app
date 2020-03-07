@@ -26,9 +26,7 @@ public class Settings {
     static private FileChooser fileChooser;
     static private Button fileChooseBtn;
     static private Path kmlFilePath;
-    static private Text text;
-    static private Text textKml;
-    static private Text textElevation;
+    static private Text textKml, textElevation, text;
     static private Button showPlanOfTieAndFlight, fileChooseBtnElevation, showPlanOfTieFlight, showPlanOfSurvey;
     static private Path elevFilePath;
     static private Button Help;
@@ -150,16 +148,13 @@ public class Settings {
         });
 
 
-        comboBox.setOnAction(new EventHandler<ActionEvent>(){
-            @Override
-            public void handle(ActionEvent event) {
+        comboBox.setOnAction(event -> {
 
-                String str = comboBox.getValue().toString();
-                //str = str.substring(6, str.length());
-                Controller.setCurSurveyFolder(str);
-                System.out.println(Controller.getCurSurvey());
+            String str = comboBox.getValue().toString();
+            //str = str.substring(6, str.length());
+            Controller.setCurSurveyFolder(str);
+            System.out.println(Controller.getCurSurvey());
 
-            }
         });
 
         Help.setOnAction(new EventHandler<ActionEvent>(){
@@ -246,7 +241,6 @@ public class Settings {
         listOfBlocks.setItems(Controller.getBlocks());
         listOfBlocks.setTranslateX(100);
         listOfBlocks.setTranslateY(50);
-
 
         listOfFlights = new ListView<>();
         listOfFlights.setMaxHeight(200);
@@ -834,11 +828,4 @@ public class Settings {
         layout.getChildren().remove(listOfFlights);*/
 
     }
-
-
-
-
-
-
-
 }

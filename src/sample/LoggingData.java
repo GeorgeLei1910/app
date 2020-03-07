@@ -118,9 +118,10 @@ public class LoggingData {
                     getFilesFromServer();
                     shouldLoad = false;
                 }
-                if(allfolders.size() == 0){
+                if(listOfFiles.size() == 0){
                     buttonLatest.setDisable(true);
                     buttonDownload.setDisable(true);
+                    AllAlerts.noFilesOnBBAlert();
                     latestTime.setText("No Files in Record");
                 }
 //                buttonConnect.setDisable(true);
@@ -182,21 +183,23 @@ public class LoggingData {
                     write = AllAlerts.overwriteWarning(directory);
                 }
                 if(write != 0) {
-                    for (String fn : filenames) {
-                        String orig = "/home/debian/stratus/build/datafiles/" + listOfFiles.get(0) + "/" + listOfFiles.get(0) + "-" + fn;
-                        String dest = Controller.getCurDataFolder() + "\\" + listOfFiles.get(0).replace(":", "") + "-" + fn;
-
-                        System.out.println("Copying from: " + orig);
-                        System.out.println("Copying to: " + dest);
-                        try {
-                            download.download(orig, dest);
-                        } catch (JSchException e) {
-                            e.printStackTrace();
-                        } catch (SftpException e) {
-                            e.printStackTrace();
-                        } finally {
-                            System.out.println("Saved");
+                    String orig = "/home/debian/stratus/build/datafiles/" + listOfFiles.get(0);
+                    String dest = Controller.getCurDataFolder();
+                    try {
+                        for (String fn : filenames) {
+                            System.out.println("Copying from: " + orig + "/" + listOfFiles.get(0) + "-" + fn);
+                            System.out.println("Copying to: " + dest + "/" + listOfFiles.get(0) + "-" + fn);
+                            download.download(orig + "/" + listOfFiles.get(0) + "-" + fn, dest + "/" + listOfFiles.get(0).replace(":", "") + "-" + fn);
                         }
+                    } catch (JSchException e) {
+                        e.printStackTrace();
+                    } catch (SftpException e) {
+                        e.printStackTrace();
+                    }
+                    if(directory.length() > 0){
+                        AllAlerts.downloadSuccessful(orig, dest);
+                    }else{
+                        AllAlerts.downloadFailed(orig, dest);
                     }
                 }
             }else{
@@ -267,8 +270,11 @@ public class LoggingData {
                                 e.printStackTrace();
                             } catch (SftpException e) {
                                 e.printStackTrace();
-                            } finally {
-                                System.out.println("Saved");
+                            }
+                            if(directory.length() > 0){
+                                AllAlerts.downloadSuccessful(orig, dest);
+                            }else{
+                                AllAlerts.downloadFailed(orig, dest);
                             }
                         }
                     }
@@ -277,7 +283,6 @@ public class LoggingData {
             }else{
                 AllAlerts.flightNotChosenAlert();
             }
-
         });
 
 

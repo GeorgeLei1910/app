@@ -39,6 +39,20 @@ class FlightPlanning(object):
         self.surveyName = ""
         self.blockName = ""
         self.flightName = ""
+        ss = self.filepath[self.filepath.index("Data"):]
+        ss = ss.split('/')
+        print(ss)
+        for x in ss:
+            if("Survey" in x):
+                self.surveyName = x[7:]
+                print(self.surveyName)
+            elif("Block" in x):
+                self.blockName = x[5:]
+                print(self.blockName)
+            elif("Flight" in x):
+                self.flightName = x[6:]
+                print(self.flightName)
+                break
 
         self.elevation_type = 0
         self.dfPolygan = pd.DataFrame(columns=['LON', 'LAT'])
@@ -266,25 +280,23 @@ class FlightPlanning(object):
         folderBlock = os.path.dirname(folderBlock)
         folderBlock = os.path.dirname(folderBlock)
         #Get the initial of the file
-        print(folderBlock)
-        ss = folderBlock.split('/')
-        print(ss)
-
+        prefixblock = "/S" + self.surveyName + "-B" + self.blockName
+        prefixflight = prefixblock + "-F" + self.flightName
         # Files in flight_plan
-        fileFlightWaypointsLL = folderBlock + "/flight_plan/" +"WayPointsblocksLL.txt"
-        fileFlightWaypoints = folderBlock + "/flight_plan/waypointsDataBlock.txt"
-        fileFlightWaypointsTieLinesLL = folderBlock + "/flight_plan/WayPointsblocksTiesLL.txt"
-        fileFlightWaypointsTieLines = folderBlock + "/flight_plan/waypointsDataBlockTieLines.txt"
+        fileFlightWaypointsLL = folderBlock + "/flight_plan" + prefixblock + "-WayPointsblocksLL.txt"
+        fileFlightWaypoints = folderBlock + "/flight_plan" + prefixblock + "-waypointsDataBlock.txt"
+        fileFlightWaypointsTieLinesLL = folderBlock + "/flight_plan" + prefixblock + "-WayPointsblocksTiesLL.txt"
+        fileFlightWaypointsTieLines = folderBlock + "/flight_plan" + prefixblock + "-waypointsDataBlockTieLines.txt"
 
         # Files in flight folder
-        filePointsFlights = os.path.dirname(self.filepath) + "/waypointsDataFlight.txt"
-        filePointsFlightsLL = os.path.dirname(self.filepath) + "/waypointsDataFlightLL.txt"
+        filePointsFlights = os.path.dirname(self.filepath) + prefixflight + "-waypointsDataFlight.txt"
+        filePointsFlightsLL = os.path.dirname(self.filepath) + prefixflight + "-waypointsDataFlightLL.txt"
         dfWayPointsLL = pd.read_csv(fileFlightWaypointsLL, sep=" ", header=None)
         dfWayPointsLL.columns = ["LON", "LAT", "elevation", "resolution", "index", "line"]
         dfWayPoints = pd.read_csv(fileFlightWaypoints, sep=" ", header=None)
         dfWayPoints.columns = ["utmX", "utmY", "elevation", "line", "index", "angle", "Block"]
 
-        # Reads through and records the values in flightplan.txt
+        # Reads through and records the values in flightplan.txt in the Flight Folder
         file = open(self.filepath, "r+")
         line = file.readline()
         segs = []
@@ -385,7 +397,7 @@ class FlightPlanning(object):
         dfTemp.loc[:, 'index'] = np.arange(len(dfTemp))
         np.savetxt(filePointsFlightsLL, dfTempLL.values, fmt='%1.10f')
         np.savetxt(filePointsFlights, dfTemp.values, fmt='%1.10f')
-        export_data(filePointsFlightsLL)
+        export_data(filePointsFlightsLL, prefixflight)
 
     # Makes grid when "Create and Show Block" is pressed
     def makeGrid(self, type):
@@ -491,7 +503,8 @@ class FlightPlanning(object):
                 return True
         return False
 
-    def UTMtoLL(self, blockfilepath, type):
+    def UTMtoLL(self, blockfilepath, type, prefix):
+        print(blockfilepath)
         dfWayPointsblocks = pd.read_csv(blockfilepath, sep=" ", header=None)
         dfWayPointsblocks.columns = ["utmX", "utmY", "elevation", "line", "index", "angle", "block"]
         dfWayPointsblocksLL = pd.DataFrame(columns=["LON", "LAT", "elevation", "resolution", "index", "line"])
@@ -502,10 +515,11 @@ class FlightPlanning(object):
             dfWayPointsblocksLL.loc[len(dfWayPointsblocksLL) - 1] = [lon, lat, elev + self.elevation_buffer, resol,
                                                                      row["index"], row["line"]]
 
+
         if (type == 1):
-            file = os.path.dirname(blockfilepath) + "/WayPointsblocksLL.txt"
+            file = os.path.dirname(blockfilepath) + prefix + "-WayPointsblocksLL.txt"
         else:
-            file = os.path.dirname(blockfilepath) + "/WayPointsblocksTiesLL.txt"
+            file = os.path.dirname(blockfilepath) + prefix + "-WayPointsblocksTiesLL.txt"
         np.savetxt(file, dfWayPointsblocksLL.values, fmt='%1.7f')
 
     def find_intersection(self, exterior, x, y, dir):
@@ -566,29 +580,25 @@ class FlightPlanning(object):
 
         return waypoints
 
-    def createBlocks(self, type):
+    def createBlocks(self, type, block):
+
+        # Type 1 = Flight Lines, Type 2 = Tie lines
         dataFilename = ""
         dfListOfBlock = pd.DataFrame(columns=['Name', 'Exterior'])
         surveyPlanFolder = os.path.dirname(self.filepath)
         surveyFolder = os.path.dirname(surveyPlanFolder)
         # print("surveyPlanFolder", surveyFolder)
-        ss = self.filepath.split('/')
-        print(ss)
-        for x in ss:
-            if("Survey" in x):
-                self.surveyName = x[7:]
-                print(self.surveyName)
-            if("Block" in x):
-                self.blockName = x[5:]
-                print(self.blockName)
-
+        self.blockName = block
         prefix = "/S" + self.surveyName + "-B" + self.blockName
+        print(prefix)
         for name in os.listdir(surveyFolder):
             if name.startswith("Block") and self.containsFolder(surveyFolder, name):
                 exterior = []
                 try:
-                    filePoints = open(surveyFolder + "/" + name + "/flight_plan" + prefix +"flightPalnBlock.txt", "r+")
+                    print(surveyFolder + "/" + name + "/flight_plan" + prefix +"-flightPalnBlock.txt", "r+")
+                    filePoints = open(surveyFolder + "/" + name + "/flight_plan" + prefix +"-flightPalnBlock.txt", "r+")
                     line = filePoints.readline()
+                    print(line)
                     if (line.startswith('Points:')):
                         segs = line.split(":")
                         print(dfListOfBlock)
@@ -603,12 +613,13 @@ class FlightPlanning(object):
         print(dfListOfBlock)
         if (type == 1):
             dfWayPoints = pd.read_csv(surveyPlanFolder + "/S" + self.surveyName + "-waypointsData.txt", sep=" ", header=None)
-            dataFilename = "waypointsDataBlock.txt"
+            dataFilename = prefix + "-waypointsDataBlock.txt"
             using_angle = self.dirAngle
         else:
-            dfWayPoints = pd.read_csv(surveyPlanFolder + "/S" + self.surveyName +  "/waypointsDataTieLine.txt", sep=" ", header=None)
-            dataFilename = "waypointsDataBlockTieLines.txt"
+            dfWayPoints = pd.read_csv(surveyPlanFolder + "/S" + self.surveyName + "-waypointsDataTieLine.txt", sep=" ", header=None)
+            dataFilename = prefix + "-waypointsDataBlockTieLines.txt"
             using_angle = self.dirAngle + 90
+        #
         dfWayPoints.columns = ["utmX", "utmY", "elevation", "line", "index", "angle"]
         dfWayPoints['Block'] = np.ones(len(dfWayPoints["utmX"])) * -1
         # print(dfListOfBlock[dfListOfBlock['Name'] == "Flight1"]['Exterior'])
@@ -625,9 +636,11 @@ class FlightPlanning(object):
         # print(dfWayPoints)
         # file = os.path.dirname(self.filepath) + "/waypointsData2.txt"
         # np.savetxt(file, dfWayPoints.values, fmt='%1.10f')
+
         for indexBlocks, rowBlocks in dfListOfBlock.iterrows():
             print("==========Block=========>>", indexBlocks + 1)
-            filePointsBlock = surveyFolder + '/' + rowBlocks['Name'] + "/flight_plan/" + dataFilename
+            filePointsBlock = surveyFolder + '/' + rowBlocks['Name'] + "/flight_plan" + dataFilename
+            print(filePointsBlock)
             df = dfWayPoints[dfWayPoints['Block'] == float(rowBlocks['Name'][5:6])]
             if (len(df) == 0):
                 continue
@@ -685,7 +698,9 @@ class FlightPlanning(object):
                 df = pd.concat([dfTemp, dfTempRest])
                 df = df.reset_index(drop=True)
                 df.loc[:, 'index'] = np.arange(len(df))
+            # TODO: Exception here when running FLightPlanBlocks going thru Tie Lines.
             x = df.loc[len(df) - 1]["utmX"]
+            # End
             y = df.loc[len(df) - 1]["utmY"]
             list_extra = self.make_extra_waypoints(rowBlocks['Exterior'], x, y, angle + 180)
             for nums1 in list_extra:
@@ -696,7 +711,7 @@ class FlightPlanning(object):
                 df.loc[len(df)] = [x, y, 0, df['line'].max(), len(df), angle + 180, indexBlocks + 1]
 
             np.savetxt(filePointsBlock, df.values, fmt='%1.10f')
-            self.UTMtoLL(filePointsBlock, type)
+            self.UTMtoLL(filePointsBlock, type, prefix)
 
 
 # Class for Quality Check
@@ -1009,9 +1024,9 @@ def process_data(filename):
     pd.DataFrame(FINAL_RESULT).to_csv(filepatOrig + "/data_from_UAV.csv")
 
 
-def export_data(filename):
+def export_data(filename, prefixflight):
     Folder = os.path.dirname(filename)
-    file_save = open(Folder + "/waypoints.txt", "w+")
+    file_save = open(Folder + prefixflight + "-waypoints.txt", "w+")
     data = pd.read_csv(filename, sep=" ", header=None)
     data.columns = ["LON", "LAT", "elevation", "resolution", "index", "line"]
     data["index"] = data["index"] + 1
@@ -1045,10 +1060,13 @@ if __name__ == "__main__":
                         help='graph type to graph')
     parser.add_argument('-i', '--proc', type=str, default='0',
                         help='graph type to graph')
+    parser.add_argument('-b', '--block', type=str, default='0',
+                        help='graph type to graph')
 
     io_args = parser.parse_args()
     arg1 = io_args.model
     filename = io_args.flight
+    block = io_args.block
 
     proc = int(io_args.proc)
     if (int(io_args.range1) and int(io_args.range2)):
@@ -1112,9 +1130,9 @@ if __name__ == "__main__":
     if arg1 == "FlightPlanBlocks":
         flightPlanning = FlightPlanning(filename)
         flightPlanning.updateParams()
-        flightPlanning.createBlocks(1)
+        flightPlanning.createBlocks(1, block)
         if (flightPlanning.tie_line == 1):
-            flightPlanning.createBlocks(2)
+            flightPlanning.createBlocks(2, block)
     if arg1 == "CreateFlight":
         flightPlanning = FlightPlanning(filename)
         flightPlanning.creatFlight()

@@ -15,18 +15,12 @@ public class Controller {
     private static LocalDate date = LocalDate.now(); // Create a date object
     private static String curFlightFolder = System.getProperty("user.dir");
     static private HashMap<String , HashMap<String, ArrayList<String>>> mapOfFiles = new HashMap<>();
-    //static private ArrayList<String> flightList = new ArrayList<>();
-    //static private ArrayList<String> blockList = new ArrayList<>();
-    //static private ArrayList<String> surveyList = new ArrayList<>();
-    static private ObservableList<String> blocks;
-    static private ObservableList<String> flights;
-    static private ObservableList<String> surveys;
+    static private ObservableList<String> flights, surveys, blocks;
     private static File workingFolder = new File(curFlightFolder);
     private static Path dirPackagePath = Paths.get(curFlightFolder + "/Package");
     private static Path fileFlightTracker = Paths.get(curFlightFolder + "/Package" + "/Flights.txt");
-    private static int Current_Block = 0;
     private static String Current_Survey = "";
-    private static int Current_Flight = 0;
+    private static int Current_Flight = 0, Current_Block = 0;
     private static int [] Current_Lines = new int[] {0, 0};
     private static Stage primaryStage;
     private static String Curr_BlockName;
@@ -40,13 +34,15 @@ public class Controller {
         flights = FXCollections.observableArrayList();
         blocks = FXCollections.observableArrayList();
         surveys = FXCollections.observableArrayList();
-        try{String s;
+        try{
+        String s;
         InputStream ins = new FileInputStream(fileFlightTracker.toString());
         Reader r = new InputStreamReader(ins, "UTF-8"); // leave charset out for default
         BufferedReader br = new BufferedReader(r);
             String blockContained = "";
             String surveyContained = "";
-        while ((s = br.readLine()) != null) {
+            s = br.readLine();
+        do{
             if(s.startsWith("Survey")){
                 HashMap<String, ArrayList<String>> Blocks = new HashMap<>();
                 mapOfFiles.put(s, Blocks);
@@ -60,12 +56,10 @@ public class Controller {
                 blockContained = s;
 
             }else {
-                System.out.println("--------"+blockContained);
-
+                System.out.println("--------" + blockContained + "-" + s);
                 mapOfFiles.get(surveyContained).get(blockContained).add(s);
             }
-
-        }
+        }while ((s = br.readLine()) != null);
         if(!mapOfFiles.isEmpty()){
             //System.out.println("sdfsefwfw");
             setCurSurveyFolder(surveyContained);
@@ -73,21 +67,17 @@ public class Controller {
         }
         }catch (Exception e)
         {
+            e.printStackTrace();
             System.err.println(e.getMessage()); // handle exception
         }
         System.out.println(mapOfFiles);
         setUpPackage();
 
-
-
     }
 
-    public static Controller getInstance(StackPane layout)
-    {
+    public static Controller getInstance(StackPane layout){
         if (single_instance == null)
             single_instance = new Controller(layout);
-
-
         return single_instance;
     }
 
@@ -181,8 +171,6 @@ public class Controller {
             blocks.add(hashMap.get(i));
             System.out.println(hashMap.get(i));
         }
-
-
     }
 
 

@@ -3,10 +3,7 @@ package sample;
 import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 import javafx.scene.Scene;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.Control;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
 import javafx.scene.text.Text;
 
@@ -30,10 +27,58 @@ public class FlightPlanning {
     private static TextField lineFromTxt, lineToTxt, lineTieFromTxt, lineTieToTxt, seperateLines;
     private static CheckBox cbUseSeperateLines;
 
+    private static ComboBox listSurveys, listBlocks, listFlights;
+    private static Button createSurvey, createBlock, createFlight;
+    private static Button editSurvey, editBlock, editFlight;
+    private static Button showSurvey, showBlock, showFlight;
+
     //FUnction to build page
     private FlightPlanning(StackPane layout) {
         // Setup for Layout
         this.layout = layout;
+        //New Stuff
+        createSurvey = new Button("Create New Survey");
+        createBlock = new Button("Create New Block");
+        createFlight = new Button("Create New Flight");
+        editSurvey = new Button("Edit Selected Survey");
+        editBlock = new Button("Edit Selected Block");
+        editFlight = new Button("Edit Selected Flight");
+        showSurvey = new Button("Show Selected Survey");
+        showBlock = new Button("Show Selected Block");
+        showFlight = new Button("Show Selected Flight");
+
+        listSurveys = new ComboBox(Controller.getSurveys());
+        listBlocks = new ComboBox(Controller.getBlocks());
+        listFlights = new ComboBox(Controller.getFlights());
+
+        listSurveys.setTranslateX(-200);
+        listBlocks.setTranslateX(0);
+        listFlights.setTranslateX(200);
+        listSurveys.setTranslateY(-180);
+        listBlocks.setTranslateY(-180);
+        listFlights.setTranslateY(-180);
+
+        createSurvey.setTranslateX(-200);
+        createBlock.setTranslateX(0);
+        createFlight.setTranslateX(200);
+        createSurvey.setTranslateY(-150);
+        createBlock.setTranslateY(-150);
+        createFlight.setTranslateY(-150);
+
+        editSurvey.setTranslateX(-200);
+        editBlock.setTranslateX(0);
+        editFlight.setTranslateX(200);
+        editSurvey.setTranslateY(-120);
+        editBlock.setTranslateY(-120);
+        editFlight.setTranslateY(-120);
+
+        showSurvey.setTranslateX(-200);
+        showBlock.setTranslateX(0);
+        showFlight.setTranslateX(200);
+        showSurvey.setTranslateY(-90);
+        showBlock.setTranslateY(-90);
+        showFlight.setTranslateY(-90);
+        //
         btnShowBlkPlan = new Button("Show Block Plan");
         buttonExport = new Button("Export File");
 

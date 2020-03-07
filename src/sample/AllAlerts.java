@@ -55,4 +55,18 @@ public class AllAlerts {
         }
         return 0;
     }
+    public static void downloadSuccessful(String orig, String dest){
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Download Complete");
+        alert.setHeaderText("Download Successful");
+        alert.setContentText("All files from " + orig + "\nis downloaded into " + dest);
+        alert.showAndWait();
+    }
+    public static void downloadFailed(String orig, String dest){
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Download Failed");
+        alert.setHeaderText("Download Unsuccessful");
+        alert.setContentText("No files were downloaded.\nEither Beaglebone is disconnected, or files were not found");
+        alert.showAndWait();
+    }
 }
