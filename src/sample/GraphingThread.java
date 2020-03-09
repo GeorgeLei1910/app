@@ -24,6 +24,7 @@ public class GraphingThread extends Thread {
             //process.waitFor();
             Process p = Runtime.getRuntime().exec(command);
             p.waitFor();
+
         }catch(Exception e){
 
         }

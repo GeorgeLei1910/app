@@ -82,9 +82,10 @@ public class CanvasFlightPlan  {
 
     /*
         Canvas Flight Types:
-        -2 = Survey Settings select Start
-        -1 = Show Flight Plan
-        0 = Show Block Plan
+        -3 = Survey Settings select Start
+        -2 = Show Flight Plan
+        -1 = Show Block Plan
+        0 = Show Block Edit Plan
         1 = Show Survey Plan (Flight Lines only)
         2 = Show Survey Plan (Tie Lines only)
         3 = Show Survey Plan (Flight and Tie Lines)
@@ -117,17 +118,24 @@ public class CanvasFlightPlan  {
         System.out.println(planSettingsFile);*/
 
         switch(type){
-            case -1:
+            case -2:
                 color = Color.NAVY;
                 planSettings = planSettingsFileFlight;
                 System.out.println(planSettings);
                 wayPoints = wayPointsFileFlight;
                 System.out.println(wayPoints);
+                break;
+            case -1:
+                color = Color.NAVY;
+                planSettings = planSettingsFileBlock;
+                System.out.println(planSettings);
+                wayPoints = wayPointsFileBlock;
+                System.out.println(wayPoints);
             break;
             case 0:
                 color = Color.RED;
-                planSettings = planSettingsFileBlock;
-                wayPoints = wayPointsFileBlock;
+                planSettings = planSettingsFile;
+                wayPoints = wayPointsFile;
             break;
             case 1:
                 System.out.println("Case 1");
@@ -197,7 +205,7 @@ public class CanvasFlightPlan  {
         //fpMap.setTitle("Flight Plan Settings");
         STAGE.show();
 
-        if(type == 1 || type ==2 || type ==3) {
+        if(type == 0) {
             final Stage partitionStage = new Stage();
             StackPane layout = new StackPane();
             Scene scenePartition = new Scene(layout, 200, 100);
@@ -240,22 +248,20 @@ public class CanvasFlightPlan  {
         Position maxPosition = new Position(0,0);
         System.out.println("showWayPoint Setup Complete");
         try {
-
-
             ObservableList<String> coords = FlightPlanning.getCoordinates();
             String start = "UTM:";
-            if(type != 1 && type != 2 && type != 3)
-                start = "Points";
+            if(type != 1 && type != 2 && type != 3 && type != 0)
+                start = "Points:";
             String segments[] = new String[0];
             String s = "";
 
-            if(type != -2){
+            if(this.type != -3){
                 InputStream ins = new FileInputStream(planSettings);
                 Reader r = new InputStreamReader(ins, "UTF-8"); // leave charset out for default
                 BufferedReader br = new BufferedReader(r);
                 while ((s = br.readLine()) != null) {
                     if (s.startsWith(start)){
-                        s = s.substring(4);
+                        s = s.substring(start.length());
                         segments = new String[s.split(":").length];
                         segments = s.split(":");
                         break;
@@ -264,14 +270,15 @@ public class CanvasFlightPlan  {
             }else{
                 segments = new String[coords.size()];
                 for(int i = 0; i < segments.length; i++){
-                    segments[i] = coords.get(i);
+                    String [] ss = coords.get(i).split(",");
+                    segments[i] = ss[1] + "," + ss[0];
                 }
             }
 
             System.out.println("Number of segments = " + segments.length);
             for(int i = 0; i < segments.length; i++){
-                String posX = segments[i].split(",")[1];
-                String posY = segments[i].split(",")[0];
+                String posX = segments[i].split(",")[0];
+                String posY = segments[i].split(",")[1];
                 System.out.println(posX + "   " + posY);
                 //Dunno what this is for but ok.
 //                if(type != 1 && type != 2 && type != 3){
@@ -320,19 +327,26 @@ public class CanvasFlightPlan  {
             graphics_context.strokeLine(polygon.get(i % size).getX(), polygon.get(i % size).getY(),
                     polygon.get((i+1) % size).getX(), polygon.get((i+1) % size).getY());
         }
-        if(this.type != -2){
+        if(this.type != -3){
             drawWaypoints( graphics_context, minPosition,  maxPosition );
         }
     }
 
 
     private void convertPosition(ArrayList<Position> list, Position minPosition, Position maxPosition){
+
         polygon.clear();
         double h = maxPosition.getX() - minPosition.getX();
         double v = maxPosition.getY() - minPosition.getY();
+        double scale = 0.0;
+        if(h > v){
+            scale = h;
+        }else{
+            scale = v;
+        }
         for(Position p : list){
-            polygon.add(new Position(((a-2*offsetX)/h)*(p.getX()-minPosition.getX())+offsetX ,
-                     b-(((b-offsetY*2)/v)*(p.getY()-minPosition.getY())+offsetY)));
+            polygon.add(new Position(((a-2*offsetX)/scale)*(p.getX()-minPosition.getX())+offsetX ,
+                     b-(((b-offsetY*2)/scale)*(p.getY()-minPosition.getY())+offsetY)));
         }
     }
 
@@ -355,9 +369,9 @@ public class CanvasFlightPlan  {
             if((s = br.readLine()) != null){
                 String segments[] = s.split(" ");
                 gc.setFill(Color.BLACK);
-                double x = ((a-2*offsetX)/h) * (Double.parseDouble(segments[1])-minX)+offsetX;
-                double y = b-(((b-2*offsetY)/v)*(Double.parseDouble(segments[0])-minY)+offsetY);
-                prevPos = new Position(Double.parseDouble(segments[1]), Double.parseDouble(segments[0]));
+                double x = ((a-2*offsetX)/h) * (Double.parseDouble(segments[0])-minX)+offsetX;
+                double y = b-(((b-2*offsetY)/v)*(Double.parseDouble(segments[1])-minY)+offsetY);
+                prevPos = new Position(Double.parseDouble(segments[0]), Double.parseDouble(segments[1]));
                 gc.fillOval( x, y, 2, 2 );
                 x_init = x;
                 y_init = y;
@@ -365,8 +379,8 @@ public class CanvasFlightPlan  {
             while ((s = br.readLine()) != null){
                 String segments[] = s.split(" ");
                 gc.setFill(Color.BLACK);
-                double posX1 = Double.parseDouble(segments[1]);
-                double posY2 = Double.parseDouble(segments[0]);
+                double posX1 = Double.parseDouble(segments[0]);
+                double posY2 = Double.parseDouble(segments[1]);
                 newPos = new Position(posX1, posY2);
                 totalDistance += newPos.distance(prevPos);
                 prevPos = newPos;
@@ -421,12 +435,8 @@ public class CanvasFlightPlan  {
                     }
                 }catch(NullPointerException e){
 
-
                 }
-
-
             }
-
         });
         layout.getChildren().add(createBlock_mode_on);
         layout.getChildren().add(createBlock_mode_off);
@@ -494,9 +504,6 @@ public class CanvasFlightPlan  {
                             pair.getValue().get((i+1) % size).getX(), pair.getValue().get((i+1) % size).getY());
                 }
             }
-
-
-
         });
         //Create BLock Plan on the
         createBlocksPlan.setOnAction((event) -> {
@@ -515,7 +522,7 @@ public class CanvasFlightPlan  {
                     for(Position itm : pair.getValue()){
                         double xP = minPosition.getX() + (itm.getX() - offsetX)*h/(a-2*offsetX);
                         double yP = (b - itm.getY() -offsetY)*v/(b-2*offsetY)+ minPosition.getY();
-                        out.write( "("+xP+","+yP+")"+ ":");
+                        out.write( xP+","+yP+ ":");
                     }
                     out.write("\n");
                     out.close();
@@ -525,6 +532,12 @@ public class CanvasFlightPlan  {
                 String path = System.getProperty("user.dir");
                 String pathPython = path + "/Package/pythontest.py";
                 String command = "python " + pathPython + " -m FlightPlanBlocks -f " + planSettingsFile + " -b " + blockno;
+                try {
+                    Process p = Runtime.getRuntime().exec(command);
+                    Controller.pythonConsole(p);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 System.out.println(command);
                 GraphingThread graphingThread = new GraphingThread(command);
                 graphingThread.showGraph();

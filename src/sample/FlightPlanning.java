@@ -40,15 +40,21 @@ public class FlightPlanning {
 
     private static ObservableList<String> items = FXCollections.observableArrayList ();
 
-    private static ComboBox listSurveys, listBlocks, listFlights;
-    private static Button createSurvey, createBlock, createFlight;
-    private static Button editSurvey, editBlock, editFlight;
-    private static Button showSurvey, showBlock, showFlight;
+    static ComboBox listFlights, listBlocks, listSurveys;
+    static Button createSurvey, createBlock, createFlight;
+    static Button editSurvey, editBlock, editFlight;
+    static Button showSurvey, showBlock, showFlight;
+
+    private static Button showSurveyTieLines, showSurveyTieFlight;
 
     //FUnction to build page
     private FlightPlanning(StackPane layout) {
         // Setup for Layout
         this.layout = layout;
+        
+        listSurveys = new ComboBox(Controller.getSurveys());
+        listBlocks = new ComboBox(Controller.getBlocks());
+        listFlights = new ComboBox(Controller.getFlights());
         //New Stuff
         createSurvey = new Button("Create New Survey");
         createBlock = new Button("Create New Block");
@@ -56,13 +62,12 @@ public class FlightPlanning {
         editSurvey = new Button("Edit Selected Survey");
         editBlock = new Button("Edit Selected Block");
         editFlight = new Button("Edit Selected Flight");
-        showSurvey = new Button("Show Selected Survey");
+        showSurvey = new Button("Show Flight Lines");
         showBlock = new Button("Show Selected Block");
         showFlight = new Button("Show Selected Flight");
-
-        listSurveys = new ComboBox(Controller.getSurveys());
-        listBlocks = new ComboBox(Controller.getBlocks());
-        listFlights = new ComboBox(Controller.getFlights());
+        
+        showSurveyTieLines = new Button("Show Tie Lines");
+        showSurveyTieFlight = new Button("Show Flight and Tie Lines");
 
         listSurveys.setTranslateX(-200);
         listBlocks.setTranslateX(0);
@@ -70,7 +75,6 @@ public class FlightPlanning {
         listSurveys.setTranslateY(-180);
         listBlocks.setTranslateY(-180);
         listFlights.setTranslateY(-180);
-
         createSurvey.setTranslateX(-200);
         createBlock.setTranslateX(0);
         createFlight.setTranslateX(200);
@@ -91,6 +95,13 @@ public class FlightPlanning {
         showSurvey.setTranslateY(-90);
         showBlock.setTranslateY(-90);
         showFlight.setTranslateY(-90);
+
+        showSurveyTieLines.setTranslateX(-200);
+        showSurveyTieLines.setTranslateY(-60);
+        showSurveyTieFlight.setTranslateX(-200);
+        showSurveyTieFlight.setTranslateY(-30);
+        
+        
         //
         btnShowBlkPlan = new Button("Show Block Plan");
         buttonExport = new Button("Export File");
@@ -104,8 +115,8 @@ public class FlightPlanning {
         currentFlight.setTranslateY(-70);
         currentFlight.setStyle("-fx-font: 13 Courier;");
 
-        buttonExport.setTranslateX(-200);
-        buttonExport.setTranslateY(40);
+        buttonExport.setTranslateX(200);
+        buttonExport.setTranslateY(-30);
         buttonExport.setStyle("-fx-font: 13 Courier;");
 
         lineFromTxt = new TextField(); lineToTxt = new TextField();
@@ -136,48 +147,49 @@ public class FlightPlanning {
         editSurvey.disableProperty().bind(listSurveys.valueProperty().isNull());
         showSurvey.disableProperty().bind(listSurveys.valueProperty().isNull());
         listBlocks.disableProperty().bind(listSurveys.valueProperty().isNull());
-        createBlock.disableProperty().bind(listBlocks.valueProperty().isNull());
+        createBlock.disableProperty().bind(listSurveys.valueProperty().isNull());
         editBlock.disableProperty().bind(listBlocks.valueProperty().isNull());
         showBlock.disableProperty().bind(listBlocks.valueProperty().isNull());
         listFlights.disableProperty().bind(listBlocks.valueProperty().isNull());
-        createFlight.disableProperty().bind(listFlights.valueProperty().isNull());
+        createFlight.disableProperty().bind(listBlocks.valueProperty().isNull());
         editFlight.disableProperty().bind(listFlights.valueProperty().isNull());
         showFlight.disableProperty().bind(listFlights.valueProperty().isNull());
 
-        
         listSurveys.setOnAction(event -> {
-            String str = listSurveys.getValue().toString();
-            Controller.setCurSurveyFolder(str);
-            System.out.println(Controller.getCurSurvey());
-        });
-        listBlocks.setOnAction(event -> {
-            String str = listBlocks.getValue().toString();
-            Controller.setCurBlockFolder(0, str);
-            System.out.println(Controller.getCurSurvey());
-        });
-        listFlights.setOnAction(event -> {
-            String str = listFlights.getValue().toString();
-            Controller.setCurFlightFolder(0);
-            System.out.println(Controller.getCurSurvey());
+            String curSurv = listSurveys.getValue().toString();
+            Controller.setCurSurveyFolder(curSurv);
         });
 
-        showSurvey.setOnAction(event -> {
-            String path = System.getProperty("user.dir").replace('\\', '/') ;
-            String pathPython = path.replace('\\', '/') + "/Package/pythontest.py";
-            String command = "python " +pathPython+" -m FlightPlan" + " -f "+ path + "/Data/"+Controller.getCurSurvey() +
-                    "/FlightPlan" + Controller.getPrefixToSurvey() + "-plan_settings.txt";
-            System.out.println(command);
-            try {
-                Process p = Runtime.getRuntime().exec(command);
-                Controller.pythonConsole(p);
-//                    p.waitFor();
-                //Python console log
-            }catch(Exception e){
+        listBlocks.setOnAction(event -> {
+            try{
+                String str = listBlocks.getValue().toString();
+                String num = "0";
+                for(int i = 0; i < str.length(); i++){
+                    char ch2 = str.charAt(i);
+                    if(ch2 == ','){
+                        num = str.substring(1, i);
+                        break;
+                    }
+                }
+                Controller.setCurBlockFolder(Integer.parseInt(num), str);
+            }catch(NullPointerException e){
 
             }
-            System.out.println("P ran");
-            CanvasFlightPlan canvasFlightPlan = new CanvasFlightPlan(1);
         });
+        listFlights.setOnAction(event -> {
+            try{
+                String str = listFlights.getValue().toString();
+                String num = "0";
+                if (!str.equals(""))
+                    num = str.substring(1,str.length());
+
+                Controller.setCurFlightFolder(Integer.parseInt(num));
+
+            }catch(NullPointerException e){
+
+            }
+        });
+
 
         createSurvey.setOnAction(event -> {
             final Stage dialog = new Stage();
@@ -509,7 +521,7 @@ public class FlightPlanning {
                 if(items.size() < 3){
                     AllAlerts.noSurveyBoundary();
                 }else {
-                    CanvasFlightPlan canvasFlightPlan = new CanvasFlightPlan(-2);
+                    CanvasFlightPlan canvasFlightPlan = new CanvasFlightPlan(-3);
                     canvasFlightPlan.setInitPosition(tieSpaceFieldStartLon, tieSpaceFieldStartLat);
                 }
             });
@@ -517,7 +529,7 @@ public class FlightPlanning {
                 if(items.size() < 3){
                     AllAlerts.noSurveyBoundary();
                 }else {
-                    CanvasFlightPlan canvasFlightPlan = new CanvasFlightPlan(-2);
+                    CanvasFlightPlan canvasFlightPlan = new CanvasFlightPlan(-3);
                     canvasFlightPlan.setInitPosition(posLonStart, posLatStart);
                 }
             });
@@ -566,6 +578,20 @@ public class FlightPlanning {
                         out.write(   "TieStart:\r\n");
                     }
                     out.close();
+                    String path = System.getProperty("user.dir").replace('\\', '/') ;
+                    String pathPython = path.replace('\\', '/') + "/Package/pythontest.py";
+                    String command = "python " +pathPython+" -m FlightPlan" + " -f "+ path + "/Data/"+Controller.getCurSurvey() +
+                            "/FlightPlan" + Controller.getPrefixToSurvey() + "-plan_settings.txt";
+                    System.out.println(command);
+                    try {
+                        Process p = Runtime.getRuntime().exec(command);
+                        Controller.pythonConsole(p);
+//                    p.waitFor();
+                        //Python console log
+                    }catch(Exception e){
+
+                    }
+                    System.out.println("P ran");
 
                 }catch(Exception e){
 
@@ -664,6 +690,30 @@ public class FlightPlanning {
             dialog.show();
         });
 
+        showSurvey.setOnAction(event -> {
+            CanvasFlightPlan canvasFlightPlan = new CanvasFlightPlan(1);
+        });
+        showSurveyTieLines.setOnAction(event -> {
+            CanvasFlightPlan canvasFlightPlan = new CanvasFlightPlan(2);
+        });
+        showSurveyTieFlight.setOnAction(event -> {
+            CanvasFlightPlan canvasFlightPlan = new CanvasFlightPlan(3);
+        });
+
+        createBlock.setOnAction(event -> {
+            listBlocks.setValue(Controller.addBlocks());
+        });
+        editBlock.setOnAction(event -> {
+            CanvasFlightPlan canvasFlightPlan = new CanvasFlightPlan(0);
+        });
+        showBlock.setOnAction(event -> {
+            CanvasFlightPlan canvasFlightPlan = new CanvasFlightPlan(-1);
+        });
+
+        createFlight.setOnAction(event -> {
+            listFlights.setValue(Controller.addFlight());
+        });
+
         editFlight.setOnAction(event -> {
 //            updateFlightPlanInfo();
             final Stage dialog = new Stage();
@@ -723,6 +773,9 @@ public class FlightPlanning {
                 applyBtn.fire();
             });
         });
+        showFlight.setOnAction(event -> {
+            CanvasFlightPlan canvasFlightPlan = new CanvasFlightPlan(-2);
+        });
 
 
         // Sets function of Buttons
@@ -730,6 +783,7 @@ public class FlightPlanning {
         btnShowBlkPlan.setOnAction((event) -> {
             CanvasFlightPlan canvasFlightPlanBlock = new CanvasFlightPlan(0);
         });
+
         // Show Flight Plan after Line and Tie from tos are Applied
         showFlightPlan.setOnAction((event) -> {
             CanvasFlightPlan canvasFlightPlanBlock = new CanvasFlightPlan(-1);
@@ -744,7 +798,7 @@ public class FlightPlanning {
             File folder = new File(srcPath);
             String parFolder = folder.getParentFile().getName();
             String s = "", from= "", to= "", isSeparate= "", line= "", isApplied= "";
-            String filePath = folder.getParent() + "/flight_plan/waypoints.txt";
+            String filePath = folder.getParent() + "/flight_plan/"+ Controller.getPrefixToFlight() +"-waypoints.txt";
             InputStream ins = null;
             try{
                 String fpPath = System.getProperty("user.dir")+ Controller.getPathToFlight() +"/flight_plan"+ Controller.getPrefixToFlight() + "-flightPlan.txt";
@@ -1004,7 +1058,7 @@ public class FlightPlanning {
 //        layout.getChildren().add(arrow);
 //        layout.getChildren().add(applied);
 //        layout.getChildren().add(showFlightPlan);
-//        layout.getChildren().add(buttonExport);
+
 //        layout.getChildren().add(lineTieFromTxt);
 //        layout.getChildren().add(lineTieToTxt);
 //        layout.getChildren().add(txtTie);
@@ -1022,6 +1076,9 @@ public class FlightPlanning {
         layout.getChildren().add(showFlight);
         layout.getChildren().add(showBlock);
         layout.getChildren().add(showSurvey);
+        layout.getChildren().add(showSurveyTieFlight);
+        layout.getChildren().add(showSurveyTieLines);
+        layout.getChildren().add(buttonExport);
     }
     // Removes the buttons and stuff when Pane transitions
     public void removeElements(){
@@ -1033,7 +1090,6 @@ public class FlightPlanning {
 //        layout.getChildren().remove(arrow);
 //        layout.getChildren().remove(applied);
 //        layout.getChildren().remove(showFlightPlan);
-//        layout.getChildren().remove(buttonExport);
 //        layout.getChildren().remove(lineTieFromTxt);
 //        layout.getChildren().remove(lineTieToTxt);
 //        layout.getChildren().remove(txtTie);
@@ -1051,7 +1107,13 @@ public class FlightPlanning {
         layout.getChildren().remove(showFlight);
         layout.getChildren().remove(showBlock);
         layout.getChildren().remove(showSurvey);
+        layout.getChildren().remove(showSurveyTieFlight);
+        layout.getChildren().remove(showSurveyTieLines);
+        layout.getChildren().remove(buttonExport);
     }
 
     public static ObservableList getCoordinates(){return items;}
+    public static void updateSurvey(){
+
+    }
 }

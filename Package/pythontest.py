@@ -225,7 +225,7 @@ class FlightPlanning(object):
             f.write('UTM:')
             for index, row in self.dfPolygan.iterrows():
                 self.converter = Proj(proj='utm', zone=self.findUtmZone(float(row['LON'])), ellps='WGS84')
-                print(row['LON'])
+                print(coordinates)
                 self.dfPolyganUTM.loc[len(self.dfPolyganUTM)] = self.converter(row['LON'], row['LAT'])
                 string = str(self.dfPolyganUTM.iloc[index]['UTMX']) + "," + str(
                     self.dfPolyganUTM.iloc[index]['UTMY']) + ":"

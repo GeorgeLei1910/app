@@ -17,11 +17,14 @@ public class MainInterface {
     static private Rectangle rectangle = new Rectangle(0, 140, 700, 450);
     static private ComboBox comboBox;
     static private ComboBox comboBoxFlights;
+
+    private static ComboBox listSurveys, listBlocks, listFlights;
+
     static private Text curSurveyName;
 
     private MainInterface(StackPane layout){
 
-
+        
 
         rectangle.setFill(Color.DARKGRAY);
         rectangle.setArcHeight(15);
@@ -55,6 +58,17 @@ public class MainInterface {
         buttonFlight.setTranslateY(-260);
         buttonFlight.setMaxWidth(80);
         buttonFlight.setMaxHeight(10);
+
+        listSurveys = new ComboBox(Controller.getSurveys());
+        listBlocks = new ComboBox(Controller.getBlocks());
+        listFlights = new ComboBox(Controller.getFlights());
+
+        listSurveys.setTranslateX(-200);
+        listBlocks.setTranslateX(0);
+        listFlights.setTranslateX(200);
+        listSurveys.setTranslateY(-180);
+        listBlocks.setTranslateY(-180);
+        listFlights.setTranslateY(-180);
 
         curSurveyName.setFill(Color.WHITE);
         curSurveyName.setTranslateX(0);
@@ -107,8 +121,6 @@ public class MainInterface {
 
 
                 }
-
-
             }
         });
 
@@ -202,10 +214,8 @@ public class MainInterface {
 
             @Override
             public void handle(ActionEvent event) {
-
                 //comboBoxFlights.setValue("kkk");
                 comboBoxFlights.setValue(Controller.addFlight());
-
             }
 
         });
