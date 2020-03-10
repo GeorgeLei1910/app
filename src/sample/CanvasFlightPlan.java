@@ -45,7 +45,7 @@ public class CanvasFlightPlan  {
 
     private String planSettingsFileFlight;
     private String wayPointsFileFlight;
-    private String wayPointsFileBlockTie;;
+    private String wayPointsFileBlockTie;
     private final Stage STAGE;
 
     private String planSettings;
@@ -338,14 +338,10 @@ public class CanvasFlightPlan  {
         polygon.clear();
         double h = maxPosition.getX() - minPosition.getX();
         double v = maxPosition.getY() - minPosition.getY();
-        double scale = 0.0;
-        if(h > v){
-            scale = h;
-        }else{
-            scale = v;
-        }
+        double scale = (h > v)? h : v;
+        double ratio = (h > v)? v / h : h / v;
         for(Position p : list){
-            polygon.add(new Position(((a-2*offsetX)/scale)*(p.getX()-minPosition.getX())+offsetX ,
+            polygon.add(new Position(((a-2*offsetX)/scale)*(p.getX()-minPosition.getX())+ offsetX ,
                      b-(((b-offsetY*2)/scale)*(p.getY()-minPosition.getY())+offsetY)));
         }
     }
@@ -354,6 +350,8 @@ public class CanvasFlightPlan  {
     private void drawWaypoints(GraphicsContext gc, Position minPosition, Position maxPosition ){
         double h = maxPosition.getX() - minPosition.getX();
         double v = maxPosition.getY() - minPosition.getY();
+        double scale = (h > v)? h : v;
+
         double minX = minPosition.getX();
         double minY = minPosition.getY();
         DecimalFormat numberFormat = new DecimalFormat("#.0");
@@ -369,8 +367,8 @@ public class CanvasFlightPlan  {
             if((s = br.readLine()) != null){
                 String segments[] = s.split(" ");
                 gc.setFill(Color.BLACK);
-                double x = ((a-2*offsetX)/h) * (Double.parseDouble(segments[0])-minX)+offsetX;
-                double y = b-(((b-2*offsetY)/v)*(Double.parseDouble(segments[1])-minY)+offsetY);
+                double x = ((a-2*offsetX)/scale) * (Double.parseDouble(segments[0])-minX)+offsetX;
+                double y = b-(((b-2*offsetY)/scale)*(Double.parseDouble(segments[1])-minY)+offsetY);
                 prevPos = new Position(Double.parseDouble(segments[0]), Double.parseDouble(segments[1]));
                 gc.fillOval( x, y, 2, 2 );
                 x_init = x;
@@ -384,8 +382,8 @@ public class CanvasFlightPlan  {
                 newPos = new Position(posX1, posY2);
                 totalDistance += newPos.distance(prevPos);
                 prevPos = newPos;
-                double x = ((a-2*offsetX)/h) * (posX1-minX)+offsetX;
-                double y = b-(((b-2*offsetY)/v)*(posY2-minY)+offsetY);
+                double x = ((a-2*offsetX)/scale) * (posX1-minX)+offsetX;
+                double y = b-(((b-2*offsetY)/scale)*(posY2-minY)+offsetY);
                 gc.fillOval( x, y, 2, 2 );
                 gc.setStroke(color);
                 gc.setLineWidth(1);
@@ -394,10 +392,12 @@ public class CanvasFlightPlan  {
                 x_init = x;
                 y_init = y;
             }
+            br.close();
             STAGE.setTitle("FlightMap   --    Total distance travel : "+ numberFormat.format(totalDistance/1000)+ " KM");
         }catch (IOException e){
 
         }
+
 
     }
 
@@ -488,6 +488,7 @@ public class CanvasFlightPlan  {
         //TODO: fix null pointer
         double h = maxPosition.getX() - minPosition.getX();
         double v = maxPosition.getY() - minPosition.getY();
+        double scale = (h > v)? h : v;
         showBlocksPlan.setOnAction((event) -> {
             showBlocksPlan.setDisable(true);
             createBlocksPlan.setDisable(false);
@@ -520,8 +521,8 @@ public class CanvasFlightPlan  {
                     out.flush();
                     out.write("Points:");
                     for(Position itm : pair.getValue()){
-                        double xP = minPosition.getX() + (itm.getX() - offsetX)*h/(a-2*offsetX);
-                        double yP = (b - itm.getY() -offsetY)*v/(b-2*offsetY)+ minPosition.getY();
+                        double xP = minPosition.getX() + (itm.getX() - offsetX)*scale/(a-2*offsetX);
+                        double yP = (b - itm.getY() -offsetY)*scale/(b-2*offsetY)+ minPosition.getY();
                         out.write( xP+","+yP+ ":");
                     }
                     out.write("\n");
@@ -597,6 +598,20 @@ public class CanvasFlightPlan  {
     public void setInitPosition(TextField f1, TextField f2){
         double h = maxPosition.getX() - minPosition.getX();
         double v = maxPosition.getY() - minPosition.getY();
+        double scale = (h > v)? h : v;
+        graphics_context.setFill(Color.PURPLE);
+
+        if(!f1.getText().isEmpty() || !f2.getText().isEmpty()){
+            System.out.println(f1.getText() + "   " + f2.getText());
+            graphics_context.setFill(Color.PURPLE);
+            double xPos = Double.parseDouble(f1.getText());
+            double yPos = Double.parseDouble(f2.getText());
+            System.out.println(xPos + "     " + yPos);
+            double xP = (xPos - minPosition.getX()) * (a - 2 * offsetX) / scale + offsetX;
+            double yP = b - (yPos - minPosition.getY()) * (b -2 * offsetY) / scale - offsetY;
+            graphics_context.fillOval(xP,yP, 15, 15);
+            System.out.println(xP + "   " + yP);
+        }
 
         EventHandler<javafx.scene.input.MouseEvent> eventHandlerScene =
                 e -> {
@@ -605,12 +620,13 @@ public class CanvasFlightPlan  {
                          double xPos = e.getX();
                          double yPos = e.getY();
                         graphics_context.fillOval(xPos,yPos, 15, 15);
-                         double xP = minPosition.getX() + (xPos - offsetX)*h/(a-2*offsetX);
-                         double yP = (b - yPos -offsetY)*v/(b-2*offsetY)+ minPosition.getY();
+                         double xP = minPosition.getX() + (xPos - offsetX)*scale/(a-2*offsetX);
+                         double yP = (b - yPos -offsetY)*scale/(b-2*offsetY)+ minPosition.getY();
 
                         f1.setText(Double.toString(xP));
                         f2.setText(Double.toString(yP));
                         System.out.println("Current Starting Point: " + yP + "     " + xP);
+                        System.out.println("Current Starting Point: " + yPos + "     " + xPos);
 
                     }catch(NullPointerException nullE){
 

@@ -225,6 +225,7 @@ public class FlightPlanning {
                 String nameOfSurvey = name.getText();
                 if(!nameOfSurvey.equals("")) listSurveys.setValue(Controller.addSurvey(nameOfSurvey));
                 dialog.close();
+                editSurvey.fire();
             });
             cancel.setOnAction(event1 -> {
                 dialog.close();
@@ -372,7 +373,7 @@ public class FlightPlanning {
             rectangle.setTranslateY(-150);
 
 
-            Text tieLineTxt = new Text("Tie-Line Spacing");
+            Text tieLineTxt = new Text("Tie-Line Spacing (m)");
             tieLineTxt.setTranslateX(100);
             tieLineTxt.setTranslateY(-190);
             TextField tieSpaceField = new TextField();
@@ -624,17 +625,21 @@ public class FlightPlanning {
 
                         while ((s = br.readLine()) != null) {
                             s = s.trim();
-                            if(s.substring(0,4).matches("^-?[0-9]\\d*(\\.\\d+)?$")){
+                            if(s.contains("coordinates")){
+                                s = br.readLine();
                                 list.getItems().clear();
                                 items.clear();
-                                String[] cords = s.split(",0");
-                                for(String str : cords){
-
-                                    String[] segs = str.split(",");
-                                    //System.out.println(segs[1].trim()+" "+ segs[0].trim()+ " 0");
-                                    posLon.setText(segs[0].trim());
-                                    posLat.setText(segs[1].trim());
-                                    btnAddPos.fire();
+                                while(!s.contains("coordinates")) {
+                                    s = s.trim();
+                                    String[] cords = s.split(",0");
+                                    for (String str : cords) {
+                                        String[] segs = str.split(",");
+                                        //System.out.println(segs[1].trim()+" "+ segs[0].trim()+ " 0");
+                                        posLon.setText(segs[0].trim());
+                                        posLat.setText(segs[1].trim());
+                                        btnAddPos.fire();
+                                    }
+                                    s = br.readLine();
                                 }
                                 break;
                             }
@@ -771,6 +776,7 @@ public class FlightPlanning {
             });
             efOK.setOnAction(event1 -> {
                 applyBtn.fire();
+                dialog.close();
             });
         });
         showFlight.setOnAction(event -> {
@@ -842,6 +848,7 @@ public class FlightPlanning {
                         }
                     }
                 }
+                br.close();
             }catch (Exception e){
                 lineFromTxt.setText("");
                 lineToTxt.setText("");
@@ -1039,6 +1046,7 @@ public class FlightPlanning {
                     }
                 }
             }
+            br.close();
         }catch (Exception e){
             lineFromTxt.setText("");
             lineToTxt.setText("");

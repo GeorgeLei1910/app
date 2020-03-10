@@ -264,12 +264,12 @@ public class MainInterface {
         layout.getChildren().add(buttonLogData);
         layout.getChildren().add(buttonDataQuality);
         layout.getChildren().add(buttonFlightPlan);
-        layout.getChildren().add(buttonBlock);
+//        layout.getChildren().add(buttonBlock);
         layout.getChildren().add(comboBox);
         layout.getChildren().add(comboBoxFlights);
         layout.getChildren().add(buttonSettings);
         layout.getChildren().add(curSurveyName);
-        layout.getChildren().add(buttonFlight);
+//        layout.getChildren().add(buttonFlight);
 
         LoggingData loggingData =  LoggingData.getInstance(layout);
         loggingData.showElements();
@@ -283,12 +283,12 @@ public class MainInterface {
         layout.getChildren().remove(buttonLogData);
         layout.getChildren().remove(buttonDataQuality);
         layout.getChildren().remove(buttonFlightPlan);
-        layout.getChildren().remove(buttonBlock);
+//        layout.getChildren().remove(buttonBlock);
         layout.getChildren().remove(comboBox);
         layout.getChildren().remove(buttonSettings);
         layout.getChildren().remove(comboBoxFlights);
         layout.getChildren().remove(curSurveyName);
-        layout.getChildren().remove(buttonFlight);
+//        layout.getChildren().remove(buttonFlight);
 
     }
 
