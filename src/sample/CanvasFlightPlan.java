@@ -22,6 +22,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.lang.Math;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -50,6 +51,7 @@ public class CanvasFlightPlan  {
 
     private String planSettings;
     private String wayPoints;
+    private String blockPoints;
     double aCanvas  = 1500.0f;
     double bCanvas  = 1500.0f;
     double a = 800.0;
@@ -91,7 +93,7 @@ public class CanvasFlightPlan  {
         3 = Show Survey Plan (Flight and Tie Lines)
      */
 
-    public  CanvasFlightPlan(int type) {
+    public  CanvasFlightPlan(int type) throws IOException {
 
         this.type = type;
         String path = System.getProperty("user.dir").replace('\\', '/') + "/Data/" + Current_Survey;
@@ -136,6 +138,7 @@ public class CanvasFlightPlan  {
                 color = Color.RED;
                 planSettings = planSettingsFile;
                 wayPoints = wayPointsFile;
+                blockPoints = planSettingsFileBlock;
             break;
             case 1:
                 System.out.println("Case 1");
@@ -240,7 +243,7 @@ public class CanvasFlightPlan  {
 
 
 
-    private void showWaypoints(){
+    private void showWaypoints() throws IOException {
         ArrayList<Position> posList = new ArrayList<>();
         double x = 0;
         double y = 0;
@@ -252,12 +255,12 @@ public class CanvasFlightPlan  {
             String start = "UTM:";
             if(type != 1 && type != 2 && type != 3 && type != 0)
                 start = "Points:";
-            String segments[] = new String[0];
+            String[] segments = new String[0];
             String s = "";
 
             if(this.type != -3){
                 InputStream ins = new FileInputStream(planSettings);
-                Reader r = new InputStreamReader(ins, "UTF-8"); // leave charset out for default
+                Reader r = new InputStreamReader(ins, StandardCharsets.UTF_8); // leave charset out for default
                 BufferedReader br = new BufferedReader(r);
                 while ((s = br.readLine()) != null) {
                     if (s.startsWith(start)){
@@ -327,6 +330,24 @@ public class CanvasFlightPlan  {
             graphics_context.strokeLine(polygon.get(i % size).getX(), polygon.get(i % size).getY(),
                     polygon.get((i+1) % size).getX(), polygon.get((i+1) % size).getY());
         }
+        if(this.type == 0){
+            ArrayList<Position> blockPosList = new ArrayList<>();
+            InputStream bis = new FileInputStream(blockPoints);
+            Reader blockr = new InputStreamReader(bis, StandardCharsets.UTF_8); // leave charset out for default
+            BufferedReader blockbr = new BufferedReader(blockr);
+            String s = "";
+            while ((s = blockbr.readLine()) != null) {
+                String [] ss = s.split(":");
+                for(int i = 1; i < ss.length; i++){
+                    String[] sss = ss[i].split(",");
+                    blockPosList.add(new Position(Double.parseDouble(sss[0]), Double.parseDouble(sss[1])));
+                }
+            }
+            graphics_context.setStroke(Color.PINK);
+            graphics_context.setLineWidth(2);
+//            graphics_context.strokeLine(polygon.get(i % size).getX(), polygon.get(i % size).getY(),
+//                    polygon.get((i+1) % size).getX(), polygon.get((i+1) % size).getY());
+        }
         if(this.type != -3){
             drawWaypoints( graphics_context, minPosition,  maxPosition );
         }
@@ -358,14 +379,14 @@ public class CanvasFlightPlan  {
         try {
             String s;
             InputStream ins = new FileInputStream(wayPoints);
-            Reader r = new InputStreamReader(ins, "UTF-8"); // leave charset out for default
+            Reader r = new InputStreamReader(ins, StandardCharsets.UTF_8); // leave charset out for default
             BufferedReader br = new BufferedReader(r);
             Position prevPos = new Position(0,0);
             Position newPos = new Position(0,0);
             double x_init = 0;
             double y_init = 0;
             if((s = br.readLine()) != null){
-                String segments[] = s.split(" ");
+                String[] segments = s.split(" ");
                 gc.setFill(Color.BLACK);
                 double x = ((a-2*offsetX)/scale) * (Double.parseDouble(segments[0])-minX)+offsetX;
                 double y = b-(((b-2*offsetY)/scale)*(Double.parseDouble(segments[1])-minY)+offsetY);
@@ -375,7 +396,7 @@ public class CanvasFlightPlan  {
                 y_init = y;
             }
             while ((s = br.readLine()) != null){
-                String segments[] = s.split(" ");
+                String[] segments = s.split(" ");
                 gc.setFill(Color.BLACK);
                 double posX1 = Double.parseDouble(segments[0]);
                 double posY2 = Double.parseDouble(segments[1]);

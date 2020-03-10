@@ -568,6 +568,7 @@ class FlightPlanning(object):
         pitch = self.spacing
         (x_ret, y_ret, dist) = self.find_intersection(Exterior, x, y, angle)
         length = dist + self.overshootBlocks
+        print(length)
         waypoints = list()
         nums_of_points = math.ceil(length / pitch)
         # extra_point = length % pitch
@@ -579,7 +580,6 @@ class FlightPlanning(object):
 
         print("length of waypoints", len(waypoints))
         # waypoints.append(extra_point)
-
         return waypoints
 
     def createBlocks(self, type, block):
