@@ -516,26 +516,43 @@ class FlightPlanning(object):
             (elev, resol) = self.get_elevation(loc)
             dfWayPointsblocksLL.loc[len(dfWayPointsblocksLL) - 1] = [lon, lat, elev + self.elevation_buffer, resol,
                                                                      row["index"], row["line"]]
-
-
         if (type == 1):
             file = os.path.dirname(blockfilepath) + prefix + "-WayPointsblocksLL.txt"
         else:
             file = os.path.dirname(blockfilepath) + prefix + "-WayPointsblocksTiesLL.txt"
         np.savetxt(file, dfWayPointsblocksLL.values, fmt='%1.7f')
 
+    # Why doesn't this use isExterior?
     def find_intersection(self, exterior, x, y, dir):
+        #Number of exterior side that crosses the point-point2 line
         ac = 0
         # print(exterior[0][0])
         # dist = math.sqrt((exterior[0][0]-x)**2 + (exterior[0][1]-y)**2)
         # dist += math.sqrt((exterior[1][0]-x)**2 + (exterior[1][1]-y)**2)
+        #First Point of line
         point = Point(x, y)
-        point2 = Point(x + 5 * self.spacing * math.cos(np.radians(dir)),
-                       y + 5 * self.spacing * math.sin(np.radians(dir)))
-        path = LineString([point, point2])
-        intersects = path.intersects(path)
+        polygonBlock = Polygon(exterior)
+        dist = 5
+        # Point that is the spacing length in direction from point
+        point2 = Point(x + dist * self.spacing * math.cos(np.radians(dir)),
+                       y + dist * self.spacing * math.sin(np.radians(dir)))
+        #while point2 is still in the polygon, move it until it is out of the polygon.
+        # What about when it just slices the block shape? Doesn't because it's always a straight line.
+        while(point2.within(polygonBlock)):
+            dist += 1
+            point2 = Point(x + dist * self.spacing * math.cos(np.radians(dir)),
+                           y + dist * self.spacing * math.sin(np.radians(dir)))
 
+        print("Line that crosses: ", point, point2)
+
+        path = LineString([point, point2])
+        #Huh??
+        intersects = path.intersects(path)
+        print(intersects)
         size = len(exterior)
+        #Iterate through all the boundaries of the block and see which edge intersects the line.
+        #Also check if it is right on the boundary. Substitute.
+        print("Iterating through sides")
         for i in range(1, size + 1):
             point3 = Point(exterior[i % size][0], exterior[i % size][1])
             point4 = Point(exterior[(i + 1) % size][0], exterior[(i + 1) % size][1])
@@ -552,7 +569,14 @@ class FlightPlanning(object):
         yLine2 = exterior[(ac + 1) % size][1]
         xLine1 = exterior[ac % size][0]
         xLine2 = exterior[(ac + 1) % size][0]
+
+
+        # This is not a good idea. Because if the denominator is 0, whole thing blows up.
+        # Use Vector calculus
         m = (yLine2 - yLine1) / (xLine2 - xLine1)
+        # Big OOF, what if dir is 90?
+        # http://www.cs.swan.ac.uk/~cssimon/line_intersection.html
+        print(dir)
         m_o = np.tan(np.radians(dir))
         # print("m_o",  m_o)
         # print("m",  m)
@@ -567,7 +591,9 @@ class FlightPlanning(object):
     def make_extra_waypoints(self, Exterior, x, y, angle):
         pitch = self.spacing
         (x_ret, y_ret, dist) = self.find_intersection(Exterior, x, y, angle)
-        length = dist + self.overshootBlocks
+        oslength = self.overshootBlocks
+        # if (mode == 1): oslength = self.overshoot
+        length = dist + oslength
         print(length)
         waypoints = list()
         nums_of_points = math.ceil(length / pitch)
@@ -583,13 +609,14 @@ class FlightPlanning(object):
         return waypoints
 
     def createBlocks(self, type, block):
-
+        # Function that Runs when Edit Block is running and Create BLock is pressed
         # Type 1 = Flight Lines, Type 2 = Tie lines
+        print("Creating Block")
         dataFilename = ""
         dfListOfBlock = pd.DataFrame(columns=['Name', 'Exterior'])
         surveyPlanFolder = os.path.dirname(self.filepath)
         surveyFolder = os.path.dirname(surveyPlanFolder)
-        # print("surveyPlanFolder", surveyFolder)
+        print("surveyPlanFolder: ", surveyFolder)
         self.blockName = block
         prefix = "/S" + self.surveyName + "-B" + self.blockName
         print(prefix)
@@ -597,13 +624,13 @@ class FlightPlanning(object):
             if name.startswith("Block") and self.containsFolder(surveyFolder, name):
                 exterior = []
                 try:
-                    print(surveyFolder + "/" + name + "/flight_plan" + prefix +"-flightPalnBlock.txt", "r+")
+                    # print(surveyFolder + "/" + name + "/flight_plan" + prefix +"-flightPalnBlock.txt", "r+")
                     filePoints = open(surveyFolder + "/" + name + "/flight_plan" + prefix +"-flightPalnBlock.txt", "r+")
                     line = filePoints.readline()
-                    print(line)
+                    # Lines from -flightPalnBlock
+                    # print(line)
                     if (line.startswith('Points:')):
                         segs = line.split(":")
-                        print(dfListOfBlock)
                         print("segs", segs)
                         for i in range(1, len(segs) - 1):
                             print(self.coords(segs[i]))
@@ -631,36 +658,51 @@ class FlightPlanning(object):
                 point = Point(row["utmX"], row["utmY"])
                 if point.within(polygonBlock):
                     if row["Block"] == -1:
-                        row["Block"] = float(rowBlocks['Name'][5:6])
+                        row["Block"] = float(rowBlocks['Name'][5:])
                     else:
                         break
-
-        # print(dfWayPoints)
+                        # If the waypoint is not in the polygon block?
+        print(dfWayPoints)
         # file = os.path.dirname(self.filepath) + "/waypointsData2.txt"
         # np.savetxt(file, dfWayPoints.values, fmt='%1.10f')
 
+        # Name, Exterior
         for indexBlocks, rowBlocks in dfListOfBlock.iterrows():
             print("==========Block=========>>", indexBlocks + 1)
             filePointsBlock = surveyFolder + '/' + rowBlocks['Name'] + "/flight_plan" + dataFilename
             print(filePointsBlock)
-            df = dfWayPoints[dfWayPoints['Block'] == float(rowBlocks['Name'][5:6])]
-            if (len(df) == 0):
-                continue
+            #From Survey Waypoint File, get either UTMX or UTMY
+            df = dfWayPoints[dfWayPoints['Block'] == float(rowBlocks['Name'][5:])]
+            if (len(df) == 0):  continue
+            # remove smallest line
             df.loc[:, 'line'] -= df['line'].min()
+            print("Minus Minimum")
+            print(df)
             df.loc[:, 'line'] += 1
+            print("Plus 1")
+            print(df)
             df.loc[:, 'index'] = np.arange(len(df))
             polygonBlock = Polygon(rowBlocks['Exterior'])
+            print("Arrange")
+            print(df)
             df = df.reset_index(drop=True)
+            print("DF Printing")
+            print(df)
+            print("DF Finished Printing")
             df_holder = pd.DataFrame(columns=["utmX", "utmY", "elevation", "line", "index", "angle", "Block"])
+            print(df)
             j = 0
             angleOrig = float(df["angle"][j])
             while (((angleOrig - using_angle) / 180).is_integer() == False):
                 j += 1
                 angleOrig = float(df["angle"][j])
             np.savetxt(filePointsBlock, df.values, fmt='%1.10f')
+            #Get the first coordinate of the Lines (First nearest Start)
             x = df.loc[df['line'] == 1]["utmX"][0]
             y = df.loc[df['line'] == 1]["utmY"][0]
-            print(x, y)
+            print(rowBlocks['Exterior'])
+            print(x, y, angleOrig)
+            #Makes Extra Waypoints for Beginning
             list_extra = self.make_extra_waypoints(rowBlocks['Exterior'], x, y, angleOrig + 180)
             for nums1 in list_extra:
                 x = x + nums1 * math.cos(math.radians(angleOrig + 180))
@@ -679,11 +721,16 @@ class FlightPlanning(object):
                 angle = angleOrig + 180 * ((line % 2) - 1)
                 print("=======angle======>>", angle)
                 newSpacing = self.spacing
+                #Get the Last Coordinate of the Line
                 x = dfTemp["utmX"][len(dfTemp) - 1]
                 y = dfTemp["utmY"][len(dfTemp) - 1]
+                #Get the First Coordinate of the Line
                 x_o = dfTempRest["utmX"][0]
                 y_o = dfTempRest["utmY"][0]
+                #Make Extra Waypoints for Overshoots.
+                print("Append")
                 list_extra = self.make_extra_waypoints(rowBlocks['Exterior'], x, y, angle)
+                print("Prepend")
                 list_extra2 = self.make_extra_waypoints(rowBlocks['Exterior'], x_o, y_o, angle)
                 for nums1 in list_extra:
                     x = x + nums1 * math.cos(math.radians(angle))

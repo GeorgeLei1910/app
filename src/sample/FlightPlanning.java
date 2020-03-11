@@ -18,6 +18,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -50,7 +51,7 @@ public class FlightPlanning {
     //FUnction to build page
     private FlightPlanning(StackPane layout) {
         // Setup for Layout
-        this.layout = layout;
+        FlightPlanning.layout = layout;
         
         listSurveys = new ComboBox(Controller.getSurveys());
         listBlocks = new ComboBox(Controller.getBlocks());
@@ -146,6 +147,8 @@ public class FlightPlanning {
         //Bind Buttons to Activation
         editSurvey.disableProperty().bind(listSurveys.valueProperty().isNull());
         showSurvey.disableProperty().bind(listSurveys.valueProperty().isNull());
+        showSurveyTieFlight.disableProperty().bind(listSurveys.valueProperty().isNull());
+        showSurveyTieLines.disableProperty().bind(listSurveys.valueProperty().isNull());
         listBlocks.disableProperty().bind(listSurveys.valueProperty().isNull());
         createBlock.disableProperty().bind(listSurveys.valueProperty().isNull());
         editBlock.disableProperty().bind(listBlocks.valueProperty().isNull());
@@ -181,7 +184,7 @@ public class FlightPlanning {
                 String str = listFlights.getValue().toString();
                 String num = "0";
                 if (!str.equals(""))
-                    num = str.substring(1,str.length());
+                    num = str.substring(1);
 
                 Controller.setCurFlightFolder(Integer.parseInt(num));
 
@@ -402,7 +405,7 @@ public class FlightPlanning {
 
                 String s;
                 InputStream ins = new FileInputStream(filePath);
-                Reader r = new InputStreamReader(ins, "UTF-8"); // leave charset out for default
+                Reader r = new InputStreamReader(ins, StandardCharsets.UTF_8); // leave charset out for default
                 BufferedReader br = new BufferedReader(r);
 
                 //Read everything to the settings
@@ -410,7 +413,7 @@ public class FlightPlanning {
                     if(s.startsWith("Direction:")){
                         System.out.println(s);
 
-                        String segments[] = s.split(":");
+                        String[] segments = s.split(":");
                         if(segments.length > 1){
                             String seg = segments[1];
                             Integer angle = (Integer.parseInt(seg.trim()) - 90 )* -1;
@@ -419,7 +422,7 @@ public class FlightPlanning {
                     }if(s.startsWith("Points:")){
                         System.out.println(s);
 
-                        String segments[] = s.split(":");
+                        String[] segments = s.split(":");
                         for(int i = 1; i < segments.length ; i++)
                             items.add(segments[i]);
                     }if(s.startsWith("Start:")){
@@ -439,7 +442,7 @@ public class FlightPlanning {
                     }
                     if(s.startsWith("Spacing:")) {
                         System.out.println(s);
-                        String segments[] = s.split(":");
+                        String[] segments = s.split(":");
                         if(segments.length > 1){
                             String seg = segments[1];
                             txtFieldSpacing.setText(seg);
@@ -447,7 +450,7 @@ public class FlightPlanning {
 
                     }if(s.startsWith("LineSpacing:")){
                         System.out.println(s);
-                        String segments[] = s.split(":");
+                        String[] segments = s.split(":");
                         if(segments.length > 1){
                             String seg = segments[1];
                             txtFieldLineSpacing.setText(seg);}
@@ -455,7 +458,7 @@ public class FlightPlanning {
                     }
                     if(s.startsWith("OvershootSurvey:")){
                         System.out.println(s);
-                        String segments[] = s.split(":");
+                        String[] segments = s.split(":");
                         if(segments.length > 1){
                             String seg = segments[1];
                             fieldOvershoot.setText(seg);}
@@ -463,7 +466,7 @@ public class FlightPlanning {
                     }
                     if(s.startsWith("OvershootBlock:")){
                         System.out.println(s);
-                        String segments[] = s.split(":");
+                        String[] segments = s.split(":");
                         if(segments.length > 1){
                             String seg = segments[1];
                             fieldOvershootBlock.setText(seg);}
@@ -471,14 +474,14 @@ public class FlightPlanning {
                     }
                     if(s.startsWith("ElevationBuffer:")){
                         //System.out.println(s);
-                        String segments[] = s.split(":");
+                        String[] segments = s.split(":");
                         if(segments.length > 1){
                             String seg = segments[1];
                             elevTxtField.setText(seg);}
                     }
                     if(s.startsWith("Clockwise:")) {
                         System.out.println(s);
-                        String segments[] = s.split(":");
+                        String[] segments = s.split(":");
                         if (segments.length > 1) {
                             String seg = segments[1];
                             if (seg.equals("1"))
@@ -487,7 +490,7 @@ public class FlightPlanning {
                     }
                     if(s.startsWith("Elevation:")){
                         System.out.println(s);
-                        String segments[] = s.split(":");
+                        String[] segments = s.split(":");
                         String seg = segments[1];
                         System.out.println("-----)))))>"+seg.equals("1"));
                         if(seg.equals("1"))
@@ -495,7 +498,7 @@ public class FlightPlanning {
 
                     }if(s.startsWith("TieLineSpacing:")) {
                         System.out.println(s);
-                        String segments[] = s.split(":");
+                        String[] segments = s.split(":");
                         String seg = segments[1];
                         tieSpaceField.setText(seg);
                     }if(s.startsWith("TieStart:")){
@@ -620,7 +623,7 @@ public class FlightPlanning {
                         file = new File(kmlFilePath.toString());
                         String s;
                         InputStream ins = new FileInputStream(file);
-                        Reader r = new InputStreamReader(ins, "UTF-8"); // leave charset out for default
+                        Reader r = new InputStreamReader(ins, StandardCharsets.UTF_8); // leave charset out for default
                         BufferedReader br = new BufferedReader(r);
 
                         while ((s = br.readLine()) != null) {
@@ -810,38 +813,38 @@ public class FlightPlanning {
                 String fpPath = System.getProperty("user.dir")+ Controller.getPathToFlight() +"/flight_plan"+ Controller.getPrefixToFlight() + "-flightPlan.txt";
                 System.out.println(fpPath);
                 ins = new FileInputStream(fpPath);
-                Reader r = new InputStreamReader(ins, "UTF-8"); // leave charset out for default
+                Reader r = new InputStreamReader(ins, StandardCharsets.UTF_8); // leave charset out for default
                 BufferedReader br = new BufferedReader(r);
                 System.out.println(filePath);
                 while ((s = br.readLine()) != null) {
                     if(s.startsWith("From:")){
-                        String segments[] = s.split(":");
+                        String[] segments = s.split(":");
                         if(segments.length > 1){
                             String seg = segments[1];
                             from = seg;
                         }
                     }
                     if(s.startsWith("To:")) {
-                        String segments[] = s.split(":");
+                        String[] segments = s.split(":");
                         if(segments.length > 1) {
                             String seg = segments[1];
                             to = seg;
                         }
                     }if(s.startsWith("useSeperateLines:")){
-                        String segments[] = s.split(":");
+                        String[] segments = s.split(":");
                         if(segments.length > 1){
                             String seg = segments[1];
                             isSeparate = seg;
                         }
                     }if(s.startsWith("seperateLines:")){
-                        String segments[] = s.split(":");
+                        String[] segments = s.split(":");
                         if(segments.length > 1){
                             String seg = segments[1];
                             line = seg;
                         }
                     }
                     if(s.startsWith("applyOrNot:")){
-                        String segments[] = s.split(":");
+                        String[] segments = s.split(":");
                         if(segments.length > 1){
                             String seg = segments[1];
                             isApplied = seg;
@@ -969,12 +972,12 @@ public class FlightPlanning {
             System.out.println(filePath);
             String s;
             InputStream ins = new FileInputStream(filePath);
-            Reader r = new InputStreamReader(ins, "UTF-8"); // leave charset out for default
+            Reader r = new InputStreamReader(ins, StandardCharsets.UTF_8); // leave charset out for default
             BufferedReader br = new BufferedReader(r);
             System.out.println(filePath);
             while ((s = br.readLine()) != null) {
                 if(s.startsWith("From:")){
-                    String segments[] = s.split(":");
+                    String[] segments = s.split(":");
                     if(segments.length > 1){
                         String seg = segments[1];
                         lineFromTxt.setText(seg);
@@ -983,7 +986,7 @@ public class FlightPlanning {
                     }
                 }
                 if(s.startsWith("To:")) {
-                    String segments[] = s.split(":");
+                    String[] segments = s.split(":");
                     if(segments.length > 1) {
                         String seg = segments[1];
                         lineToTxt.setText(seg);
@@ -993,7 +996,7 @@ public class FlightPlanning {
 
 
                 }if(s.startsWith("fromTie:")) {
-                    String segments[] = s.split(":");
+                    String[] segments = s.split(":");
                     if(segments.length > 1){
                         String seg = segments[1];
                         lineTieFromTxt.setText(seg);
@@ -1002,7 +1005,7 @@ public class FlightPlanning {
                     }
 
                 }if(s.startsWith("toTie:")) {
-                    String segments[] = s.split(":");
+                    String[] segments = s.split(":");
                     if (segments.length > 1) {
                         String seg = segments[1];
                         lineTieToTxt.setText(seg);
@@ -1011,7 +1014,7 @@ public class FlightPlanning {
                     }
 
                 }if(s.startsWith("useSeperateLines:")){
-                    String segments[] = s.split(":");
+                    String[] segments = s.split(":");
                     if(segments.length > 1){
                         String seg = segments[1];
                         System.out.println(seg);
@@ -1028,7 +1031,7 @@ public class FlightPlanning {
                         }
                     }
                 }if(s.startsWith("seperateLines:")){
-                    String segments[] = s.split(":");
+                    String[] segments = s.split(":");
                     if(segments.length > 1){
                         String seg = segments[1];
                         seperateLines.setText(seg);
@@ -1037,7 +1040,7 @@ public class FlightPlanning {
                     }
                 }
                 if(s.startsWith("applyOrNot:")){
-                    String segments[] = s.split(":");
+                    String[] segments = s.split(":");
                     if(segments.length > 1){
                         String seg = segments[1];
                         applied.setText(seg);

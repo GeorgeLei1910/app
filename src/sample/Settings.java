@@ -14,6 +14,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 
 public class Settings {
@@ -140,16 +141,10 @@ public class Settings {
         buttonSurvey.setStyle("-fx-font-size:16");
         buttonSurvey.setTranslateX(0);
         buttonSurvey.setTranslateY(250);
-        buttonBack.setOnAction(new EventHandler<ActionEvent>(){
-            @Override
-            public void handle(ActionEvent event) {
-
-               removeElements(layout);
-               MainInterface mainInterface = MainInterface.getInstance(layout);
-                mainInterface.showElements(layout);
-
-
-            }
+        buttonBack.setOnAction(event -> {
+           removeElements(layout);
+           MainInterface mainInterface = MainInterface.getInstance(layout);
+            mainInterface.showElements(layout);
         });
 
 
@@ -410,7 +405,7 @@ public class Settings {
 
                 String s;
                 InputStream ins = new FileInputStream(filePath);
-                Reader r = new InputStreamReader(ins, "UTF-8"); // leave charset out for default
+                Reader r = new InputStreamReader(ins, StandardCharsets.UTF_8); // leave charset out for default
                 BufferedReader br = new BufferedReader(r);
 
                 //Read everything to the settings
@@ -418,7 +413,7 @@ public class Settings {
                     if(s.startsWith("Direction:")){
                         System.out.println(s);
 
-                        String segments[] = s.split(":");
+                        String[] segments = s.split(":");
                         if(segments.length > 1){
                             String seg = segments[1];
                             Integer angle = (Integer.parseInt(seg.trim()) - 90 )* -1;
@@ -427,7 +422,7 @@ public class Settings {
                     }if(s.startsWith("Points:")){
                         System.out.println(s);
 
-                        String segments[] = s.split(":");
+                        String[] segments = s.split(":");
                         for(int i = 1; i < segments.length ; i++)
                             items.add(segments[i]);
                     }if(s.startsWith("Start:")){
@@ -447,7 +442,7 @@ public class Settings {
                     }
                     if(s.startsWith("Spacing:")) {
                         System.out.println(s);
-                        String segments[] = s.split(":");
+                        String[] segments = s.split(":");
                         if(segments.length > 1){
                             String seg = segments[1];
                             txtFieldSpacing.setText(seg);
@@ -455,7 +450,7 @@ public class Settings {
 
                     }if(s.startsWith("LineSpacing:")){
                         System.out.println(s);
-                        String segments[] = s.split(":");
+                        String[] segments = s.split(":");
                         if(segments.length > 1){
                             String seg = segments[1];
                             txtFieldLineSpacing.setText(seg);}
@@ -463,7 +458,7 @@ public class Settings {
                     }
                     if(s.startsWith("OvershootSurvey:")){
                         System.out.println(s);
-                        String segments[] = s.split(":");
+                        String[] segments = s.split(":");
                         if(segments.length > 1){
                             String seg = segments[1];
                             fieldOvershoot.setText(seg);}
@@ -471,7 +466,7 @@ public class Settings {
                     }
                     if(s.startsWith("OvershootBlock:")){
                         System.out.println(s);
-                        String segments[] = s.split(":");
+                        String[] segments = s.split(":");
                         if(segments.length > 1){
                             String seg = segments[1];
                             fieldOvershootBlock.setText(seg);}
@@ -479,14 +474,14 @@ public class Settings {
                     }
                     if(s.startsWith("ElevationBuffer:")){
                         //System.out.println(s);
-                        String segments[] = s.split(":");
+                        String[] segments = s.split(":");
                         if(segments.length > 1){
                             String seg = segments[1];
                             elevTxtField.setText(seg);}
                     }
                     if(s.startsWith("Clockwise:")) {
                         System.out.println(s);
-                        String segments[] = s.split(":");
+                        String[] segments = s.split(":");
                         if (segments.length > 1) {
                             String seg = segments[1];
                             if (seg.equals("1"))
@@ -495,7 +490,7 @@ public class Settings {
                     }
                     if(s.startsWith("Elevation:")){
                         System.out.println(s);
-                        String segments[] = s.split(":");
+                        String[] segments = s.split(":");
                         String seg = segments[1];
                         System.out.println("-----)))))>"+seg.equals("1"));
                         if(seg.equals("1"))
@@ -503,7 +498,7 @@ public class Settings {
 
                     }if(s.startsWith("TieLineSpacing:")) {
                         System.out.println(s);
-                        String segments[] = s.split(":");
+                        String[] segments = s.split(":");
                         String seg = segments[1];
                         tieSpaceField.setText(seg);
                     }if(s.startsWith("TieStart:")){
@@ -527,7 +522,8 @@ public class Settings {
 
 
             btnChooseStartTie.setOnAction(event14 -> {
-                CanvasFlightPlan canvasFlightPlan = new CanvasFlightPlan(-2);
+                CanvasFlightPlan canvasFlightPlan = null;
+                canvasFlightPlan = new CanvasFlightPlan(-2);
                 canvasFlightPlan.setInitPosition(tieSpaceFieldStartLon, tieSpaceFieldStartLat);
             });
             btnCancel.setOnAction(event15 -> dialog.close());
@@ -594,7 +590,8 @@ public class Settings {
             });
 
             btnShowFlight.setOnAction(event13 -> {
-                CanvasFlightPlan canvasFlightPlan = new CanvasFlightPlan(-2);
+                CanvasFlightPlan canvasFlightPlan = null;
+                canvasFlightPlan = new CanvasFlightPlan(-2);
                 canvasFlightPlan.setInitPosition(posLonStart, posLatStart);
             });
 
@@ -612,7 +609,7 @@ public class Settings {
                         file = new File(kmlFilePath.toString());
                         String s;
                         InputStream ins = new FileInputStream(file);
-                        Reader r = new InputStreamReader(ins, "UTF-8"); // leave charset out for default
+                        Reader r = new InputStreamReader(ins, StandardCharsets.UTF_8); // leave charset out for default
                         BufferedReader br = new BufferedReader(r);
 
                         while ((s = br.readLine()) != null) {
@@ -699,27 +696,18 @@ public class Settings {
 
                 }
                 System.out.println("P ran");
-               CanvasFlightPlan canvasFlightPlan = new CanvasFlightPlan(1);
+                CanvasFlightPlan canvasFlightPlan = new CanvasFlightPlan(1);
             }
         });
 
-        showPlanOfTieFlight.setOnAction(new EventHandler<ActionEvent>(){
-            @Override
-            public void handle(ActionEvent event) {
-                CanvasFlightPlan canvasFlightPlan1 = new CanvasFlightPlan(2);
-            }
+        showPlanOfTieFlight.setOnAction(event -> {
+            CanvasFlightPlan canvasFlightPlan1 = new CanvasFlightPlan(2);
         });
 
 
-        showPlanOfTieAndFlight.setOnAction(new EventHandler<ActionEvent>(){
-            @Override
-            public void handle(ActionEvent event) {
-                CanvasFlightPlan canvasFlightPlan1 = new CanvasFlightPlan(3);
-            }
+        showPlanOfTieAndFlight.setOnAction(event -> {
+            CanvasFlightPlan canvasFlightPlan1 = new CanvasFlightPlan(3);
         });
-
-
-
     }
 
 

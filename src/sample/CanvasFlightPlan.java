@@ -59,7 +59,7 @@ public class CanvasFlightPlan  {
     double offsetX = 20;
     double offsetY = 20;
     private Scene SCENE;
-    private ArrayList<Position> polygon = new ArrayList<>();
+    private ArrayList<Position> polygon = new ArrayList<>(), blockPolygon = new ArrayList<>();
     private GraphicsContext graphics_context;
     private Integer index_color;
     private HashMap<Integer, ArrayList<Position>> polsPositions = new HashMap<>();
@@ -93,7 +93,7 @@ public class CanvasFlightPlan  {
         3 = Show Survey Plan (Flight and Tie Lines)
      */
 
-    public  CanvasFlightPlan(int type) throws IOException {
+    public  CanvasFlightPlan(int type) {
 
         this.type = type;
         String path = System.getProperty("user.dir").replace('\\', '/') + "/Data/" + Current_Survey;
@@ -102,7 +102,6 @@ public class CanvasFlightPlan  {
         wayPointsFile = path + "/FlightPlan" + Controller.getPrefixToSurvey() +"-waypointsData.txt";
         wayPointsTieFile = path + "/FlightPlan"+ Controller.getPrefixToSurvey() + "-waypointsDataTieLine.txt";
 
-
         path += "/Block" + Current_Block;
         planSettingsFileBlock = path + "/flight_plan" + Controller.getPrefixToBlock() + "-flightPalnBlock.txt";
         wayPointsFileBlock = path + "/flight_plan" + Controller.getPrefixToBlock() + "-waypointsDataBlock.txt";
@@ -110,14 +109,6 @@ public class CanvasFlightPlan  {
         planSettingsFileFlight = path + "/flight_plan" + Controller.getPrefixToBlock() + "-flightPalnBlock.txt";
 
         wayPointsFileFlight = path + "/Flight"+Current_Flight+"/flight_plan"+ Controller.getPrefixToFlight() +"-waypointsDataFlight.txt";
-
-/*        System.out.println(planSettingsFile);
-        System.out.println(wayPointsFile);
-        System.out.println(wayPointsTieFile);
-        System.out.println(planSettingsFileBlock);
-        System.out.println(wayPointsFileBlock);
-        System.out.println(wayPointsFileBlockTie);
-        System.out.println(planSettingsFile);*/
 
         switch(type){
             case -2:
@@ -159,6 +150,8 @@ public class CanvasFlightPlan  {
                 }catch(IOException e){
                     e.printStackTrace();
                 }
+                break;
+            case 4:
             break;
             default: planSettings = planSettingsFile;
             break;
@@ -243,7 +236,7 @@ public class CanvasFlightPlan  {
 
 
 
-    private void showWaypoints() throws IOException {
+    private void showWaypoints() {
         ArrayList<Position> posList = new ArrayList<>();
         double x = 0;
         double y = 0;
@@ -313,49 +306,62 @@ public class CanvasFlightPlan  {
             this.maxPosition = maxPosition;
             convertPosition(posList, minPosition, maxPosition);
 
-        }catch (IOException e){
+            for(Position p : polygon){
+                graphics_context.setFill(Color.BLUE);
+                System.out.println(p.getX()+","+p.getY());
+                graphics_context.fillOval( p.getX() ,p.getY(), 10, 10 );
+            }
+            int size = polygon.size();
+            for(int i = 0; i < polygon.size(); i++) {
+                graphics_context.setStroke(Color.GREEN);
+                graphics_context.setLineWidth(5);
+                graphics_context.strokeLine(polygon.get(i % size).getX(), polygon.get(i % size).getY(),
+                        polygon.get((i+1) % size).getX(), polygon.get((i+1) % size).getY());
+            }
+            if(this.type == 0){
+                //TODO: Implement Show Current BLock Plan
+                try {
+                    ArrayList<Position> blockPosList = new ArrayList<>();
+                    InputStream bis = new FileInputStream(blockPoints);
+                    Reader blockr = new InputStreamReader(bis, StandardCharsets.UTF_8); // leave charset out for default
+                    BufferedReader blockbr = new BufferedReader(blockr);
+                    s = "";
+                    while ((s = blockbr.readLine()) != null) {
+                        String[] ss = s.split(":");
+                        for (int i = 1; i < ss.length; i++) {
+                            String[] sss = ss[i].split(",");
+                            System.out.println(Double.parseDouble(sss[0]) + "  " + Double.parseDouble(sss[1]));
+                            blockPosList.add(new Position(Double.parseDouble(sss[0]), Double.parseDouble(sss[1])));
+                        }
+                    }
+                    convertBlockPosition(blockPosList, minPosition, maxPosition);
+                    size = blockPosList.size();
+                    for(int i = 0; i < size; i++) {
+                        graphics_context.setStroke(Color.PURPLE);
+                        graphics_context.setLineWidth(7);
+                        graphics_context.strokeLine(blockPolygon.get(i % size).getX(), blockPolygon.get(i % size).getY(),
+                                blockPolygon.get((i+1) % size).getX(), blockPolygon.get((i+1) % size).getY());
+                    }
+//            graphics_context.strokeLine(polygon.get(i % size).getX(), polygon.get(i % size).getY(),
+//                    polygon.get((i+1) % size).getX(), polygon.get((i+1) % size).getY());
+                }catch (IOException e){
+                    e.printStackTrace();
+                }
+            }
+            if(this.type != -3){
+                drawWaypoints( graphics_context, minPosition,  maxPosition );
+            }
 
+        }catch (IOException e){
+            e.printStackTrace();
         }
 
         //Y then X because Lat is Y and Lon is X
-        for(Position p : polygon){
-            graphics_context.setFill(Color.BLUE);
-            System.out.println(p.getX()+","+p.getY());
-            graphics_context.fillOval( p.getX() ,p.getY(), 10, 10 );
-        }
-        int size = polygon.size();
-        for(int i = 0; i < polygon.size(); i++) {
-            graphics_context.setStroke(Color.GREEN);
-            graphics_context.setLineWidth(5);
-            graphics_context.strokeLine(polygon.get(i % size).getX(), polygon.get(i % size).getY(),
-                    polygon.get((i+1) % size).getX(), polygon.get((i+1) % size).getY());
-        }
-        if(this.type == 0){
-            ArrayList<Position> blockPosList = new ArrayList<>();
-            InputStream bis = new FileInputStream(blockPoints);
-            Reader blockr = new InputStreamReader(bis, StandardCharsets.UTF_8); // leave charset out for default
-            BufferedReader blockbr = new BufferedReader(blockr);
-            String s = "";
-            while ((s = blockbr.readLine()) != null) {
-                String [] ss = s.split(":");
-                for(int i = 1; i < ss.length; i++){
-                    String[] sss = ss[i].split(",");
-                    blockPosList.add(new Position(Double.parseDouble(sss[0]), Double.parseDouble(sss[1])));
-                }
-            }
-            graphics_context.setStroke(Color.PINK);
-            graphics_context.setLineWidth(2);
-//            graphics_context.strokeLine(polygon.get(i % size).getX(), polygon.get(i % size).getY(),
-//                    polygon.get((i+1) % size).getX(), polygon.get((i+1) % size).getY());
-        }
-        if(this.type != -3){
-            drawWaypoints( graphics_context, minPosition,  maxPosition );
-        }
+
     }
 
 
     private void convertPosition(ArrayList<Position> list, Position minPosition, Position maxPosition){
-
         polygon.clear();
         double h = maxPosition.getX() - minPosition.getX();
         double v = maxPosition.getY() - minPosition.getY();
@@ -364,6 +370,17 @@ public class CanvasFlightPlan  {
         for(Position p : list){
             polygon.add(new Position(((a-2*offsetX)/scale)*(p.getX()-minPosition.getX())+ offsetX ,
                      b-(((b-offsetY*2)/scale)*(p.getY()-minPosition.getY())+offsetY)));
+        }
+    }
+    private void convertBlockPosition(ArrayList<Position> list, Position minPosition, Position maxPosition){
+        blockPolygon.clear();
+        double h = maxPosition.getX() - minPosition.getX();
+        double v = maxPosition.getY() - minPosition.getY();
+        double scale = (h > v)? h : v;
+        double ratio = (h > v)? v / h : h / v;
+        for(Position p : list){
+            blockPolygon.add(new Position(((a-2*offsetX)/scale)*(p.getX()-minPosition.getX())+ offsetX ,
+                    b-(((b-offsetY*2)/scale)*(p.getY()-minPosition.getY())+offsetY)));
         }
     }
 
@@ -414,7 +431,25 @@ public class CanvasFlightPlan  {
                 y_init = y;
             }
             br.close();
-            STAGE.setTitle("FlightMap   --    Total distance travel : "+ numberFormat.format(totalDistance/1000)+ " KM");
+            String modeOfCanvas = "";
+            switch(type){
+                case 3: modeOfCanvas = "Survey Map of " + Controller.getCurSurvey() + " With Flight and Tie Lines";
+                break;
+                case 2: modeOfCanvas = "Survey Map of " + Controller.getCurSurvey() + " With Tie Lines";
+                break;
+                case 1: modeOfCanvas = "Survey Map of " + Controller.getCurSurvey() + " With Flight Lines";
+                break;
+                case 0: modeOfCanvas = "Survey Map of " + Controller.getCurSurvey() + " Edit Block " + Controller.getCurBlock();
+                break;
+                case -1: modeOfCanvas = "Block Map of " + Controller.getPrefixToBlock();
+                break;
+                case -2: modeOfCanvas = "Flight Map of " + Controller.getPrefixToFlight();
+                break;
+                case -3: modeOfCanvas = Controller.getCurSurvey() + ": Select Starting Point";
+                break;
+                default:
+            }
+            STAGE.setTitle(modeOfCanvas+"   --    Total distance travel : "+ numberFormat.format(totalDistance/1000)+ " KM");
         }catch (IOException e){
 
         }
@@ -437,28 +472,26 @@ public class CanvasFlightPlan  {
         createBlocksPlan.setTranslateY(70);
         createBlocksPlan.setTranslateX(80);
         ComboBox comboBox = new ComboBox(Controller.getBlocks());
+        comboBox.setDisable(true);
         comboBox.setTranslateY(-110);
 
+        comboBox.setValue(Controller.getBlocks().get(Controller.getCurBlock()));
+        System.out.println(comboBox.getValue().toString());
+        String str = comboBox.getValue().toString();
 
-        comboBox.setOnAction(new EventHandler<ActionEvent>(){
-            @Override
-            public void handle(ActionEvent event) {
-                try{
-                    String str = comboBox.getValue().toString();
-                    for(int i = 0; i < str.length(); i++) {
-                        char ch2 = str.charAt(i);
-                        if (ch2 == ',') {
-                            str = str.substring(1, i);
-                            index_color = Integer.parseInt(str);
-                            break;
-                        }
-
-                    }
-                }catch(NullPointerException e){
-
+        try{
+            for(int i = 0; i < str.length(); i++) {
+                char ch2 = str.charAt(i);
+                if (ch2 == ',') {
+                    str = str.substring(1, i);
+                    index_color = Integer.parseInt(str);
+                    break;
                 }
             }
-        });
+        }catch(NullPointerException e){
+            e.printStackTrace();
+        }
+
         layout.getChildren().add(createBlock_mode_on);
         layout.getChildren().add(createBlock_mode_off);
         layout.getChildren().add(comboBox);
@@ -470,7 +503,7 @@ public class CanvasFlightPlan  {
                 e -> {
                 showBlocksPlan.setDisable(false);
                     try{
-                        Color c =  COLORS.values()[index_color-1].numVal;
+                        Color c =  COLORS.values()[(index_color-1) % 10].numVal;
                         graphics_context.setFill(c);
                         Position newPos = produceZappedPoint(e.getX(),e.getY());
                         System.out.println(newPos.getX() +" "+ newPos.getY());
@@ -479,7 +512,6 @@ public class CanvasFlightPlan  {
                             polsPositions.put(index_color, new ArrayList<>());
                             polsPositions.get(index_color).add(newPos);
                             System.out.println("-->");
-
                         }
                         else{
                             polsPositions.get(index_color).add(newPos);
@@ -520,7 +552,7 @@ public class CanvasFlightPlan  {
                 int size = pair.getValue().size();
 
                 for (int i = 0 ; i < size ; i++){
-                    graphics_context.setStroke(COLORS.values()[ pair.getKey()-1].numVal);
+                    graphics_context.setStroke(COLORS.values()[(pair.getKey()-1) % 10].numVal);
                     graphics_context.setLineWidth(2);
                     graphics_context.strokeLine(pair.getValue().get(i % size).getX(), pair.getValue().get(i % size).getY(),
                             pair.getValue().get((i+1) % size).getX(), pair.getValue().get((i+1) % size).getY());
@@ -554,15 +586,16 @@ public class CanvasFlightPlan  {
                 String path = System.getProperty("user.dir");
                 String pathPython = path + "/Package/pythontest.py";
                 String command = "python " + pathPython + " -m FlightPlanBlocks -f " + planSettingsFile + " -b " + blockno;
+                System.out.println(command);
                 try {
                     Process p = Runtime.getRuntime().exec(command);
                     Controller.pythonConsole(p);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                System.out.println(command);
-                GraphingThread graphingThread = new GraphingThread(command);
-                graphingThread.showGraph();
+//
+//                GraphingThread graphingThread = new GraphingThread(command);
+//                graphingThread.showGraph();
 
             }
         });
@@ -571,9 +604,8 @@ public class CanvasFlightPlan  {
 
     private Position produceZappedPoint(double x, double y){
         double constant = 22;
-        double constant2 = 0.8;
+        double constant2 = 0.5;
         double constant3 = 0.2;
-
 
         Position mousePos = new Position(x, y);
 
@@ -638,9 +670,13 @@ public class CanvasFlightPlan  {
                 e -> {
                     try{
                         graphics_context.setFill(Color.RED);
-                         double xPos = e.getX();
-                         double yPos = e.getY();
-                        graphics_context.fillOval(xPos,yPos, 15, 15);
+
+                        Position newPos = produceZappedPoint(e.getX(),e.getY());
+                         double xPos = newPos.x;
+                         double yPos = newPos.y;
+                        System.out.println(newPos.getX() +" "+ newPos.getY());
+                        graphics_context.fillRect(xPos,yPos, 10, 10);
+//                        graphics_context.fillOval(xPos,yPos, 15, 15);
                          double xP = minPosition.getX() + (xPos - offsetX)*scale/(a-2*offsetX);
                          double yP = (b - yPos -offsetY)*scale/(b-2*offsetY)+ minPosition.getY();
 
