@@ -5,6 +5,7 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
@@ -30,14 +31,14 @@ public class Controller {
 
     private Controller(StackPane layout){
 
-        this.layout = layout;
+        Controller.layout = layout;
         flights = FXCollections.observableArrayList();
         blocks = FXCollections.observableArrayList();
         surveys = FXCollections.observableArrayList();
         try{
         String s;
         InputStream ins = new FileInputStream(fileFlightTracker.toString());
-        Reader r = new InputStreamReader(ins, "UTF-8"); // leave charset out for default
+        Reader r = new InputStreamReader(ins, StandardCharsets.UTF_8); // leave charset out for default
         BufferedReader br = new BufferedReader(r);
             String blockContained = "";
             String surveyContained = "";
@@ -392,16 +393,16 @@ public class Controller {
     }
     //Gets the file prefix of sth.
     public static String getPrefixToSurvey(){
-        String [] surveyName = getCurSurvey().split("_");
-        return "/S"+surveyName[1];
+        String surveyName = getCurSurvey().substring(7);
+        return "/S"+surveyName;
     }
     public static String getPrefixToBlock(){
-        String [] surveyName = getCurSurvey().split("_");
-        return "/S"+surveyName[1] +"-B"+Controller.getCurBlock();
+        String surveyName = getCurSurvey().substring(7);
+        return "/S"+surveyName +"-B"+Controller.getCurBlock();
     }
     public static String getPrefixToFlight(){
-        String [] surveyName = getCurSurvey().split("_");
-        return "/S"+surveyName[1] +"-B"+Controller.getCurBlock() + "-F"+Controller.getCurFlight();
+        String surveyName = getCurSurvey().substring(7);
+        return "/S"+surveyName +"-B"+Controller.getCurBlock() + "-F"+Controller.getCurFlight();
     }
 
     //Gets the String for the Path to Each folder

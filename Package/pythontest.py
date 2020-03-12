@@ -514,8 +514,7 @@ class FlightPlanning(object):
             (lon, lat) = self.converter(row["utmX"], row["utmY"], inverse=True)
             loc = str(lat) + ',' + str(lon)
             (elev, resol) = self.get_elevation(loc)
-            dfWayPointsblocksLL.loc[len(dfWayPointsblocksLL) - 1] = [lon, lat, elev + self.elevation_buffer, resol,
-                                                                     row["index"], row["line"]]
+            dfWayPointsblocksLL.loc[len(dfWayPointsblocksLL) - 1] = [lon, lat, elev + self.elevation_buffer, resol, row["index"], row["line"]]
         if (type == 1):
             file = os.path.dirname(blockfilepath) + prefix + "-WayPointsblocksLL.txt"
         else:
@@ -548,6 +547,7 @@ class FlightPlanning(object):
         path = LineString([point, point2])
         #Huh??
         intersects = path.intersects(path)
+
         print(intersects)
         size = len(exterior)
         #Iterate through all the boundaries of the block and see which edge intersects the line.
@@ -563,35 +563,48 @@ class FlightPlanning(object):
                 ac = i
                 break
 
+
         # print("ac", ac)
         # print("---->", x, y)
         yLine1 = exterior[ac % size][1]
         yLine2 = exterior[(ac + 1) % size][1]
+
         xLine1 = exterior[ac % size][0]
         xLine2 = exterior[(ac + 1) % size][0]
 
+        # p1 + ta(p2 - p1) =
+        # p3 + tb(p4 - p3)
 
-        # This is not a good idea. Because if the denominator is 0, whole thing blows up.
-        # Use Vector calculus
-        m = (yLine2 - yLine1) / (xLine2 - xLine1)
-        # Big OOF, what if dir is 90?
-        # http://www.cs.swan.ac.uk/~cssimon/line_intersection.html
-        print(dir)
-        m_o = np.tan(np.radians(dir))
-        # print("m_o",  m_o)
-        # print("m",  m)
-        x_ret = (m_o * x - m * xLine1 + yLine1 - y) / (m_o - m)
-        if (abs(m_o) > 100):
-            y_ret = m * (x_ret - xLine1) + yLine1
-        else:
-            y_ret = m_o * (x_ret - x) + y
+        y1 = point.y
+        y2 = point2.y
+        y3 = exterior[ac % size][1]
+        y4 = exterior[(ac + 1) % size][1]
+
+        x1 = point.x
+        x2 = point2.x
+        x3 = exterior[ac % size][0]
+        x4 = exterior[(ac + 1) % size][0]
+
+        ta = (y3 - y4)*(x1 - x3) + (x4 - x3)*(y1 - y3)
+        ta = ta / ((x4 - x3)*(y1 - y2) - (x1 - x2)*(y4 - y3))
+        tb = (y1 - y2)*(x1 - x3) + (x2 - x1)*(y1 - y3)
+        tb = tb / ((x4 - x3)*(y1 - y2) - (x1 - x2)*(y4 - y3))
+        x_ret = x3 + tb * (x4 - x3)
+        y_ret = y3 + tb * (y4 - y3)
         new_dist = np.sqrt((y_ret - y) ** 2 + (x_ret - x) ** 2)
+
         return (x_ret, y_ret, new_dist)
 
-    def make_extra_waypoints(self, Exterior, x, y, angle):
+    def make_extra_waypoints(self, blockExterior, x, y, angle):
         pitch = self.spacing
-        (x_ret, y_ret, dist) = self.find_intersection(Exterior, x, y, angle)
-        oslength = self.overshootBlocks
+        (x_ret, y_ret, dist) = self.find_intersection(blockExterior, x, y, angle)
+        surveyExterior = [[float(val[0]), float(val[1])] for val in self.dfPolyganUTM.values]
+        surveyPolygon = Polygon(surveyExterior)
+        oslength = self.overshoot
+        print(self.dfPolyganUTM)
+        outpoint = Point(x_ret, y_ret)
+        if outpoint.within(surveyPolygon):
+            oslength = self.overshootBlocks
         # if (mode == 1): oslength = self.overshoot
         length = dist + oslength
         print(length)
@@ -737,6 +750,7 @@ class FlightPlanning(object):
                     y = y + nums1 * math.sin(math.radians(angle))
                     # x_o = x_o  + nums2* math.cos(math.radians(angle))
                     # y_o = y_o  + nums2* math.sin(math.radians(angle))
+                    #Add this extra waypoint
                     dfTemp.loc[len(dfTemp)] = [x, y, 0, line, len(dfTemp), angle, indexBlocks + 1]
                 for nums2 in list_extra2:
                     x_o = x_o + nums2 * math.cos(math.radians(angle))
@@ -744,10 +758,11 @@ class FlightPlanning(object):
                     df_holder.drop(df_holder.index, inplace=True)
                     df_holder.loc[-1] = [x_o, y_o, 0, line + 1, 0, angle + 180, indexBlocks + 1]
                     dfTempRest = pd.concat([df_holder, dfTempRest])
+                #Add this extra waypoint
                 df = pd.concat([dfTemp, dfTempRest])
                 df = df.reset_index(drop=True)
                 df.loc[:, 'index'] = np.arange(len(df))
-            # TODO: Exception here when running FLightPlanBlocks going thru Tie Lines.
+
             x = df.loc[len(df) - 1]["utmX"]
             # End
             y = df.loc[len(df) - 1]["utmY"]

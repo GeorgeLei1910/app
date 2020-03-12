@@ -309,7 +309,7 @@ public class CanvasFlightPlan  {
             for(Position p : polygon){
                 graphics_context.setFill(Color.BLUE);
                 System.out.println(p.getX()+","+p.getY());
-                graphics_context.fillOval( p.getX() ,p.getY(), 10, 10 );
+                graphics_context.fillOval( p.getX() - 5 ,p.getY() - 5, 10, 10 );
             }
             int size = polygon.size();
             for(int i = 0; i < polygon.size(); i++) {
@@ -408,7 +408,7 @@ public class CanvasFlightPlan  {
                 double x = ((a-2*offsetX)/scale) * (Double.parseDouble(segments[0])-minX)+offsetX;
                 double y = b-(((b-2*offsetY)/scale)*(Double.parseDouble(segments[1])-minY)+offsetY);
                 prevPos = new Position(Double.parseDouble(segments[0]), Double.parseDouble(segments[1]));
-                gc.fillOval( x, y, 2, 2 );
+                gc.fillOval( x - 1, y - 1, 2, 2 );
                 x_init = x;
                 y_init = y;
             }
@@ -422,7 +422,7 @@ public class CanvasFlightPlan  {
                 prevPos = newPos;
                 double x = ((a-2*offsetX)/scale) * (posX1-minX)+offsetX;
                 double y = b-(((b-2*offsetY)/scale)*(posY2-minY)+offsetY);
-                gc.fillOval( x, y, 2, 2 );
+                gc.fillOval( x - 1, y - 1, 2, 2 );
                 gc.setStroke(color);
                 gc.setLineWidth(1);
                 gc.setLineDashes(2);
@@ -507,7 +507,7 @@ public class CanvasFlightPlan  {
                         graphics_context.setFill(c);
                         Position newPos = produceZappedPoint(e.getX(),e.getY());
                         System.out.println(newPos.getX() +" "+ newPos.getY());
-                        graphics_context.fillOval(newPos.getX(),newPos.getY(), 10, 10);
+                        graphics_context.fillOval(newPos.getX() - 5,newPos.getY() - 5, 10, 10);
                         if(!polsPositions.containsKey(index_color)){
                             polsPositions.put(index_color, new ArrayList<>());
                             polsPositions.get(index_color).add(newPos);
@@ -603,7 +603,7 @@ public class CanvasFlightPlan  {
     }
 
     private Position produceZappedPoint(double x, double y){
-        double constant = 22;
+        double constant = 6;
         double constant2 = 0.5;
         double constant3 = 0.2;
 
@@ -662,7 +662,7 @@ public class CanvasFlightPlan  {
             System.out.println(xPos + "     " + yPos);
             double xP = (xPos - minPosition.getX()) * (a - 2 * offsetX) / scale + offsetX;
             double yP = b - (yPos - minPosition.getY()) * (b -2 * offsetY) / scale - offsetY;
-            graphics_context.fillOval(xP,yP, 15, 15);
+            graphics_context.fillOval(xP - 7.5,yP - 7.5, 15, 15);
             System.out.println(xP + "   " + yP);
         }
 
