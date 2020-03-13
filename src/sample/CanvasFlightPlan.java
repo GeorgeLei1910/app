@@ -10,6 +10,7 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Control;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
@@ -394,7 +395,7 @@ public class CanvasFlightPlan  {
         double minY = minPosition.getY();
         DecimalFormat numberFormat = new DecimalFormat("#.0");
         try {
-            String s;
+            String s = "";
             InputStream ins = new FileInputStream(wayPoints);
             Reader r = new InputStreamReader(ins, StandardCharsets.UTF_8); // leave charset out for default
             BufferedReader br = new BufferedReader(r);
@@ -402,13 +403,14 @@ public class CanvasFlightPlan  {
             Position newPos = new Position(0,0);
             double x_init = 0;
             double y_init = 0;
+
             if((s = br.readLine()) != null){
                 String[] segments = s.split(" ");
-                gc.setFill(Color.BLACK);
+                gc.setFill(Color.RED);
                 double x = ((a-2*offsetX)/scale) * (Double.parseDouble(segments[0])-minX)+offsetX;
                 double y = b-(((b-2*offsetY)/scale)*(Double.parseDouble(segments[1])-minY)+offsetY);
                 prevPos = new Position(Double.parseDouble(segments[0]), Double.parseDouble(segments[1]));
-                gc.fillOval( x - 1, y - 1, 2, 2 );
+                gc.fillRect( x - 2.5, y - 2.5, 5, 5 );
                 x_init = x;
                 y_init = y;
             }
@@ -422,7 +424,7 @@ public class CanvasFlightPlan  {
                 prevPos = newPos;
                 double x = ((a-2*offsetX)/scale) * (posX1-minX)+offsetX;
                 double y = b-(((b-2*offsetY)/scale)*(posY2-minY)+offsetY);
-                gc.fillOval( x - 1, y - 1, 2, 2 );
+                gc.fillOval( x - 2.5, y - 2.5, 5, 5 );
                 gc.setStroke(color);
                 gc.setLineWidth(1);
                 gc.setLineDashes(2);
@@ -462,6 +464,8 @@ public class CanvasFlightPlan  {
         Button createBlock_mode_off = new Button("CreateBlock Mode OFF");
         Button showBlocksPlan = new Button("Show Block Plans");
         Button createBlocksPlan = new Button("Create Block Plans");
+        Button rerenderBlocksPlan = new Button("Re-Render Block Plans");
+        Button undoPoints = new Button("Undo");
         createBlock_mode_on.setTranslateY(100);
         createBlock_mode_on.setTranslateX(-80);
         createBlock_mode_off.setTranslateY(100);
@@ -471,6 +475,12 @@ public class CanvasFlightPlan  {
         showBlocksPlan.setTranslateX(-80);
         createBlocksPlan.setTranslateY(70);
         createBlocksPlan.setTranslateX(80);
+
+        undoPoints.setTranslateY(40);
+        undoPoints.setTranslateX(-80);
+        rerenderBlocksPlan.setTranslateY(40);
+        rerenderBlocksPlan.setTranslateX(80);
+
         ComboBox comboBox = new ComboBox(Controller.getBlocks());
         comboBox.setDisable(true);
         comboBox.setTranslateY(-110);
@@ -497,6 +507,8 @@ public class CanvasFlightPlan  {
         layout.getChildren().add(comboBox);
         layout.getChildren().add(createBlocksPlan);
         layout.getChildren().add(showBlocksPlan);
+        layout.getChildren().add(rerenderBlocksPlan);
+        layout.getChildren().add(undoPoints);
         showBlocksPlan.setDisable(true);
         createBlocksPlan.setDisable(true);
         EventHandler<javafx.scene.input.MouseEvent> eventHandlerScene =
@@ -509,8 +521,8 @@ public class CanvasFlightPlan  {
                         System.out.println(newPos.getX() +" "+ newPos.getY());
                         graphics_context.fillOval(newPos.getX() - 5,newPos.getY() - 5, 10, 10);
                         if(!polsPositions.containsKey(index_color)){
-                            polsPositions.put(index_color, new ArrayList<>());
-                            polsPositions.get(index_color).add(newPos);
+                            polsPositions.put(Controller.getCurBlock(), new ArrayList<>());
+                            polsPositions.get(Controller.getCurBlock()).add(newPos);
                             System.out.println("-->");
                         }
                         else{
@@ -528,6 +540,17 @@ public class CanvasFlightPlan  {
 
             scene.addEventHandler(javafx.scene.input.MouseEvent.MOUSE_CLICKED, eventHandlerScene);
         });
+        undoPoints.setOnAction(event -> {
+            ArrayList<Position> todel = polsPositions.get(Controller.getCurBlock());
+            if(todel.size() > 0){
+            Position delete = todel.remove(todel.size() - 1);
+            graphics_context.setFill(Color.WHITE);
+            graphics_context.fillOval(delete.getX() - 5,delete.getY() - 5, 10, 10);
+            }
+        });
+        rerenderBlocksPlan.setOnAction(event -> {
+            renderBlock(Controller.getCurBlock());
+        });
 
 
         createBlock_mode_off.setOnAction((event) -> {
@@ -536,6 +559,7 @@ public class CanvasFlightPlan  {
             createBlock_mode_off.setDisable(true);
             createBlocksPlan.setDisable(true);
             showBlocksPlan.setDisable(true);
+            rerenderBlocksPlan.setDisable(false);
 
         });
         //TODO: fix null pointer
@@ -583,23 +607,22 @@ public class CanvasFlightPlan  {
                 }catch(Exception e) {
 
                 }
-                String path = System.getProperty("user.dir");
-                String pathPython = path + "/Package/pythontest.py";
-                String command = "python " + pathPython + " -m FlightPlanBlocks -f " + planSettingsFile + " -b " + blockno;
-                System.out.println(command);
-                try {
-                    Process p = Runtime.getRuntime().exec(command);
-                    Controller.pythonConsole(p);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-//
-//                GraphingThread graphingThread = new GraphingThread(command);
-//                graphingThread.showGraph();
-
+                renderBlock(blockno);
             }
         });
 
+    }
+    private void renderBlock(int blockno){
+        String path = System.getProperty("user.dir");
+        String pathPython = path + "/Package/pythontest.py";
+        String command = "python " + pathPython + " -m FlightPlanBlocks -f " + planSettingsFile + " -b " + blockno;
+        System.out.println(command);
+        try {
+            Process p = Runtime.getRuntime().exec(command);
+            Controller.pythonConsole(p);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private Position produceZappedPoint(double x, double y){
@@ -676,7 +699,6 @@ public class CanvasFlightPlan  {
                          double yPos = newPos.y;
                         System.out.println(newPos.getX() +" "+ newPos.getY());
                         graphics_context.fillRect(xPos,yPos, 10, 10);
-//                        graphics_context.fillOval(xPos,yPos, 15, 15);
                          double xP = minPosition.getX() + (xPos - offsetX)*scale/(a-2*offsetX);
                          double yP = (b - yPos -offsetY)*scale/(b-2*offsetY)+ minPosition.getY();
 

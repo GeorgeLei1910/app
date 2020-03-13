@@ -547,8 +547,6 @@ class FlightPlanning(object):
         path = LineString([point, point2])
         #Huh??
         intersects = path.intersects(path)
-
-        print(intersects)
         size = len(exterior)
         #Iterate through all the boundaries of the block and see which edge intersects the line.
         #Also check if it is right on the boundary. Substitute.
@@ -556,10 +554,10 @@ class FlightPlanning(object):
         for i in range(1, size + 1):
             point3 = Point(exterior[i % size][0], exterior[i % size][1])
             point4 = Point(exterior[(i + 1) % size][0], exterior[(i + 1) % size][1])
-            print(point3, point4)
+            # print(point3, point4)
             path2 = LineString([point3, point4])
             if (path2.intersects(path)):
-                print("--->", point3, point4)
+                # print("--->", point3, point4)
                 ac = i
                 break
 
@@ -607,17 +605,16 @@ class FlightPlanning(object):
             oslength = self.overshootBlocks
         # if (mode == 1): oslength = self.overshoot
         length = dist + oslength
-        print(length)
+        # print(length)
         waypoints = list()
         nums_of_points = math.ceil(length / pitch)
         # extra_point = length % pitch
         # print("nums_of_points", pitch)
-        pitch = length / nums_of_points
-        print("pitch", pitch)
-        for i in range(0, nums_of_points):
-            waypoints.append(pitch)
+        # pitch = length / nums_of_points
+        waypoints.append(dist)
+        waypoints.append(oslength)
 
-        print("length of waypoints", len(waypoints))
+        # print("length of waypoints", len(waypoints))
         # waypoints.append(extra_point)
         return waypoints
 
@@ -683,25 +680,15 @@ class FlightPlanning(object):
         for indexBlocks, rowBlocks in dfListOfBlock.iterrows():
             print("==========Block=========>>", indexBlocks + 1)
             filePointsBlock = surveyFolder + '/' + rowBlocks['Name'] + "/flight_plan" + dataFilename
-            print(filePointsBlock)
             #From Survey Waypoint File, get either UTMX or UTMY
             df = dfWayPoints[dfWayPoints['Block'] == float(rowBlocks['Name'][5:])]
             if (len(df) == 0):  continue
             # remove smallest line
             df.loc[:, 'line'] -= df['line'].min()
-            print("Minus Minimum")
-            print(df)
             df.loc[:, 'line'] += 1
-            print("Plus 1")
-            print(df)
             df.loc[:, 'index'] = np.arange(len(df))
             polygonBlock = Polygon(rowBlocks['Exterior'])
-            print("Arrange")
-            print(df)
             df = df.reset_index(drop=True)
-            print("DF Printing")
-            print(df)
-            print("DF Finished Printing")
             df_holder = pd.DataFrame(columns=["utmX", "utmY", "elevation", "line", "index", "angle", "Block"])
             print(df)
             j = 0
@@ -737,7 +724,9 @@ class FlightPlanning(object):
                 #Get the Last Coordinate of the Line
                 x = dfTemp["utmX"][len(dfTemp) - 1]
                 y = dfTemp["utmY"][len(dfTemp) - 1]
-                #Get the First Coordinate of the Line
+                x1 = x
+                y1 = y
+                #Get the First Coordinate of the Next Line
                 x_o = dfTempRest["utmX"][0]
                 y_o = dfTempRest["utmY"][0]
                 #Make Extra Waypoints for Overshoots.
