@@ -57,8 +57,8 @@ public class CanvasFlightPlan  {
     double bCanvas  = 1500.0f;
     double a = 800.0;
     double b = 800.0;
-    double offsetX = 20;
-    double offsetY = 20;
+    double offsetX = 100;
+    double offsetY = 100;
     private Scene SCENE;
     private ArrayList<Position> polygon = new ArrayList<>(), blockPolygon = new ArrayList<>();
     private GraphicsContext graphics_context;
