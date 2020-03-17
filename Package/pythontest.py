@@ -254,7 +254,7 @@ class FlightPlanning(object):
 
     def get_elevation(self, loc):
         if (self.elevation_type == 0):
-            print("Getting elevation on preset")
+            # print("Getting elevation on preset")
             return self.get_elevation_srtm(loc)
         else:
             print("Getting elevation on Google")
@@ -612,7 +612,7 @@ class FlightPlanning(object):
             point2 = Point(x + dist * self.spacing * math.cos(np.radians(dir)),
                            y + dist * self.spacing * math.sin(np.radians(dir)))
 
-        print("Line that crosses: ", point, point2)
+        # print("Line that crosses: ", point, point2)
 
         path = LineString([point, point2])
         #Huh??
@@ -620,7 +620,7 @@ class FlightPlanning(object):
         size = len(exterior)
         #Iterate through all the boundaries of the block and see which edge intersects the line.
         #Also check if it is right on the boundary. Substitute.
-        print("Iterating through sides")
+        # print("Iterating through sides")
         for i in range(1, size + 1):
             point3 = Point(exterior[i % size][0], exterior[i % size][1])
             point4 = Point(exterior[(i + 1) % size][0], exterior[(i + 1) % size][1])
@@ -668,7 +668,7 @@ class FlightPlanning(object):
         surveyExterior = [[float(val[0]), float(val[1])] for val in self.dfPolyganUTM.values]
         surveyPolygon = Polygon(surveyExterior)
         oslength = self.overshoot
-        print(self.dfPolyganUTM)
+        # print(self.dfPolyganUTM)
         outpoint = Point(x_ret, y_ret)
         if outpoint.within(surveyPolygon):
             oslength = self.overshootBlocks
@@ -699,7 +699,7 @@ class FlightPlanning(object):
         print("surveyPlanFolder: ", surveyFolder)
         self.blockName = block
         prefix = "/S" + self.surveyName + "-B" + self.blockName
-        print(prefix)
+        # print(prefix)
         for name in os.listdir(surveyFolder):
             if name.startswith("Block") and self.containsFolder(surveyFolder, name):
                 exterior = []
@@ -713,13 +713,14 @@ class FlightPlanning(object):
                         segs = line.split(":")
                         print("segs", segs)
                         for i in range(1, len(segs) - 1):
-                            print(self.coords(segs[i]))
+                            # print(self.coords(segs[i]))
                             coordinates = [(float(val)) for val in self.coords(segs[i])]
                             exterior.append(coordinates)
                     dfListOfBlock = dfListOfBlock.append({'Name': name, 'Exterior': exterior}, ignore_index=True)
                 except:
                     continue
         print(dfListOfBlock)
+        #Grab the waypoint data from
         if (type == 1):
             dfWayPoints = pd.read_csv(surveyPlanFolder + "/S" + self.surveyName + "-waypointsData.txt", sep=" ", header=None)
             dataFilename = prefix + "-waypointsDataBlock.txt"
@@ -728,39 +729,44 @@ class FlightPlanning(object):
             dfWayPoints = pd.read_csv(surveyPlanFolder + "/S" + self.surveyName + "-waypointsDataTieLine.txt", sep=" ", header=None)
             dataFilename = prefix + "-waypointsDataBlockTieLines.txt"
             using_angle = self.dirAngle + 90
-        #
+
+
         dfWayPoints.columns = ["utmX", "utmY", "elevation", "line", "index", "angle"]
+        #add 'Block' Column and make last column = -1
         dfWayPoints['Block'] = np.ones(len(dfWayPoints["utmX"])) * -1
         # print(dfListOfBlock[dfListOfBlock['Name'] == "Flight1"]['Exterior'])
+        # If Point is within the block
+        #create another polygon with the
         for index, row in dfWayPoints.iterrows():
             for indexBlocks, rowBlocks in dfListOfBlock.iterrows():
                 polygonBlock = Polygon(rowBlocks['Exterior'])
+                boundBlock = polygonBlock.bounds
                 point = Point(row["utmX"], row["utmY"])
                 if point.within(polygonBlock):
+                    row['line']
                     if row["Block"] == -1:
                         row["Block"] = float(rowBlocks['Name'][5:])
-                    else:
-                        break
+                    # else:
+                    #     break
                         # If the waypoint is not in the polygon block?
         print(dfWayPoints)
         # file = os.path.dirname(self.filepath) + "/waypointsData2.txt"
         # np.savetxt(file, dfWayPoints.values, fmt='%1.10f')
-
         # Name, Exterior
         for indexBlocks, rowBlocks in dfListOfBlock.iterrows():
             print("==========Block=========>>", indexBlocks + 1)
             filePointsBlock = surveyFolder + '/' + rowBlocks['Name'] + "/flight_plan" + dataFilename
-            #From Survey Waypoint File, get either UTMX or UTMY
-            df = dfWayPoints[dfWayPoints['Block'] == float(rowBlocks['Name'][5:])]
+            #Get the waypoints that has the Current Block number
+            idxblk = float(rowBlocks['Name'][5:])
+            df = dfWayPoints[dfWayPoints['Block'] == idxblk]
             if (len(df) == 0):  continue
-            # remove smallest line
-            df.loc[:, 'line'] -= df['line'].min()
-            df.loc[:, 'line'] += 1
+            # Add one to make the first one one
+            df.loc[:, 'line'] -= (df['line'].min() - 1)
             df.loc[:, 'index'] = np.arange(len(df))
             polygonBlock = Polygon(rowBlocks['Exterior'])
             df = df.reset_index(drop=True)
             df_holder = pd.DataFrame(columns=["utmX", "utmY", "elevation", "line", "index", "angle", "Block"])
-            print(df)
+            # print(df)
             j = 0
             angleOrig = float(df["angle"][j])
             while (((angleOrig - using_angle) / 180).is_integer() == False):
@@ -775,13 +781,12 @@ class FlightPlanning(object):
             #Makes Extra Waypoints for Beginning
             list_extra = self.make_extra_waypoints(rowBlocks['Exterior'], x, y, angleOrig + 180)
             for nums1 in list_extra:
-                x = x + nums1 * math.cos(math.radians(angleOrig + 180))
-                y = y + nums1 * math.sin(math.radians(angleOrig + 180))
-                # x_o = x_o  + nums2* math.cos(math.radians(angle))
-                # y_o = y_o  + nums2* math.sin(math.radians(angle))
+                x = x  + nums1 * math.cos(math.radians(angleOrig+180))
+                y = y  + nums1 * math.sin(math.radians(angleOrig+180))
                 df_holder.drop(df_holder.index, inplace=True)
-                df_holder.loc[-1] = [x, y, 0, 1, 0, angleOrig, indexBlocks + 1]
-                df = pd.concat([df_holder, df])
+                # df_holder.loc[-1] = [x , y , 0, 1, 0, angleOrig, idxblk]
+                # df = pd.concat([df_holder , df])
+            #Makes Extra Waypoints for Middle
             for line in range(1, int(df['line'].max())):
                 dfTemp = df.loc[df['line'] <= line]
                 dfTempRest = pd.concat([dfTemp, df]).drop_duplicates(keep=False)
@@ -789,64 +794,40 @@ class FlightPlanning(object):
                 print("=======LINE======>>", line)
                 dfTemp = dfTemp.reset_index(drop=True)
                 angle = angleOrig + 180 * ((line % 2) - 1)
-                print("=======angle======>>", angle)
+                print("=======angle======>>",angle)
                 newSpacing = self.spacing
-                #Get the Last Coordinate of the Line
-                x = dfTemp["utmX"][len(dfTemp) - 1]
-                y = dfTemp["utmY"][len(dfTemp) - 1]
-                x1 = x
-                y1 = y
-                #Get the First Coordinate of the Next Line
+                x = dfTemp["utmX"][len(dfTemp)-1]
+                y = dfTemp["utmY"][len(dfTemp)-1]
                 x_o = dfTempRest["utmX"][0]
                 y_o = dfTempRest["utmY"][0]
-                #Make Extra Waypoints for Overshoots.
-                lentonext = math.sqrt((x_o - x) ** 2 + (y_o - y) ** 2)
-                # if(lentonext > self.)
-                print("Append")
-                list_extra = self.make_extra_waypoints(rowBlocks['Exterior'], x, y, angle)
-                print("Prepend")
-                list_extra2 = self.make_extra_waypoints(rowBlocks['Exterior'], x_o, y_o, angle)
-                x = x + list_extra[0] * math.cos(math.radians(angle))
-                y = y + list_extra[0] * math.sin(math.radians(angle))
-                dfTemp.loc[len(dfTemp)] = [x, y, 0, line, len(dfTemp), angle, indexBlocks + 1]
-                x = x + list_extra[1] * math.cos(math.radians(angle))
-                y = y + list_extra[1] * math.sin(math.radians(angle))
-                # x_o = x_o  + nums2* math.cos(math.radians(angle))
-                # y_o = y_o  + nums2* math.sin(math.radians(angle))
-                #Add this extra waypoint
-                dfTemp.loc[len(dfTemp)] = [x, y, 0, line, len(dfTemp), angle, indexBlocks + 1]
-
-
-                # for nums2 in list_extra2:
-                #     x_o = x_o + nums2 * math.cos(math.radians(angle))
-                #     y_o = y_o + nums2 * math.sin(math.radians(angle))
-
-                x_o = x + self.linespacing * math.cos(math.radians(angle + (90 * self.Clockwise)))
-                y_o = y + self.linespacing * math.sin(math.radians(angle + (90 * self.Clockwise)))
-                self.Clockwise = self.Clockwise * -1.0
-                print(x,"  ", y)
-                print(x_o, "   ", y_o)
-                df_holder.drop(df_holder.index, inplace=True)
-                df_holder.loc[-1] = [x_o, y_o, 0, line + 1, 0, angle + 180, indexBlocks + 1]
-                dfTempRest = pd.concat([df_holder, dfTempRest])
-            #Add this extra waypoint
+                list_extra = self.make_extra_waypoints(rowBlocks['Exterior'],x,y, angle)
+                list_extra2 = self.make_extra_waypoints(rowBlocks['Exterior'],x_o,y_o, angle)
+                for nums1 in list_extra:
+                    x = x  + nums1 * math.cos(math.radians(angle))
+                    y = y  + nums1 * math.sin(math.radians(angle))
+                    #x_o = x_o  + nums2* math.cos(math.radians(angle))
+                    #y_o = y_o  + nums2* math.sin(math.radians(angle))
+                    # dfTemp.loc[len(dfTemp)] = [x , y , 0, line, len(dfTemp), angle, idxblk]
+                for nums2 in list_extra2:
+                    x_o = x_o  + nums2* math.cos(math.radians(angle))
+                    y_o = y_o  + nums2* math.sin(math.radians(angle))
+                    df_holder.drop(df_holder.index, inplace=True)
+                    # df_holder.loc[-1] = [x_o , y_o , 0, line+1, 0, angle + 180, idxblk]
+                    # dfTempRest = pd.concat([df_holder , dfTempRest])
                 df = pd.concat([dfTemp, dfTempRest])
                 df = df.reset_index(drop=True)
-                df.loc[:, 'index'] = np.arange(len(df))
-
-            x = df.loc[len(df) - 1]["utmX"]
-            # End
-            y = df.loc[len(df) - 1]["utmY"]
-            list_extra = self.make_extra_waypoints(rowBlocks['Exterior'], x, y, angle + 180)
+                df.loc[:,'index'] = np.arange(len(df))
+            x = df.loc[len(df)-1]["utmX"]
+            y = df.loc[len(df)-1]["utmY"]
+            list_extra = self.make_extra_waypoints(rowBlocks['Exterior'],x,y, angle + 180)
             for nums1 in list_extra:
-                x = x + nums1 * math.cos(math.radians(angle + 180))
-                y = y + nums1 * math.sin(math.radians(angle + 180))
-                # x_o = x_o  + nums2* math.cos(math.radians(angle))
-                # y_o = y_o  + nums2* math.sin(math.radians(angle))
-                df.loc[len(df)] = [x, y, 0, df['line'].max(), len(df), angle + 180, indexBlocks + 1]
-
-            np.savetxt(filePointsBlock, df.values, fmt='%1.10f')
-            self.UTMtoLL(filePointsBlock, type, prefix)
+                x = x  + nums1 * math.cos(math.radians(angle + 180))
+                y = y  + nums1 * math.sin(math.radians(angle + 180))
+                #x_o = x_o  + nums2* math.cos(math.radians(angle))
+                #y_o = y_o  + nums2* math.sin(math.radians(angle))
+                # df.loc[len(df)] = [x , y , 0, df['line'].max(), len(df), angle + 180, idxblk]
+        np.savetxt(filePointsBlock, df.values, fmt='%1.10f')
+        self.UTMtoLL(filePointsBlock, type, prefix)
 
 
 # Class for Quality Check
