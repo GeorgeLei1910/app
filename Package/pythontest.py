@@ -20,6 +20,7 @@ from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon, LineString, LinearRing
 import simplejson
 import urllib
+import time
 
 # LatLong- UTM conversion..h
 # definitions for lat/long to UTM and UTM to lat/lng conversions
@@ -402,6 +403,7 @@ class FlightPlanning(object):
         export_data(filePointsFlightsLL, prefixflight)
 
     # Makes grid when "Create and Show Block" is pressed
+    # always put i and j before making point
     def makeGrid(self, type):
         # Type 1 is flight lines, Type 2 is tie lines
         self.wayPoints.drop(self.wayPoints.index, inplace=True)
@@ -430,38 +432,42 @@ class FlightPlanning(object):
         path = LineString([point, point2])
         straight = False
         #If First line
-        if (path.intersects(polygon) == True):
-            straight = True
+        angle = (angle + 360) % 360
         lines = 1
         i = 0
-        # f= open(os.path.dirname(self.filepath)+"/tempPoints.txt","w+")
+        if (path.intersects(polygon) == True):
+            straight = True
+            # Comment below to find the start point of this
+            # i += 1
+            # self.wayPoints.loc[i] = [x, y, 0, lines, i, angle]
         # Draws the flight lines of the Flight Plan
         # Too many lines can Freeze up the app.
+        # Making Waypoints Forwards
         while (True):
             distance = polygon.exterior.distance(point)
             print("distance", distance)
             print("angle", angle)
             print("lines", lines)
+            # If it is the line proper
             if (straight):
+                #Next Point program creates
                 x = round(math.cos(math.radians(angle)) * spacing + x, 10)
                 y = round(math.sin(math.radians(angle)) * spacing + y, 10)
+                #Span and check if this path touches the survey. If not, that is the end of the survey
                 point = Point(x, y)
                 point2 = Point(x + math.cos(math.radians(angle)) *
                                LARGE_NUMBER, y + math.sin(math.radians(angle)) * LARGE_NUMBER)
-                point3 = Point(x + math.cos(math.radians(angle + 180)) *
-                               LARGE_NUMBER, y + math.sin(math.radians(angle + 180)) * LARGE_NUMBER)
-                path = LineString([point2, point, point3])
-                if (path.intersects(polygon) == False):
-                    break
-                else:
+                path = LineString([point2, point])
+                # if the distance from survey's edge moving forward is less than previous distance
+                # or the path from point to infinity in direction intersects the polygon
+                if (polygon.exterior.distance(point) <= distance or path.intersects(polygon)):
+                    straight = True
                     i += 1
-                    path = LineString([point2, point])
-                    if (polygon.exterior.distance(point) <= distance or path.intersects(polygon)):
-                        straight = True
-                    else:
-                        straight = False
-                self.wayPoints.loc[i] = [x, y, 0, lines, i, angle]
+                    self.wayPoints.loc[i] = [x, y, 0, lines, i, angle]
+                else:
+                    straight = False
                 distance = polygon.exterior.distance(point)
+            # Turning function
             else:
                 lines += 1
                 if ((lines % 2) == 1):
@@ -470,20 +476,24 @@ class FlightPlanning(object):
                     angle = angle - 90 * self.Clockwise
                 x = round(math.cos(math.radians(angle)) * line_spacing + x, 10)
                 y = round(math.sin(math.radians(angle)) * line_spacing + y, 10)
-                point = Point(x, y)
-                self.wayPoints.loc[i] = [x, y, 0, lines, i, angle]
-                i += 1
+                # point = Point(x, y)
+                # i += 1
+                # self.wayPoints.loc[i] = [x, y, 0, lines, i, angle]
                 if ((lines % 2) == 1):
                     angle = angle + 90 * self.Clockwise
                 else:
                     angle = angle - 90 * self.Clockwise
+                angle = (angle + 360) % 360
                 x = round(math.cos(math.radians(angle)) * spacing + x, 10)
                 y = round(math.sin(math.radians(angle)) * spacing + y, 10)
                 point = Point(x, y)
-                self.wayPoints.loc[i] = [x, y, 0, lines, i, angle]
                 i += 1
-                point = Point(x, y)
-                distance = polygon.exterior.distance(point)
+                self.wayPoints.loc[i] = [x, y, 0, lines, i, angle]
+                point2 = Point(x + math.cos(math.radians(angle)) *
+                               LARGE_NUMBER, y + math.sin(math.radians(angle)) * LARGE_NUMBER)
+                path = LineString([point2, point])
+                if (path.intersects(polygon) == False):
+                    break
                 straight = True
         if (type == 1):
             angle = self.dirAngle + 180
@@ -498,8 +508,16 @@ class FlightPlanning(object):
             x = self.tie_init_point[0]
             y = self.tie_init_point[1]
         self.Clockwise = self.Clockwise * -1.0
-        j = 0
-        lines = 0
+        point = Point(x, y)
+        point2 = Point(x + math.cos(math.radians(angle)) * LARGE_NUMBER,
+                       y + math.sin(math.radians(angle)) * LARGE_NUMBER)
+        path = LineString([point, point2])
+        straight = False
+        if (path.intersects(polygon) == True):
+            straight = True
+        j = 1
+        lines = 1
+        # Going Backwards
         while (True):
             distance = polygon.exterior.distance(point)
             print("distance", distance)
@@ -511,50 +529,48 @@ class FlightPlanning(object):
                 point = Point(x, y)
                 point2 = Point(x + math.cos(math.radians(angle)) *
                                LARGE_NUMBER, y + math.sin(math.radians(angle)) * LARGE_NUMBER)
-                point3 = Point(x + math.cos(math.radians(angle + 180)) *
-                               LARGE_NUMBER, y + math.sin(math.radians(angle + 180)) * LARGE_NUMBER)
-                path = LineString([point2, point, point3])
-                if (path.intersects(polygon) == False):
-                    break
+                path = LineString([point2, point])
+                if (polygon.exterior.distance(point) <= distance or path.intersects(polygon)):
+                    straight = True
+                    i += 1
+                    j -= 1
+                    self.wayPoints.loc[i] = [x, y, 0, lines, j, (angle + 180) % 360]
                 else:
-                    path = LineString([point2, point])
-                    if (polygon.exterior.distance(point) <= distance or path.intersects(polygon)):
-                        straight = True
-                    else:
-                        straight = False
-                self.wayPoints.loc[i] = [x, y, 0, lines, j, angle]
-                i += 1
-                j -= 1
+                    straight = False
                 distance = polygon.exterior.distance(point)
             else:
                 lines -= 1
-                if ((lines % 2) == 1):
+                if ((lines % 2) == 0):
                     angle = angle + 90 * self.Clockwise
                 else:
                     angle = angle - 90 * self.Clockwise
                 x = round(math.cos(math.radians(angle)) * line_spacing + x, 10)
                 y = round(math.sin(math.radians(angle)) * line_spacing + y, 10)
-                point = Point(x, y)
-                self.wayPoints.loc[i] = [x, y, 0, lines, j, angle]
-                i += 1
-                j -= 1
-                if ((lines % 2) == 1):
+                # point = Point(x, y)
+                # i += 1
+                # j -= 1
+                # self.wayPoints.loc[i] = [x, y, 0, lines, j, angle - 180]
+                if ((lines % 2) == 0):
                     angle = angle + 90 * self.Clockwise
                 else:
                     angle = angle - 90 * self.Clockwise
                 x = round(math.cos(math.radians(angle)) * spacing + x, 10)
                 y = round(math.sin(math.radians(angle)) * spacing + y, 10)
                 point = Point(x, y)
-                self.wayPoints.loc[i] = [x, y, 0, lines, j, angle]
                 i += 1
                 j -= 1
-                point = Point(x, y)
-                distance = polygon.exterior.distance(point)
-                straight = True
-        # self.wayPoints.sort_values(by=['index'])
+                self.wayPoints.loc[i] = [x, y, 0, lines, j, (angle + 180) % 360]
+                point2 = Point(x + math.cos(math.radians(angle)) *
+                               LARGE_NUMBER, y + math.sin(math.radians(angle)) * LARGE_NUMBER)
+                path = LineString([point2, point])
+                if (path.intersects(polygon)):
+                    straight = True
+                else:
+                    break
+                    # self.wayPoints.sort_values(by=['index'])
         # print(self.wayPoints.values)
         self.wayPoints.loc[:, 'line'] -= (lines - 1)
-        self.wayPoints.loc[:, 'index'] -= j
+        self.wayPoints.loc[:, 'index'] -= (j - 1)
         self.wayPoints = self.wayPoints.sort_values('index')
         ss = self.filepath.split('/')
         print(ss)
@@ -600,45 +616,39 @@ class FlightPlanning(object):
         # dist += math.sqrt((exterior[1][0]-x)**2 + (exterior[1][1]-y)**2)
         #First Point of line
         point = Point(x, y)
-        polygonBlock = Polygon(exterior)
-        dist = 5
+        x = x + self.spacing * math.cos(np.radians(dir))
+        y = y + self.spacing * math.sin(np.radians(dir))
+        point2 = Point(x,y)
+        path = LineString([point, point2])
         # Point that is the spacing length in direction from point
-        point2 = Point(x + dist * self.spacing * math.cos(np.radians(dir)),
-                       y + dist * self.spacing * math.sin(np.radians(dir)))
         #while point2 is still in the polygon, move it until it is out of the polygon.
         # What about when it just slices the block shape? Doesn't because it's always a straight line.
-        while(point2.within(polygonBlock)):
-            dist += 1
-            point2 = Point(x + dist * self.spacing * math.cos(np.radians(dir)),
-                           y + dist * self.spacing * math.sin(np.radians(dir)))
 
-        # print("Line that crosses: ", point, point2)
 
-        path = LineString([point, point2])
-        #Huh??
-        intersects = path.intersects(path)
-        size = len(exterior)
         #Iterate through all the boundaries of the block and see which edge intersects the line.
         #Also check if it is right on the boundary. Substitute.
         # print("Iterating through sides")
+        size = len(exterior)
+        dist = LARGE_NUMBER
         for i in range(1, size + 1):
             point3 = Point(exterior[i % size][0], exterior[i % size][1])
             point4 = Point(exterior[(i + 1) % size][0], exterior[(i + 1) % size][1])
             # print(point3, point4)
             path2 = LineString([point3, point4])
             if (path2.intersects(path)):
-                # print("--->", point3, point4)
+                print(point3, point4)
                 ac = i
                 break
 
 
+
         # print("ac", ac)
         # print("---->", x, y)
-        yLine1 = exterior[ac % size][1]
-        yLine2 = exterior[(ac + 1) % size][1]
-
-        xLine1 = exterior[ac % size][0]
-        xLine2 = exterior[(ac + 1) % size][0]
+        # yLine1 = exterior[ac % size][1]
+        # yLine2 = exterior[(ac + 1) % size][1]
+        #
+        # xLine1 = exterior[ac % size][0]
+        # xLine2 = exterior[(ac + 1) % size][0]
 
         # p1 + ta(p2 - p1) =
         # p3 + tb(p4 - p3)
@@ -662,6 +672,8 @@ class FlightPlanning(object):
         new_dist = np.sqrt((y_ret - y) ** 2 + (x_ret - x) ** 2)
 
         return (x_ret, y_ret, new_dist)
+
+
     def make_extra_waypoints(self, blockExterior, x, y, angle):
         pitch = self.spacing
         (x_ret, y_ret, dist) = self.find_intersection(blockExterior, x, y, angle)
@@ -676,7 +688,7 @@ class FlightPlanning(object):
         length = dist + oslength
         # print(length)
         waypoints = list()
-        nums_of_points = math.ceil(length / pitch)
+        # nums_of_points = math.ceil(length / pitch)
         # extra_point = length % pitch
         # print("nums_of_points", pitch)
         # pitch = length / nums_of_points
@@ -730,26 +742,57 @@ class FlightPlanning(object):
             dataFilename = prefix + "-waypointsDataBlockTieLines.txt"
             using_angle = self.dirAngle + 90
 
-
+        #TODO: Heading instead of angle
         dfWayPoints.columns = ["utmX", "utmY", "elevation", "line", "index", "angle"]
         #add 'Block' Column and make last column = -1
         dfWayPoints['Block'] = np.ones(len(dfWayPoints["utmX"])) * -1
         # print(dfListOfBlock[dfListOfBlock['Name'] == "Flight1"]['Exterior'])
         # If Point is within the block
         #create another polygon with the
-        for index, row in dfWayPoints.iterrows():
-            for indexBlocks, rowBlocks in dfListOfBlock.iterrows():
-                polygonBlock = Polygon(rowBlocks['Exterior'])
-                boundBlock = polygonBlock.bounds
-                point = Point(row["utmX"], row["utmY"])
-                if point.within(polygonBlock):
-                    row['line']
-                    if row["Block"] == -1:
-                        row["Block"] = float(rowBlocks['Name'][5:])
-                    # else:
-                    #     break
-                        # If the waypoint is not in the polygon block?
-        print(dfWayPoints)
+        # If the waypoint is not in the polygon block?
+        #Fill in the gaps (Since the function above only fills the points in the polygon, I will fill the points that are in between them and
+        # outside of the polygon
+        for indexBlocks, rowBlocks in dfListOfBlock.iterrows():
+            polygonBlock = Polygon(rowBlocks['Exterior'])
+            borders = polygonBlock.bounds
+            polygonBlockBounds = Polygon.from_bounds(borders[0],borders[1],borders[2],borders[3])
+            for i in range(1, int(dfWayPoints['line'].max())):
+                dfTemp = dfWayPoints.loc[dfWayPoints['line'] == i]
+                lineend = len(dfTemp.index)
+                # Check if line intersects
+                point = Point(dfTemp.iat[0, 0], dfTemp.iat[0, 1])
+                point2 = Point(dfTemp.iat[lineend - 1, 0], dfTemp.iat[lineend - 1, 1])
+                line = LineString([point2, point])
+                if (line.intersects(polygonBlock)):
+                    beg = dfTemp.iat[0, 4] - 1
+                    first = 0
+                    last = 0
+                    for j in reversed(range(0, lineend)):
+                        point3 = Point(dfTemp.iat[j, 0],dfTemp.iat[j, 1])
+                        line = LineString([point2, point3])
+                        last = j
+                        if line.intersects(polygonBlock):
+                            break
+                    for j in range(0, lineend):
+                        point3 = Point(dfTemp.iat[j, 0],dfTemp.iat[j, 1])
+                        line = LineString([point, point3])
+                        first = j
+                        if line.intersects(polygonBlock):
+                            break
+                    print(beg, first, last)
+                    if first < last:
+                        for j in range(int(first + beg), int(last + beg + 1)):
+                            # print("Before", dfWayPoints.iat[j, 6])
+                            point = Point(dfWayPoints.iat[j,0],dfWayPoints.iat[j,1])
+                            if dfWayPoints.iat[j, 6] == -1.0:# and point.within(polygonBlockBounds):
+                                dfWayPoints.iat[j, 6] = float(rowBlocks['Name'][5:])
+                                # print("After", dfWayPoints.iat[j, 6])
+
+                #     print(i)
+
+
+
+        # print(dfWayPoints)
         # file = os.path.dirname(self.filepath) + "/waypointsData2.txt"
         # np.savetxt(file, dfWayPoints.values, fmt='%1.10f')
         # Name, Exterior
@@ -766,69 +809,66 @@ class FlightPlanning(object):
             polygonBlock = Polygon(rowBlocks['Exterior'])
             df = df.reset_index(drop=True)
             df_holder = pd.DataFrame(columns=["utmX", "utmY", "elevation", "line", "index", "angle", "Block"])
-            # print(df)
-            j = 0
-            angleOrig = float(df["angle"][j])
-            while (((angleOrig - using_angle) / 180).is_integer() == False):
-                j += 1
-                angleOrig = float(df["angle"][j])
-            np.savetxt(filePointsBlock, df.values, fmt='%1.10f')
-            #Get the first coordinate of the Lines (First nearest Start)
+            # j = 0
+            # angleOrig = float(df["angle"][j])
+            # while (((angleOrig - using_angle) / 180).is_integer() == False):
+            #     j += 1
+            #     angleOrig = float(df["angle"][j])
+            # np.savetxt(filePointsBlock, df.values, fmt='%1.10f')
+            # #Get the first coordinate of the Lines (First nearest Start)
             x = df.loc[df['line'] == 1]["utmX"][0]
             y = df.loc[df['line'] == 1]["utmY"][0]
-            print(rowBlocks['Exterior'])
-            print(x, y, angleOrig)
-            #Makes Extra Waypoints for Beginning
-            list_extra = self.make_extra_waypoints(rowBlocks['Exterior'], x, y, angleOrig + 180)
-            for nums1 in list_extra:
-                x = x  + nums1 * math.cos(math.radians(angleOrig+180))
-                y = y  + nums1 * math.sin(math.radians(angleOrig+180))
-                df_holder.drop(df_holder.index, inplace=True)
-                # df_holder.loc[-1] = [x , y , 0, 1, 0, angleOrig, idxblk]
-                # df = pd.concat([df_holder , df])
-            #Makes Extra Waypoints for Middle
+            # print(rowBlocks['Exterior'])
+            # print(x, y, angleOrig)
+            # #Makes Extra Waypoints for Beginning
+            # list_extra = self.make_extra_waypoints(rowBlocks['Exterior'], x, y, angleOrig + 180)
+            # for nums1 in list_extra:
+            #     x = x  + nums1 * math.cos(math.radians(angleOrig+180))
+            #     y = y  + nums1 * math.sin(math.radians(angleOrig+180))
+            #     df_holder.drop(df_holder.index, inplace=True)
+            #     df_holder.loc[-1] = [x , y , 0, 1, 0, angleOrig, idxblk]
+            #     df = pd.concat([df_holder , df])
+            # #Makes Extra Waypoints for Middle
             for line in range(1, int(df['line'].max())):
                 dfTemp = df.loc[df['line'] <= line]
                 dfTempRest = pd.concat([dfTemp, df]).drop_duplicates(keep=False)
                 dfTempRest = dfTempRest.reset_index(drop=True)
-                print("=======LINE======>>", line)
-                dfTemp = dfTemp.reset_index(drop=True)
-                angle = angleOrig + 180 * ((line % 2) - 1)
-                print("=======angle======>>",angle)
-                newSpacing = self.spacing
+            #     print("=======LINE======>>", line)
+            #     dfTemp = dfTemp.reset_index(drop=True)
+            #     angle = angleOrig + 180 * ((line % 2) - 1)
+            #     print("=======angle======>>",angle)
                 x = dfTemp["utmX"][len(dfTemp)-1]
                 y = dfTemp["utmY"][len(dfTemp)-1]
                 x_o = dfTempRest["utmX"][0]
                 y_o = dfTempRest["utmY"][0]
-                list_extra = self.make_extra_waypoints(rowBlocks['Exterior'],x,y, angle)
-                list_extra2 = self.make_extra_waypoints(rowBlocks['Exterior'],x_o,y_o, angle)
-                for nums1 in list_extra:
-                    x = x  + nums1 * math.cos(math.radians(angle))
-                    y = y  + nums1 * math.sin(math.radians(angle))
-                    #x_o = x_o  + nums2* math.cos(math.radians(angle))
-                    #y_o = y_o  + nums2* math.sin(math.radians(angle))
-                    # dfTemp.loc[len(dfTemp)] = [x , y , 0, line, len(dfTemp), angle, idxblk]
-                for nums2 in list_extra2:
-                    x_o = x_o  + nums2* math.cos(math.radians(angle))
-                    y_o = y_o  + nums2* math.sin(math.radians(angle))
-                    df_holder.drop(df_holder.index, inplace=True)
-                    # df_holder.loc[-1] = [x_o , y_o , 0, line+1, 0, angle + 180, idxblk]
-                    # dfTempRest = pd.concat([df_holder , dfTempRest])
-                df = pd.concat([dfTemp, dfTempRest])
-                df = df.reset_index(drop=True)
-                df.loc[:,'index'] = np.arange(len(df))
-            x = df.loc[len(df)-1]["utmX"]
-            y = df.loc[len(df)-1]["utmY"]
-            list_extra = self.make_extra_waypoints(rowBlocks['Exterior'],x,y, angle + 180)
-            for nums1 in list_extra:
-                x = x  + nums1 * math.cos(math.radians(angle + 180))
-                y = y  + nums1 * math.sin(math.radians(angle + 180))
-                #x_o = x_o  + nums2* math.cos(math.radians(angle))
-                #y_o = y_o  + nums2* math.sin(math.radians(angle))
-                # df.loc[len(df)] = [x , y , 0, df['line'].max(), len(df), angle + 180, idxblk]
+            #     list_extra = self.make_extra_waypoints(rowBlocks['Exterior'],x,y, angle)
+            #     list_extra2 = self.make_extra_waypoints(rowBlocks['Exterior'],x_o,y_o, angle)
+            #     print(list_extra)
+            #     print(list_extra2)
+            #     for nums1 in list_extra:
+            #         x = x  + nums1 * math.cos(math.radians(angle))
+            #         y = y  + nums1 * math.sin(math.radians(angle))
+            #         dfTemp.loc[len(dfTemp)] = [x , y , 0, line, len(dfTemp), angle, idxblk]
+            #     for nums2 in list_extra2:
+            #         x_o = x_o  + nums2* math.cos(math.radians(angle))
+            #         y_o = y_o  + nums2* math.sin(math.radians(angle))
+            #         df_holder.drop(df_holder.index, inplace=True)
+            #         df_holder.loc[-1] = [x_o , y_o , 0, line+1, 0, angle + 180, idxblk]
+            #         dfTempRest = pd.concat([df_holder , dfTempRest])
+            #     df = pd.concat([dfTemp, dfTempRest])
+            #     df = df.reset_index(drop=True)
+            #     df.loc[:,'index'] = np.arange(len(df))
+            # x = df.loc[len(df)-1]["utmX"]
+            # y = df.loc[len(df)-1]["utmY"]
+            # list_extra = self.make_extra_waypoints(rowBlocks['Exterior'],x,y, angle + 180)
+            # for nums1 in list_extra:
+            #     x = x  + nums1 * math.cos(math.radians(angle + 180))
+            #     y = y  + nums1 * math.sin(math.radians(angle + 180))
+            #     #x_o = x_o  + nums2* math.cos(math.radians(angle))
+            #     #y_o = y_o  + nums2* math.sin(math.radians(angle))
+            #     df.loc[len(df)] = [x , y , 0, df['line'].max(), len(df), angle + 180, idxblk]
         np.savetxt(filePointsBlock, df.values, fmt='%1.10f')
         self.UTMtoLL(filePointsBlock, type, prefix)
-
 
 # Class for Quality Check
 class QualityCheck(object):
