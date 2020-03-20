@@ -616,10 +616,14 @@ class FlightPlanning(object):
         # dist = math.sqrt((exterior[0][0]-x)**2 + (exterior[0][1]-y)**2)
         # dist += math.sqrt((exterior[1][0]-x)**2 + (exterior[1][1]-y)**2)
         #First Point of line
+        polygon = Polygon(exterior)
         point = Point(x, y)
-        x = x + self.spacing * math.cos(np.radians(dir))
-        y = y + self.spacing * math.sin(np.radians(dir))
         point2 = Point(x,y)
+        #Find a point outside the polygon
+        while(point2.within(polygon)):
+            x = x + self.spacing * math.cos(np.radians(dir))
+            y = y + self.spacing * math.sin(np.radians(dir))
+            point2 = Point(x,y)
         path = LineString([point, point2])
         # Point that is the spacing length in direction from point
         #while point2 is still in the polygon, move it until it is out of the polygon.
@@ -630,7 +634,6 @@ class FlightPlanning(object):
         #Also check if it is right on the boundary. Substitute.
         # print("Iterating through sides")
         size = len(exterior)
-        dist = LARGE_NUMBER
         for i in range(1, size + 1):
             point3 = Point(exterior[i % size][0], exterior[i % size][1])
             point4 = Point(exterior[(i + 1) % size][0], exterior[(i + 1) % size][1])
@@ -670,13 +673,14 @@ class FlightPlanning(object):
         tb = tb / ((x4 - x3)*(y1 - y2) - (x1 - x2)*(y4 - y3))
         x_ret = x3 + tb * (x4 - x3)
         y_ret = y3 + tb * (y4 - y3)
-        new_dist = np.sqrt((y_ret - y) ** 2 + (x_ret - x) ** 2)
+
+        new_dist = np.sqrt((y_ret - y1) ** 2 + (x_ret - x1) ** 2)
 
         return (x_ret, y_ret, new_dist)
 
 
     def make_extra_waypoints(self, blockExterior, x, y, angle):
-        pitch = self.spacing
+
         (x_ret, y_ret, dist) = self.find_intersection(blockExterior, x, y, angle)
         surveyExterior = [[float(val[0]), float(val[1])] for val in self.dfPolyganUTM.values]
         surveyPolygon = Polygon(surveyExterior)
@@ -810,64 +814,64 @@ class FlightPlanning(object):
             polygonBlock = Polygon(rowBlocks['Exterior'])
             df = df.reset_index(drop=True)
             df_holder = pd.DataFrame(columns=["utmX", "utmY", "elevation", "line", "index", "angle", "Block"])
-            # j = 0
-            # angleOrig = float(df["angle"][j])
-            # while (((angleOrig - using_angle) / 180).is_integer() == False):
-            #     j += 1
-            #     angleOrig = float(df["angle"][j])
+            j = 0
+            angleOrig = float(df["angle"][j])
+            while (((angleOrig - using_angle) / 180).is_integer() == False):
+                j += 1
+                angleOrig = float(df["angle"][j])
             # np.savetxt(filePointsBlock, df.values, fmt='%1.10f')
             # #Get the first coordinate of the Lines (First nearest Start)
             x = df.loc[df['line'] == 1]["utmX"][0]
             y = df.loc[df['line'] == 1]["utmY"][0]
-            # print(rowBlocks['Exterior'])
-            # print(x, y, angleOrig)
-            # #Makes Extra Waypoints for Beginning
-            # list_extra = self.make_extra_waypoints(rowBlocks['Exterior'], x, y, angleOrig + 180)
-            # for nums1 in list_extra:
-            #     x = x  + nums1 * math.cos(math.radians(angleOrig+180))
-            #     y = y  + nums1 * math.sin(math.radians(angleOrig+180))
-            #     df_holder.drop(df_holder.index, inplace=True)
-            #     df_holder.loc[-1] = [x , y , 0, 1, 0, angleOrig, idxblk]
-            #     df = pd.concat([df_holder , df])
-            # #Makes Extra Waypoints for Middle
+            print(rowBlocks['Exterior'])
+            print(x, y, angleOrig)
+            #Makes Extra Waypoints for Beginning
+            list_extra = self.make_extra_waypoints(rowBlocks['Exterior'], x, y, angleOrig + 180)
+            for nums1 in list_extra:
+                x = x  + nums1 * math.cos(math.radians(angleOrig+180))
+                y = y  + nums1 * math.sin(math.radians(angleOrig+180))
+                df_holder.drop(df_holder.index, inplace=True)
+                df_holder.loc[-1] = [x , y , 0, 1, 0, angleOrig, idxblk]
+                df = pd.concat([df_holder , df])
+            #Makes Extra Waypoints for Middle
             for line in range(1, int(df['line'].max())):
                 dfTemp = df.loc[df['line'] <= line]
                 dfTempRest = pd.concat([dfTemp, df]).drop_duplicates(keep=False)
                 dfTempRest = dfTempRest.reset_index(drop=True)
-            #     print("=======LINE======>>", line)
-            #     dfTemp = dfTemp.reset_index(drop=True)
-            #     angle = angleOrig + 180 * ((line % 2) - 1)
-            #     print("=======angle======>>",angle)
+                print("=======LINE======>>", line)
+                dfTemp = dfTemp.reset_index(drop=True)
+                angle = angleOrig + 180 * ((line % 2) - 1)
+                print("=======angle======>>",angle)
                 x = dfTemp["utmX"][len(dfTemp)-1]
                 y = dfTemp["utmY"][len(dfTemp)-1]
                 x_o = dfTempRest["utmX"][0]
                 y_o = dfTempRest["utmY"][0]
-            #     list_extra = self.make_extra_waypoints(rowBlocks['Exterior'],x,y, angle)
-            #     list_extra2 = self.make_extra_waypoints(rowBlocks['Exterior'],x_o,y_o, angle)
-            #     print(list_extra)
-            #     print(list_extra2)
-            #     for nums1 in list_extra:
-            #         x = x  + nums1 * math.cos(math.radians(angle))
-            #         y = y  + nums1 * math.sin(math.radians(angle))
-            #         dfTemp.loc[len(dfTemp)] = [x , y , 0, line, len(dfTemp), angle, idxblk]
-            #     for nums2 in list_extra2:
-            #         x_o = x_o  + nums2* math.cos(math.radians(angle))
-            #         y_o = y_o  + nums2* math.sin(math.radians(angle))
-            #         df_holder.drop(df_holder.index, inplace=True)
-            #         df_holder.loc[-1] = [x_o , y_o , 0, line+1, 0, angle + 180, idxblk]
-            #         dfTempRest = pd.concat([df_holder , dfTempRest])
-            #     df = pd.concat([dfTemp, dfTempRest])
-            #     df = df.reset_index(drop=True)
-            #     df.loc[:,'index'] = np.arange(len(df))
-            # x = df.loc[len(df)-1]["utmX"]
-            # y = df.loc[len(df)-1]["utmY"]
-            # list_extra = self.make_extra_waypoints(rowBlocks['Exterior'],x,y, angle + 180)
-            # for nums1 in list_extra:
-            #     x = x  + nums1 * math.cos(math.radians(angle + 180))
-            #     y = y  + nums1 * math.sin(math.radians(angle + 180))
-            #     #x_o = x_o  + nums2* math.cos(math.radians(angle))
-            #     #y_o = y_o  + nums2* math.sin(math.radians(angle))
-            #     df.loc[len(df)] = [x , y , 0, df['line'].max(), len(df), angle + 180, idxblk]
+                list_extra = self.make_extra_waypoints(rowBlocks['Exterior'],x,y, angle)
+                list_extra2 = self.make_extra_waypoints(rowBlocks['Exterior'],x_o,y_o, angle)
+                print(list_extra)
+                print(list_extra2)
+                for nums1 in list_extra:
+                    x = x  + nums1 * math.cos(math.radians(angle))
+                    y = y  + nums1 * math.sin(math.radians(angle))
+                    dfTemp.loc[len(dfTemp)] = [x , y , 0, line, len(dfTemp), angle, idxblk]
+                for nums2 in list_extra2:
+                    x_o = x_o  + nums2* math.cos(math.radians(angle))
+                    y_o = y_o  + nums2* math.sin(math.radians(angle))
+                    df_holder.drop(df_holder.index, inplace=True)
+                    df_holder.loc[-1] = [x_o , y_o , 0, line+1, 0, angle + 180, idxblk]
+                    dfTempRest = pd.concat([df_holder , dfTempRest])
+                df = pd.concat([dfTemp, dfTempRest])
+                df = df.reset_index(drop=True)
+                df.loc[:,'index'] = np.arange(len(df))
+            x = df.loc[len(df)-1]["utmX"]
+            y = df.loc[len(df)-1]["utmY"]
+            list_extra = self.make_extra_waypoints(rowBlocks['Exterior'],x,y, angle + 180)
+            for nums1 in list_extra:
+                x = x  + nums1 * math.cos(math.radians(angle + 180))
+                y = y  + nums1 * math.sin(math.radians(angle + 180))
+                #x_o = x_o  + nums2* math.cos(math.radians(angle))
+                #y_o = y_o  + nums2* math.sin(math.radians(angle))
+                df.loc[len(df)] = [x , y , 0, df['line'].max(), len(df), angle + 180, idxblk]
         np.savetxt(filePointsBlock, df.values, fmt='%1.10f')
         self.UTMtoLL(filePointsBlock, type, prefix)
 
