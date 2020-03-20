@@ -450,23 +450,6 @@ class FlightPlanning(object):
             print("lines", lines)
             # If it is the line proper
             if (straight):
-                #Next Point program creates
-                # x = round(math.cos(math.radians(angle)) * spacing + x, 10)
-                # y = round(math.sin(math.radians(angle)) * spacing + y, 10)
-                # #Span and check if this path touches the survey. If not, that is the end of the survey
-                # point = Point(x, y)
-                # point2 = Point(x + math.cos(math.radians(angle)) *
-                #                LARGE_NUMBER, y + math.sin(math.radians(angle)) * LARGE_NUMBER)
-                # path = LineString([point2, point])
-                # # if the distance from survey's edge moving forward is less than previous distance
-                # # or the path from point to infinity in direction intersects the polygon
-                # if (polygon.exterior.distance(point) <= distance or path.intersects(polygon)):
-                #     straight = True
-                #     i += 1
-                #     self.wayPoints.loc[i] = [x, y, 0, lines, i, angle]
-                # else:
-                #     straight = False
-                # distance = polygon.exterior.distance(point)
                 x = round(math.cos(math.radians(angle)) * spacing + x, 10)
                 y = round(math.sin(math.radians(angle)) * spacing + y, 10)
                 point = Point(x, y)
@@ -488,32 +471,6 @@ class FlightPlanning(object):
                 distance = polygon.exterior.distance(point)
             # Turning function
             else:
-                # lines += 1
-                # if ((lines % 2) == 1):
-                #     angle = angle + 90 * self.Clockwise
-                # else:
-                #     angle = angle - 90 * self.Clockwise
-                # x = round(math.cos(math.radians(angle)) * line_spacing + x, 10)
-                # y = round(math.sin(math.radians(angle)) * line_spacing + y, 10)
-                # # point = Point(x, y)
-                # # i += 1
-                # # self.wayPoints.loc[i] = [x, y, 0, lines, i, angle]
-                # if ((lines % 2) == 1):
-                #     angle = angle + 90 * self.Clockwise
-                # else:
-                #     angle = angle - 90 * self.Clockwise
-                # angle = (angle + 360) % 360
-                # x = round(math.cos(math.radians(angle)) * spacing + x, 10)
-                # y = round(math.sin(math.radians(angle)) * spacing + y, 10)
-                # point = Point(x, y)
-                # i += 1
-                # self.wayPoints.loc[i] = [x, y, 0, lines, i, angle]
-                # point2 = Point(x + math.cos(math.radians(angle)) *
-                #                LARGE_NUMBER, y + math.sin(math.radians(angle)) * LARGE_NUMBER)
-                # path = LineString([point2, point])
-                # if (path.intersects(polygon) == False):
-                #     break
-                # straight = True
                 lines += 1
                 if ((lines % 2) == 1):
                     angle = angle + 90 * self.Clockwise
@@ -567,20 +524,6 @@ class FlightPlanning(object):
             print("angle", angle)
             print("lines", lines)
             if (straight):
-                # x = round(math.cos(math.radians(angle)) * spacing + x, 10)
-                # y = round(math.sin(math.radians(angle)) * spacing + y, 10)
-                # point = Point(x, y)
-                # point2 = Point(x + math.cos(math.radians(angle)) *
-                #                LARGE_NUMBER, y + math.sin(math.radians(angle)) * LARGE_NUMBER)
-                # path = LineString([point2, point])
-                # if (polygon.exterior.distance(point) <= distance or path.intersects(polygon)):
-                #     straight = True
-                #     i += 1
-                #     j -= 1
-                #     self.wayPoints.loc[i] = [x, y, 0, lines, j, (angle + 180) % 360]
-                # else:
-                #     straight = False
-                # distance = polygon.exterior.distance(point)
                 x = round(math.cos(math.radians(angle)) * spacing + x, 10)
                 y = round(math.sin(math.radians(angle)) * spacing + y, 10)
                 point = Point(x, y)
@@ -602,34 +545,6 @@ class FlightPlanning(object):
                         straight = False
                 distance = polygon.exterior.distance(point)
             else:
-                # lines -= 1
-                # if ((lines % 2) == 0):
-                #     angle = angle + 90 * self.Clockwise
-                # else:
-                #     angle = angle - 90 * self.Clockwise
-                # x = round(math.cos(math.radians(angle)) * line_spacing + x, 10)
-                # y = round(math.sin(math.radians(angle)) * line_spacing + y, 10)
-                # # point = Point(x, y)
-                # # i += 1
-                # # j -= 1
-                # # self.wayPoints.loc[i] = [x, y, 0, lines, j, angle - 180]
-                # if ((lines % 2) == 0):
-                #     angle = angle + 90 * self.Clockwise
-                # else:
-                #     angle = angle - 90 * self.Clockwise
-                # x = round(math.cos(math.radians(angle)) * spacing + x, 10)
-                # y = round(math.sin(math.radians(angle)) * spacing + y, 10)
-                # point = Point(x, y)
-                # i += 1
-                # j -= 1
-                # self.wayPoints.loc[i] = [x, y, 0, lines, j, (angle + 180) % 360]
-                # point2 = Point(x + math.cos(math.radians(angle)) *
-                #                LARGE_NUMBER, y + math.sin(math.radians(angle)) * LARGE_NUMBER)
-                # path = LineString([point2, point])
-                # if (path.intersects(polygon)):
-                #     straight = True
-                # else:
-                #     break
                 lines -= 1
                 if ((lines % 2) == 0):
                     angle = angle + 90 * self.Clockwise
