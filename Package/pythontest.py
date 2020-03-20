@@ -706,7 +706,18 @@ class FlightPlanning(object):
         # print("length of waypoints", len(waypoints))
         # waypoints.append(extra_point)
         return waypoints
-
+    def find_point_inside(self, point, point2, polygonBlock):
+        line = LineString([point, point2])
+        point3 = line.interpolate(0.5, normalized=True)
+        while (point3.within(polygonBlock) == False):
+            print(point3)
+            line = LineString([point, point3])
+            if line.intersects(polygonBlock):
+                point3 = line.interpolate(0.5, normalized=True)
+            else:
+                line = LineString([point2, point3])
+                point3 = line.interpolate(0.5, normalized=True)
+        return point3
     def createBlocks(self, type, block):
         # Function that Runs when Edit Block is running and Create BLock is pressed
         # Type 1 = Flight Lines, Type 2 = Tie lines
@@ -774,6 +785,7 @@ class FlightPlanning(object):
                 point = Point(dfTemp.iat[0, 0], dfTemp.iat[0, 1])
                 point2 = Point(dfTemp.iat[lineend - 1, 0], dfTemp.iat[lineend - 1, 1])
                 line = LineString([point2, point])
+                angle = dfTemp.iat[0, 5]
                 if (line.intersects(polygonBlock)):
                     beg = dfTemp.iat[0, 4] - 1
                     first = 0
@@ -783,6 +795,10 @@ class FlightPlanning(object):
                         line = LineString([point2, point3])
                         last = j
                         if line.intersects(polygonBlock):
+                            if not point3.within(polygonBlock):
+                                point4 = Point(dfTemp.iat[j + 1, 0], dfTemp.iat[j + 1, 1])
+                                point3 = self.find_point_inside(point4, point3, polygonBlock)
+                                dfWayPoints.loc[j + 1 + beg] = [point3.x, point3.y, 0, i, j + beg + 1, angle, float(rowBlocks['Name'][5:])]
                             point2 = point3
                             break
                     for j in range(0, lineend):
@@ -790,6 +806,10 @@ class FlightPlanning(object):
                         line = LineString([point, point3])
                         first = j
                         if line.intersects(polygonBlock):
+                            if not point3.within(polygonBlock):
+                                point4 = Point(dfTemp.iat[j - 1, 0], dfTemp.iat[j - 1, 1])
+                                point3 = self.find_point_inside(point4, point3, polygonBlock)
+                                dfWayPoints.loc[j - 1 + beg] = [point3.x, point3.y, 0, i, j + beg - 1, angle, float(rowBlocks['Name'][5:])]
                             point = point3
                             break
                     print(beg, first, last)
@@ -803,16 +823,7 @@ class FlightPlanning(object):
                     # If the line intersects but not points are inside the polygon, Find a point inside the polygon and make it a waypoint
                     else:
                         print("No points in thing")
-                        line = LineString([point, point2])
-                        point3 = line.interpolate(0.5, normalized=True)
-                        while (point3.within(polygonBlock) == False):
-                            print(point3)
-                            line = LineString([point, point3])
-                            if line.intersects(polygonBlock):
-                                point3 = line.interpolate(0.5, normalized=True)
-                            else:
-                                line = LineString([point2, point3])
-                                point3 = line.interpolate(0.5, normalized=True)
+                        point3 = self.find_point_inside(point, point2, polygonBlock)
                         angle = dfWayPoints.iat[int(last + beg), 5]
                         dfWayPoints.loc[int(last + beg)] = [point3.x, point3.y, 0, i, last + beg - 1, angle,
                                                             float(rowBlocks['Name'][5:])]
@@ -833,7 +844,6 @@ class FlightPlanning(object):
             # Add one to make the first one one
             df.loc[:, 'line'] -= (df['line'].min() - 1)
             df.loc[:, 'index'] = np.arange(len(df))
-            polygonBlock = Polygon(rowBlocks['Exterior'])
             df = df.reset_index(drop=True)
             df_holder = pd.DataFrame(columns=["utmX", "utmY", "elevation", "line", "index", "angle", "Block"])
             j = 0
@@ -863,9 +873,11 @@ class FlightPlanning(object):
                 print("=======LINE======>>", line)
                 dfTemp = dfTemp.reset_index(drop=True)
                 angle = angleOrig + 180 * ((line % 2) - 1)
+                angle = (angle + 360) % 360
                 print("=======angle======>>", angle)
                 x = dfTemp["utmX"][len(dfTemp) - 1]
                 y = dfTemp["utmY"][len(dfTemp) - 1]
+                print(x, y)
                 x_o = dfTempRest["utmX"][0]
                 y_o = dfTempRest["utmY"][0]
                 list_extra = self.make_extra_waypoints(rowBlocks['Exterior'], x, y, angle)
@@ -882,7 +894,6 @@ class FlightPlanning(object):
                     df_holder.drop(df_holder.index, inplace=True)
                     df_holder.loc[-1] = [x_o, y_o, 0, line + 1, 0, angle + 180, idxblk]
                     dfTempRest = pd.concat([df_holder, dfTempRest])
-
                 #Dot product to see if the next line is ahead
                 anglex = math.cos(math.radians(angle)) * (x_o - x)
                 angley = math.sin(math.radians(angle)) * (y_o - y)
@@ -903,7 +914,8 @@ class FlightPlanning(object):
                 y_dest = 0
                 mode = 0
                 if((fdegs % 90) > tolerance and (fdegs % 90) < (90 - tolerance)):
-                    if(vdot > 0 and int(angle2) % 4 == int(fdegs / 90) % 4) or (vdot < 0 and not (int(angle) + 2) % 4 == int(fdegs / 90) % 4):
+                    #TODO: This Conditiion is a little wonky.
+                    if(vdot > 0 and int(angle2) % 4 == int(fdegs / 90) % 4) or (vdot < 0 and not (int(angle2) + 2) % 4 == int(fdegs / 90) % 4):
                         x_orig = x
                         y_orig = y
                         x_dest = x_o
