@@ -1208,7 +1208,6 @@ def export_data(filename, prefixflight):
 # The main function of the python program
 if __name__ == "__main__":
     print("These are the arguments")
-    start = time.time_ns()
     parser = argparse.ArgumentParser()
     parser.add_argument('-m', '--model', type=str, default='FC',
                         help='graph type to graph')
@@ -1299,6 +1298,4 @@ if __name__ == "__main__":
     # if arg1 == "QualityNoTurn":
     #     QualityCheckNoTurns = QualityCheckNoTurns(filename)
     #     # QualityCheckNoTurns.flightMap()
-    end = time.time_ns()
     print("ENDER")
-    print("Time Taken: ", end - start, "nanoseconds")
