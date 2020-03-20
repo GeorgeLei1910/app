@@ -30,6 +30,8 @@ F5
 Survey_Canada
 B1, 2019-09-21
 F1
+Survey_Quarantine_Mar20
+B1, 2020-03-20
 Survey_test
 B1, 2019-08-12
 B2, 2019-08-12
@@ -134,6 +136,7 @@ F14
 F15
 Survey_  
 Survey_Isolation_Mar18
+B1, 2020-03-20
 Survey_Coronavirus_Mar16
 B5, 2020-03-18
 B3, 2020-03-17
