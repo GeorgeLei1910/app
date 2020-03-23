@@ -830,6 +830,112 @@ class FlightPlanning(object):
 
                 #     print(i)
 
+        # Compare the end of line n - 1 and start of n
+        # If the n is ahead, make n - 1 get to n
+        # Else make n - 1 get to n
+        # Check the length from the nearer point to the further point,
+        # if length is smaller than the length of remaining waypoints,
+        # Then add the remaining waypoints that are not further than the furthest point and add the remainder length + applicable overshoot
+        # else add all the remaining points and add the remainder distance +
+        # Make a loop that loops
+        for indexBlocks, rowBlocks in dfListOfBlock.iterrows():
+            dfPrev = dfWayPoints.loc[dfWayPoints['line'] == dfWayPoints['line'].min()]
+            idxblk = float(rowBlocks['Name'][5:])
+            for i in range(dfWayPoints['line'].min() + 1, dfWayPoints['line'].max() + 1):
+                dfCurr = dfWayPoints.loc[dfWayPoints['line'] == i]
+                for j in range(0, len(dfCurr)):
+                    start = j
+                    if dfCurr.iat[j, 6] == idxblk:
+                        break
+                for j in reversed(range(0, len(dfPrev))):
+                    end = j
+                    if dfPrev.iat[j, 6] == idxblk:
+                        break
+                # Get the Coordinates for the start and end and compare
+                x = dfPrev.iat[end, 0]
+                y = dfPrev.iat[end, 1]
+                x_o = dfCurr.iat[start, 0]
+                y_o = dfCurr.iat[start, 1]
+                anglex = math.cos(math.radians(angle)) * (x_o - x)
+                angley = math.sin(math.radians(angle)) * (y_o - y)
+                magnitude = math.sqrt((x_o - x) ** 2 + (y_o - y) ** 2)
+                #dot product of direction vector and vector(x, y to x_o, y_o)
+                vdot = (anglex + angley)/magnitude
+                #
+                fdegs = (math.degrees(math.acos((y_o - y) / magnitude)))
+                if(x_o < x):
+                    fdegs = ((-1 * fdegs) + 360) % 360
+                print("dot prod: ", vdot, "fdegs: ", fdegs)
+                if(vdot > 0):
+                    x_orig = x
+                    y_orig = y
+                    x_dest = x_o
+                    y_dest = y_o
+                    mode = 0
+                else:
+                    x_orig = x_o
+                    y_orig = y_o
+                    x_dest = x
+                    y_dest = y
+                    mode = 1
+                x_dest_barrier = LineString([Point(x_dest, 0 - LARGE_NUMBER), Point(x_dest, LARGE_NUMBER)])
+                y_dest_barrier = LineString([Point(0 - LARGE_NUMBER, y_dest), Point(LARGE_NUMBER, y_dest)])
+                point_o = Point([x_orig, y_orig])
+                print(x_dest, y_dest)
+                x1 = x_orig + LARGE_NUMBER * math.cos(np.radians(angle))
+                y1 = y_orig + LARGE_NUMBER * math.sin(np.radians(angle))
+                point = Point(x_orig, y_orig)
+                point2 = Point(x1, y1)
+                path = LineString([point, point2])
+                dist = 0
+                if path.intersects(x_dest_barrier) and path.intersects(y_dest_barrier):
+                    itsx = path.intersection(x_dest_barrier)
+                    itsy = path.intersection(y_dest_barrier)
+                    if(itsx.distance(point) < itsy.distance(point)):
+                        dist = itsx.distance(point)
+                    else:
+                        dist = itsy.distance(point)
+                elif path.intersects(x_dest_barrier):
+                    itsx = path.intersection(x_dest_barrier)
+                    dist = itsx.distance(point)
+                else :
+                    itsy = path.intersection(y_dest_barrier)
+                    dist = itsy.distance(point)
+                # Get distance of remaining waypoints and compare lengths to determine the number of waypoints to be added.
+                # path = last point of line
+                if mode == 0:
+                    point = Point([dfPrev.iat[-1, 0],dfPrev.iat[-1, 2]])
+                    path = LineString([point, point_o])
+                    if path.length > dist:
+                        add = math.floor(dist / self.spacing)
+                        rem = dist % self.spacing
+                    else:
+                        add = math.floor(path / self.spacing)
+                        rem = dist - path.length
+                    for j in range(end + 1, end + add + 1):
+                        idx = dfPrev.iat[j, 4]
+                        dfWayPoints.loc[dfWayPoints['index'] == idx] = idxblk
+                else:
+                    point = Point([dfCurr.iat[0, 0],dfCurr.iat[0, 2]])
+                    path = LineString([point, point_o])
+                    if path.length > dist:
+                        add = math.floor(dist / self.spacing)
+                        rem = dist % self.spacing
+                    else:
+                        add = math.floor(path / self.spacing)
+                        rem = dist - path.length
+                    for j in range(end + 1, end + add + 1):
+                        idx = dfPrev.iat[j, 4]
+                        dfWayPoints.loc[dfWayPoints['index'] == idx] = idxblk
+
+
+
+                
+
+
+
+
+
         # print(dfWayPoints)
         # file = os.path.dirname(self.filepath) + "/waypointsData2.txt"
         # np.savetxt(file, dfWayPoints.values, fmt='%1.10f')

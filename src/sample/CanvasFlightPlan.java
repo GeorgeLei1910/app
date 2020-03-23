@@ -92,6 +92,7 @@ public class CanvasFlightPlan  {
         1 = Show Survey Plan (Flight Lines only)
         2 = Show Survey Plan (Tie Lines only)
         3 = Show Survey Plan (Flight and Tie Lines)
+        4 = Show Block Tie Lines
      */
 
     public  CanvasFlightPlan(int type) {
@@ -115,16 +116,12 @@ public class CanvasFlightPlan  {
             case -2:
                 color = Color.NAVY;
                 planSettings = planSettingsFileFlight;
-                System.out.println(planSettings);
                 wayPoints = wayPointsFileFlight;
-                System.out.println(wayPoints);
                 break;
             case -1:
                 color = Color.NAVY;
                 planSettings = planSettingsFileBlock;
-                System.out.println(planSettings);
                 wayPoints = wayPointsFileBlock;
-                System.out.println(wayPoints);
             break;
             case 0:
                 color = Color.RED;
@@ -133,7 +130,6 @@ public class CanvasFlightPlan  {
                 blockPoints = planSettingsFileBlock;
             break;
             case 1:
-                System.out.println("Case 1");
                 planSettings = planSettingsFile;
                 wayPoints = wayPointsFile;
                 color = Color.BLUE;
@@ -153,6 +149,9 @@ public class CanvasFlightPlan  {
                 }
                 break;
             case 4:
+                color = Color.DARKCYAN;
+                planSettings = planSettingsFileBlock;
+                wayPoints = wayPointsFileBlockTie;
             break;
             default: planSettings = planSettingsFile;
             break;
@@ -435,6 +434,8 @@ public class CanvasFlightPlan  {
             br.close();
             String modeOfCanvas = "";
             switch(type){
+                case 4: modeOfCanvas = "Block Map of " + Controller.getPrefixToBlock() + " With Tie Lines";
+                break;
                 case 3: modeOfCanvas = "Survey Map of " + Controller.getCurSurvey() + " With Flight and Tie Lines";
                 break;
                 case 2: modeOfCanvas = "Survey Map of " + Controller.getCurSurvey() + " With Tie Lines";
@@ -478,6 +479,7 @@ public class CanvasFlightPlan  {
 
         undoPoints.setTranslateY(40);
         undoPoints.setTranslateX(-80);
+        undoPoints.setDisable(true);
         rerenderBlocksPlan.setTranslateY(40);
         rerenderBlocksPlan.setTranslateX(80);
 
@@ -514,6 +516,7 @@ public class CanvasFlightPlan  {
         EventHandler<javafx.scene.input.MouseEvent> eventHandlerScene =
                 e -> {
                 showBlocksPlan.setDisable(false);
+                undoPoints.setDisable(false);
                     try{
                         Color c =  COLORS.values()[(index_color-1) % 10].numVal;
                         graphics_context.setFill(c);
@@ -537,7 +540,7 @@ public class CanvasFlightPlan  {
         createBlock_mode_on.setOnAction((event) -> {
             createBlock_mode_on.setDisable(true);
             createBlock_mode_off.setDisable(false);
-
+            rerenderBlocksPlan.setDisable(true);
             scene.addEventHandler(javafx.scene.input.MouseEvent.MOUSE_CLICKED, eventHandlerScene);
         });
         undoPoints.setOnAction(event -> {

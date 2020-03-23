@@ -46,7 +46,7 @@ public class FlightPlanning {
     static Button editSurvey, editBlock, editFlight;
     static Button showSurvey, showBlock, showFlight;
 
-    private static Button showSurveyTieLines, showSurveyTieFlight;
+    private static Button showSurveyTieLines, showSurveyTieFlight, showBlockTie;
 
     //FUnction to build page
     private FlightPlanning(StackPane layout) {
@@ -64,8 +64,10 @@ public class FlightPlanning {
         editBlock = new Button("Edit Selected Block");
         editFlight = new Button("Edit Selected Flight");
         showSurvey = new Button("Show Flight Lines");
-        showBlock = new Button("Show Selected Block");
+        showBlock = new Button("Show Block Flight Plan");
         showFlight = new Button("Show Selected Flight");
+
+        showBlockTie = new Button("Show Block Tie Plan");
         
         showSurveyTieLines = new Button("Show Tie Lines");
         showSurveyTieFlight = new Button("Show Flight and Tie Lines");
@@ -101,6 +103,9 @@ public class FlightPlanning {
         showSurveyTieLines.setTranslateY(-60);
         showSurveyTieFlight.setTranslateX(-200);
         showSurveyTieFlight.setTranslateY(-30);
+
+        showBlockTie.setTranslateX(0);
+        showBlockTie.setTranslateY(-60);
         
         
         //
@@ -153,10 +158,12 @@ public class FlightPlanning {
         createBlock.disableProperty().bind(listSurveys.valueProperty().isNull());
         editBlock.disableProperty().bind(listBlocks.valueProperty().isNull());
         showBlock.disableProperty().bind(listBlocks.valueProperty().isNull());
+        showBlockTie.disableProperty().bind(listBlocks.valueProperty().isNull());
         listFlights.disableProperty().bind(listBlocks.valueProperty().isNull());
         createFlight.disableProperty().bind(listBlocks.valueProperty().isNull());
         editFlight.disableProperty().bind(listFlights.valueProperty().isNull());
         showFlight.disableProperty().bind(listFlights.valueProperty().isNull());
+        buttonExport.disableProperty().bind(listFlights.valueProperty().isNull());
 
         listSurveys.setOnAction(event -> {
             String curSurv = listSurveys.getValue().toString();
@@ -652,7 +659,6 @@ public class FlightPlanning {
                 }
             });
 
-
             btnOK.setPrefWidth(80);
             btnCancel.setPrefWidth(80);
             popUplayout.getChildren().add(text);
@@ -716,6 +722,9 @@ public class FlightPlanning {
         });
         showBlock.setOnAction(event -> {
             CanvasFlightPlan canvasFlightPlan = new CanvasFlightPlan(-1);
+        });
+        showBlockTie.setOnAction(event -> {
+            CanvasFlightPlan canvasFlightPlan = new CanvasFlightPlan(4);
         });
 
         createFlight.setOnAction(event -> {
@@ -1061,20 +1070,6 @@ public class FlightPlanning {
     }
     // Puts elements when Flight Planning tab is selected
     public void showElements(){
-//        layout.getChildren().add(btnShowBlkPlan);
-//        layout.getChildren().add(currentFlight);
-//        layout.getChildren().add(lineFromTxt);
-//        layout.getChildren().add(lineToTxt);
-//        layout.getChildren().add(applyBtn);
-//        layout.getChildren().add(arrow);
-//        layout.getChildren().add(applied);
-//        layout.getChildren().add(showFlightPlan);
-
-//        layout.getChildren().add(lineTieFromTxt);
-//        layout.getChildren().add(lineTieToTxt);
-//        layout.getChildren().add(txtTie);
-//        layout.getChildren().add(cbUseSeperateLines);
-//        layout.getChildren().add(seperateLines);
         layout.getChildren().add(listFlights);
         layout.getChildren().add(listBlocks);
         layout.getChildren().add(listSurveys);
@@ -1090,22 +1085,10 @@ public class FlightPlanning {
         layout.getChildren().add(showSurveyTieFlight);
         layout.getChildren().add(showSurveyTieLines);
         layout.getChildren().add(buttonExport);
+        layout.getChildren().add(showBlockTie);
     }
     // Removes the buttons and stuff when Pane transitions
     public void removeElements(){
-//        layout.getChildren().remove(btnShowBlkPlan);
-//        layout.getChildren().remove(currentFlight);
-//        layout.getChildren().remove(lineFromTxt);
-//        layout.getChildren().remove(lineToTxt);
-//        layout.getChildren().remove(applyBtn);
-//        layout.getChildren().remove(arrow);
-//        layout.getChildren().remove(applied);
-//        layout.getChildren().remove(showFlightPlan);
-//        layout.getChildren().remove(lineTieFromTxt);
-//        layout.getChildren().remove(lineTieToTxt);
-//        layout.getChildren().remove(txtTie);
-//        layout.getChildren().remove(cbUseSeperateLines);
-//        layout.getChildren().remove(seperateLines);
         layout.getChildren().remove(listFlights);
         layout.getChildren().remove(listBlocks);
         layout.getChildren().remove(listSurveys);
@@ -1121,10 +1104,9 @@ public class FlightPlanning {
         layout.getChildren().remove(showSurveyTieFlight);
         layout.getChildren().remove(showSurveyTieLines);
         layout.getChildren().remove(buttonExport);
+        layout.getChildren().remove(showBlockTie);
     }
 
     public static ObservableList getCoordinates(){return items;}
-    public static void updateSurvey(){
 
-    }
 }

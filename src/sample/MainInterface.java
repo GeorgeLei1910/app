@@ -18,7 +18,7 @@ public class MainInterface {
     static private ComboBox comboBox;
     static private ComboBox comboBoxFlights;
 
-    private static ComboBox listSurveys, listBlocks, listFlights;
+    public static ComboBox listSurveys, listBlocks, listFlights;
 
     static private Text curSurveyName;
 
@@ -102,96 +102,77 @@ public class MainInterface {
 
 
 
-        comboBox.setOnAction(new EventHandler<ActionEvent>(){
-            @Override
-            public void handle(ActionEvent event) {
-                try{
-                    String str = comboBox.getValue().toString();
-                    String num = "0";
-                    for(int i = 0; i < str.length(); i++){
-                        char ch2 = str.charAt(i);
-                        if(ch2 == ','){
-                            num = str.substring(1, i);
-                            break;
-                        }
-
+        comboBox.setOnAction(event -> {
+            try{
+                String str = comboBox.getValue().toString();
+                String num = "0";
+                for(int i = 0; i < str.length(); i++){
+                    char ch2 = str.charAt(i);
+                    if(ch2 == ','){
+                        num = str.substring(1, i);
+                        break;
                     }
-                    Controller.setCurBlockFolder(Integer.parseInt(num), str);
-                }catch(NullPointerException e){
-
-
                 }
-            }
-        });
-
-
-        comboBoxFlights.setOnAction(new EventHandler<ActionEvent>(){
-            @Override
-            public void handle(ActionEvent event) {
-                try{
-                    String str = comboBoxFlights.getValue().toString();
-                    String num = "0";
-                    if (!str.equals(""))
-                        num = str.substring(1,str.length());
-
-                    Controller.setCurFlightFolder(Integer.parseInt(num));
-
-                }catch(NullPointerException e){
-
-                }
+                Controller.setCurBlockFolder(Integer.parseInt(num), str);
+            }catch(NullPointerException e){
 
             }
         });
 
 
-        buttonDataQuality.setOnAction(new EventHandler<ActionEvent>(){
-            @Override
-            public void handle(ActionEvent event) {
-                try{
-                LoggingData loggingData = LoggingData.getInstance(layout);
-                FlightPlanning flightPlanning = FlightPlanning.getInstance(layout);
-                loggingData.removeElements();
-                flightPlanning.removeElements();
+        comboBoxFlights.setOnAction(event -> {
+            try{
+                String str = comboBoxFlights.getValue().toString();
+                String num = "0";
+                if (!str.equals(""))
+                    num = str.substring(1);
 
-                DataQuality dataQuality =  DataQuality.getInstance(layout);
-                dataQuality.showElems();
-                }catch (IllegalArgumentException e){
+                Controller.setCurFlightFolder(Integer.parseInt(num));
 
-                }
+            }catch(NullPointerException e){
 
             }
         });
 
-        buttonLogData.setOnAction(new EventHandler<ActionEvent>(){
-            @Override
-            public void handle(ActionEvent event) {
-                try{
-                DataQuality dataQuality =  DataQuality.getInstance(layout);
-                FlightPlanning flightPlanning = FlightPlanning.getInstance(layout);
-                dataQuality.removeElements();
-                flightPlanning.removeElements();
-                LoggingData loggingData = LoggingData.getInstance(layout);
-                loggingData.showElements();
-                }catch (IllegalArgumentException e){
 
-                }
+        buttonDataQuality.setOnAction(event -> {
+            try{
+            LoggingData loggingData = LoggingData.getInstance(layout);
+            FlightPlanning flightPlanning = FlightPlanning.getInstance(layout);
+            loggingData.removeElements();
+            flightPlanning.removeElements();
+
+            DataQuality dataQuality =  DataQuality.getInstance(layout);
+            dataQuality.showElems();
+            }catch (IllegalArgumentException e){
 
             }
+
         });
 
-        buttonFlightPlan.setOnAction(new EventHandler<ActionEvent>(){
-            @Override
-            public void handle(ActionEvent event) {
-                try{
-                DataQuality dataQuality =  DataQuality.getInstance(layout);
-                LoggingData loggingData = LoggingData.getInstance(layout);
-                dataQuality.removeElements();
-                loggingData.removeElements();
-                FlightPlanning flightPlanning = FlightPlanning.getInstance(layout);
-                flightPlanning.showElements();
-                }catch(IllegalArgumentException e){
+        buttonLogData.setOnAction(event -> {
+            try{
+            DataQuality dataQuality =  DataQuality.getInstance(layout);
+            FlightPlanning flightPlanning = FlightPlanning.getInstance(layout);
+            dataQuality.removeElements();
+            flightPlanning.removeElements();
+            LoggingData loggingData = LoggingData.getInstance(layout);
+            loggingData.showElements();
+            }catch (IllegalArgumentException e){
 
-                }
+            }
+
+        });
+
+        buttonFlightPlan.setOnAction(event -> {
+            try{
+            DataQuality dataQuality =  DataQuality.getInstance(layout);
+            LoggingData loggingData = LoggingData.getInstance(layout);
+            dataQuality.removeElements();
+            loggingData.removeElements();
+            FlightPlanning flightPlanning = FlightPlanning.getInstance(layout);
+            flightPlanning.showElements();
+            }catch(IllegalArgumentException e){
 
             }
 
