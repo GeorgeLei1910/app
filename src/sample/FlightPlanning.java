@@ -351,6 +351,7 @@ public class FlightPlanning {
 
             CheckBox chbDir = new CheckBox("Clockwise planning");
             CheckBox chbGoogleApi = new CheckBox("Google API for elevation");
+            CheckBox chbTwoWay = new CheckBox("Render Both Ways");
 
             chbDir.setTranslateX(-200);
             chbDir.setTranslateY(80);
@@ -358,17 +359,20 @@ public class FlightPlanning {
             chbGoogleApi.setTranslateX(-190);
             chbGoogleApi.setTranslateY(100);
 
+            chbTwoWay.setTranslateX(-190);
+            chbTwoWay.setTranslateY(120);
+
             Button useKMLFile = new Button("Load KML file");
             useKMLFile.setTranslateX(165);
             useKMLFile.setTranslateY(-50);
 
             Text elevText = new Text("Elevation Buffer");
             elevText.setTranslateX(-200);
-            elevText.setTranslateY(140);
+            elevText.setTranslateY(160);
 
             TextField elevTxtField = new TextField();
             elevTxtField.setTranslateX(-120);
-            elevTxtField.setTranslateY(140);
+            elevTxtField.setTranslateY(160);
             elevTxtField.setMaxWidth(50);
 
 
@@ -521,6 +525,13 @@ public class FlightPlanning {
                             }
                         }
                         break;
+                    }if(s.startsWith("TwoWay:")){
+                        System.out.println(s);
+                        String[] segments = s.split(":");
+                        String seg = segments[1];
+                        System.out.println("-----)))))>"+seg.equals("1"));
+                        if(seg.equals("1"))
+                            chbTwoWay.setSelected(true);
                     }
                 }
             }catch (Exception e) {
@@ -580,6 +591,8 @@ public class FlightPlanning {
                     out.write("Clockwise:"+((chbDir.isSelected()) ? "1" : "-1"));
                     out.write(   "\r\n");
                     out.write("Elevation:"+((chbGoogleApi.isSelected()) ? "1" : "0"));
+                    out.write(   "\r\n");
+                    out.write("TwoWay:"+((chbTwoWay.isSelected()) ? "1" : "0"));
                     out.write(   "\r\n");
                     out.write("TieLineSpacing:"+tieSpaceField.getText().trim());
                     out.write(   "\r\n");
@@ -684,6 +697,7 @@ public class FlightPlanning {
             popUplayout.getChildren().add(txtOvershootBlock);
             popUplayout.getChildren().add(chbGoogleApi);
             popUplayout.getChildren().add(chbDir);
+            popUplayout.getChildren().add(chbTwoWay);
             popUplayout.getChildren().add(txtFieldLineSpacing);
             popUplayout.getChildren().add(txtLineSpacing);
             popUplayout.getChildren().add(useKMLFile);

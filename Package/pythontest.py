@@ -56,6 +56,7 @@ class FlightPlanning(object):
                 break
 
         self.elevation_type = 0
+        self.two_way = 0
         self.dfPolygan = pd.DataFrame(columns=['LAT', 'LON'])
         self.dfPolyganUTM = pd.DataFrame(columns=['UTMX', 'UTMY'])
         self.dirAngle = 0
@@ -73,7 +74,6 @@ class FlightPlanning(object):
         self.converter = Proj(proj='utm', zone=1, ellps='WGS84')
         self.wayPoints = pd.DataFrame(columns=['utmX', 'utmY', 'elevation', 'line', 'index', 'angle'])
         #All the UTM Zones
-        # TODO: Solve the cross utmZone problem.
         self.utmZones = [(-180, -174), (-174, -168), (-168, -162), (-162, -156), (-156, -150), (-150, -144),
                          (-144, -138)
             , (-138, -132), (-132, -126), (-126, -120), (-120, -114), (-114, -108), (-108, -102), (-102, -96),
@@ -187,8 +187,13 @@ class FlightPlanning(object):
         if (line.startswith('Elevation:')):
             segs = line.split(":")
             self.elevation_type = float((segs[1])[0:len(segs[1]) - 1])
-
         print("Elevation: ", self.elevation_type)
+
+        line = file.readline()
+        segs.clear()
+        if (line.startswith('TwoWay:')):
+            segs = line.split(":")
+            self.two_way = float((segs[1])[0:len(segs[1]) - 1])
 
         line = file.readline()
         segs.clear()
@@ -204,13 +209,14 @@ class FlightPlanning(object):
 
         line = file.readline()
         segs.clear()
+        zoneOrig = self.findUtmZone(float(self.dfPolygan['LON'][0]))
         if (line.startswith('TieStart:')):
             segs = line.split(":")
             print("kkkkkk", segs[1])
             if (len(segs[1]) > 2):
                 self.tie_init_point = np.append(self.tie_init_point, self.coords((segs[1])[0:len(segs[1]) - 1]))
                 self.tie_init_point = [float(val) for val in self.tie_init_point]
-                self.converter = Proj(proj='utm', zone=self.findUtmZone(float(self.tie_init_point[0])), ellps='WGS84')
+                self.converter = Proj(proj='utm', zone=zoneOrig, ellps='WGS84')
                 print(self.tie_init_point[0])
                 tup = self.converter(self.tie_init_point[0], self.tie_init_point[1])
                 self.tie_init_point = np.array([tup[0], tup[1]])
@@ -227,8 +233,9 @@ class FlightPlanning(object):
         # Created after clicking on "Create and Show Plan"
         with open(self.filepath, "a") as f:
             f.write('UTM:')
+            print("Starting Zone: ",zoneOrig)
             for index, row in self.dfPolygan.iterrows():
-                self.converter = Proj(proj='utm', zone=self.findUtmZone(float(row['LON'])), ellps='WGS84')
+                self.converter = Proj(proj='utm', zone=zoneOrig, ellps='WGS84')
                 print(coordinates)
                 self.dfPolyganUTM.loc[len(self.dfPolyganUTM)] = self.converter(row['LON'], row['LAT'])
                 string = str(self.dfPolyganUTM.iloc[index]['UTMX']) + "," + str(
@@ -243,7 +250,7 @@ class FlightPlanning(object):
         # Written/Created after clicking on "Create and Show Plan"
         with open(self.filepath, "a") as f:
             f.write('initUTM:')
-            self.converter = Proj(proj='utm', zone=self.findUtmZone(float(self.initPoint[0])), ellps='WGS84')
+            self.converter = Proj(proj='utm', zone=zoneOrig, ellps='WGS84')
             tup = self.converter(self.initPoint[0], self.initPoint[1])
             self.initPointUTM = np.array([tup[0], tup[1]])
             strInitpointUtm = str(tup[0]) + "," + str(tup[1])
@@ -437,11 +444,13 @@ class FlightPlanning(object):
         angle = (angle + 360) % 360
         lines = 1
         i = 0
+        j = 1
         if (path.intersects(polygon) == True):
             straight = True
             # Comment below to find the start point of this
-            # i += 1
-            # self.wayPoints.loc[i] = [x, y, 0, lines, i, angle]
+        if self.two_way == 0:
+            i += 1
+            self.wayPoints.loc[i] = [x, y, 0, lines, i, angle]
         # Draws the flight lines of the Flight Plan
         # Too many lines can Freeze up the app.
         # Making Waypoints Forwards
@@ -498,78 +507,78 @@ class FlightPlanning(object):
                 if (path.intersects(polygon) == False):
                     break
                 straight = True
-        if (type == 1):
-            angle = self.dirAngle + 180
-            spacing = self.spacing
-            line_spacing = self.linespacing
-            x = self.initPointUTM[0]
-            y = self.initPointUTM[1]
-        else:
-            angle = self.dirAngle - 90
-            spacing = self.spacing
-            line_spacing = self.tie_spacing
-            x = self.tie_init_point[0]
-            y = self.tie_init_point[1]
-        self.Clockwise = self.Clockwise * -1.0
-        point = Point(x, y)
-        point2 = Point(x + math.cos(math.radians(angle)) * LARGE_NUMBER,
-                       y + math.sin(math.radians(angle)) * LARGE_NUMBER)
-        path = LineString([point, point2])
-        straight = False
-        if (path.intersects(polygon) == True):
-            straight = True
-        j = 1
-        lines = 1
-        # Going Backwards
-        while (True):
-            distance = polygon.exterior.distance(point)
-            print("distance", distance)
-            print("angle", angle)
-            print("lines", lines)
-            if (straight):
-                x = round(math.cos(math.radians(angle)) * spacing + x, 10)
-                y = round(math.sin(math.radians(angle)) * spacing + y, 10)
-                point = Point(x, y)
-                point2 = Point(x + math.cos(math.radians(angle)) *
-                               LARGE_NUMBER, y + math.sin(math.radians(angle)) * LARGE_NUMBER)
-                path = LineString([point2, point])
-                if (polygon.exterior.distance(point) <= distance or path.intersects(polygon)):
-                    straight = True
+        if self.two_way == 1:
+            if (type == 1):
+                angle = self.dirAngle + 180
+                spacing = self.spacing
+                line_spacing = self.linespacing
+                x = self.initPointUTM[0]
+                y = self.initPointUTM[1]
+            else:
+                angle = self.dirAngle - 90
+                spacing = self.spacing
+                line_spacing = self.tie_spacing
+                x = self.tie_init_point[0]
+                y = self.tie_init_point[1]
+            self.Clockwise = self.Clockwise * -1.0
+            point = Point(x, y)
+            point2 = Point(x + math.cos(math.radians(angle)) * LARGE_NUMBER,
+                           y + math.sin(math.radians(angle)) * LARGE_NUMBER)
+            path = LineString([point, point2])
+            straight = False
+            if (path.intersects(polygon) == True):
+                straight = True
+            lines = 1
+            # Going Backwards
+            while (True):
+                distance = polygon.exterior.distance(point)
+                print("distance", distance)
+                print("angle", angle)
+                print("lines", lines)
+                if (straight):
+                    x = round(math.cos(math.radians(angle)) * spacing + x, 10)
+                    y = round(math.sin(math.radians(angle)) * spacing + y, 10)
+                    point = Point(x, y)
+                    point2 = Point(x + math.cos(math.radians(angle)) *
+                                   LARGE_NUMBER, y + math.sin(math.radians(angle)) * LARGE_NUMBER)
+                    path = LineString([point2, point])
+                    if (polygon.exterior.distance(point) <= distance or path.intersects(polygon)):
+                        straight = True
+                        i += 1
+                        j -= 1
+                        self.wayPoints.loc[i] = [x, y, 0, lines, j, (angle + 180) % 360]
+                    else:
+                        straight = False
+                        # self.wayPoints.loc[i] = [x, y, 0, lines, j, (angle + 180) % 360]
+                else:
+                    lines -= 1
+                    if ((lines % 2) == 0):
+                        angle = angle + 90 * self.Clockwise
+                    else:
+                        angle = angle - 90 * self.Clockwise
+                    x = round(math.cos(math.radians(angle)) * line_spacing + x, 10)
+                    y = round(math.sin(math.radians(angle)) * line_spacing + y, 10)
+                    # point = Point(x, y)
+                    # i += 1
+                    # j -= 1
+                    # self.wayPoints.loc[i] = [x, y, 0, lines, j, angle - 180]
+                    if ((lines % 2) == 0):
+                        angle = angle + 90 * self.Clockwise
+                    else:
+                        angle = angle - 90 * self.Clockwise
+                    x = round(math.cos(math.radians(angle)) * spacing + x, 10)
+                    y = round(math.sin(math.radians(angle)) * spacing + y, 10)
+                    point = Point(x, y)
                     i += 1
                     j -= 1
                     self.wayPoints.loc[i] = [x, y, 0, lines, j, (angle + 180) % 360]
-                else:
-                    straight = False
-                distance = polygon.exterior.distance(point)
-            else:
-                lines -= 1
-                if ((lines % 2) == 0):
-                    angle = angle + 90 * self.Clockwise
-                else:
-                    angle = angle - 90 * self.Clockwise
-                x = round(math.cos(math.radians(angle)) * line_spacing + x, 10)
-                y = round(math.sin(math.radians(angle)) * line_spacing + y, 10)
-                # point = Point(x, y)
-                # i += 1
-                # j -= 1
-                # self.wayPoints.loc[i] = [x, y, 0, lines, j, angle - 180]
-                if ((lines % 2) == 0):
-                    angle = angle + 90 * self.Clockwise
-                else:
-                    angle = angle - 90 * self.Clockwise
-                x = round(math.cos(math.radians(angle)) * spacing + x, 10)
-                y = round(math.sin(math.radians(angle)) * spacing + y, 10)
-                point = Point(x, y)
-                i += 1
-                j -= 1
-                self.wayPoints.loc[i] = [x, y, 0, lines, j, (angle + 180) % 360]
-                point2 = Point(x + math.cos(math.radians(angle)) *
-                               LARGE_NUMBER, y + math.sin(math.radians(angle)) * LARGE_NUMBER)
-                path = LineString([point2, point])
-                if (path.intersects(polygon)):
-                    straight = True
-                else:
-                    break
+                    point2 = Point(x + math.cos(math.radians(angle)) *
+                                   LARGE_NUMBER, y + math.sin(math.radians(angle)) * LARGE_NUMBER)
+                    path = LineString([point2, point])
+                    if (path.intersects(polygon)):
+                        straight = True
+                    else:
+                        break
         self.wayPoints.sort_values(by=['index'])
         # print(self.wayPoints.values)
         self.wayPoints.loc[:, 'line'] -= (lines - 1)
@@ -857,6 +866,7 @@ class FlightPlanning(object):
                     start = j
                     if dfCurr.iat[j, 6] == idxblk:
                         break
+
                 for j in reversed(range(0, len(dfPrev))):
                     end = j
                     if dfPrev.iat[j, 6] == idxblk:

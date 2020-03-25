@@ -39,12 +39,16 @@ B3, 2019-08-12
 Survey_Demo
 B1, 2020-03-09
 F1
+Survey_UTMCross2
 Survey_2020 Logging
 B2, 2020-02-19
 F1
 B1, 2020-02-19
 F1
 Survey_UTMCross
+B1, 2020-03-25
+F1
+F2
 Survey_Mexico
 Survey_DavidTest
 B10, 2020-03-11
@@ -139,6 +143,7 @@ Survey_
 Survey_UTMCrossVertical
 Survey_Isolation_Mar18
 B1, 2020-03-20
+Survey_UTMQuad
 Survey_Coronavirus_Mar16
 B5, 2020-03-18
 B3, 2020-03-17
