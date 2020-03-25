@@ -23,6 +23,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.lang.Math;
 import java.io.*;
+import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -304,19 +305,54 @@ public class CanvasFlightPlan  {
             }
             this.minPosition = minPosition;
             this.maxPosition = maxPosition;
-            convertPosition(posList, minPosition, maxPosition);
+            double scale = convertPosition(posList, minPosition, maxPosition);
 
-            for(Position p : polygon){
-                graphics_context.setFill(Color.BLUE);
-                System.out.println(p.getX()+","+p.getY());
-                graphics_context.fillOval( p.getX() - 5 ,p.getY() - 5, 10, 10 );
-            }
+
             int size = polygon.size();
             for(int i = 0; i < polygon.size(); i++) {
                 graphics_context.setStroke(Color.GREEN);
                 graphics_context.setLineWidth(5);
                 graphics_context.strokeLine(polygon.get(i % size).getX(), polygon.get(i % size).getY(),
                         polygon.get((i+1) % size).getX(), polygon.get((i+1) % size).getY());
+            }
+            for(Position p : polygon){
+                graphics_context.setFill(Color.BLUE);
+                System.out.println(p.getX()+","+p.getY());
+                graphics_context.fillOval( p.getX() - 5 ,p.getY() - 5, 10, 10 );
+            }
+            if(this.type == -1 || this.type == -2 || this.type == 4){
+                InputStream ins = new FileInputStream(planSettingsFile);
+                Reader r = new InputStreamReader(ins, StandardCharsets.UTF_8); // leave charset out for default
+                BufferedReader br = new BufferedReader(r);
+                segments = new String[0];
+                start = "UTM:";
+                while ((s = br.readLine()) != null) {
+                    if (s.startsWith(start)){
+                        s = s.substring(start.length());
+                        segments = new String[s.split(":").length];
+                        segments = s.split(":");
+                        break;
+                    }
+                }
+
+                ArrayList<Position> survList = new ArrayList<>();
+
+                for(int i = 0; i < segments.length; i++) {
+                    String posX = segments[i].split(",")[0];
+                    String posY = segments[i].split(",")[1];
+                    double posx = Double.parseDouble(posX);
+                    double posy = Double.parseDouble(posY);
+                    survList.add(new Position(posx, posy));
+                }
+                convertPosition(survList, minPosition, maxPosition, scale);
+                size = polygon.size();
+                for(int i = 0; i < polygon.size(); i++) {
+                    graphics_context.setStroke(Color.MAGENTA);
+                    graphics_context.setLineDashes(10);
+                    graphics_context.setLineWidth(3);
+                    graphics_context.strokeLine(polygon.get(i % size).getX(), polygon.get(i % size).getY(),
+                            polygon.get((i+1) % size).getX(), polygon.get((i+1) % size).getY());
+                }
             }
             if(this.type == 0){
                 //TODO: Implement Show Current BLock Plan
@@ -361,15 +397,22 @@ public class CanvasFlightPlan  {
     }
 
 
-    private void convertPosition(ArrayList<Position> list, Position minPosition, Position maxPosition){
+    private double convertPosition(ArrayList<Position> list, Position minPosition, Position maxPosition){
         polygon.clear();
         double h = maxPosition.getX() - minPosition.getX();
         double v = maxPosition.getY() - minPosition.getY();
         double scale = (h > v)? h : v;
-        double ratio = (h > v)? v / h : h / v;
         for(Position p : list){
             polygon.add(new Position(((a-2*offsetX)/scale)*(p.getX()-minPosition.getX())+ offsetX ,
-                     b-(((b-offsetY*2)/scale)*(p.getY()-minPosition.getY())+offsetY)));
+                    b-(((b-offsetY*2)/scale)*(p.getY()-minPosition.getY())+offsetY)));
+        }
+        return scale;
+    }
+    private void convertPosition(ArrayList<Position> list, Position minPosition, Position maxPosition, double scale){
+        polygon.clear();
+        for(Position p : list){
+            polygon.add(new Position(((a-2*offsetX)/scale)*(p.getX()-minPosition.getX())+ offsetX ,
+                    b-(((b-offsetY*2)/scale)*(p.getY()-minPosition.getY())+offsetY)));
         }
     }
     private void convertBlockPosition(ArrayList<Position> list, Position minPosition, Position maxPosition){

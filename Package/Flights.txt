@@ -44,6 +44,7 @@ B2, 2020-02-19
 F1
 B1, 2020-02-19
 F1
+Survey_UTMCross
 Survey_Mexico
 Survey_DavidTest
 B10, 2020-03-11
@@ -135,6 +136,7 @@ F13
 F14
 F15
 Survey_  
+Survey_UTMCrossVertical
 Survey_Isolation_Mar18
 B1, 2020-03-20
 Survey_Coronavirus_Mar16
@@ -145,6 +147,7 @@ F1
 F2
 B6, 2020-03-20
 B1, 2020-03-16
+B8, 2020-03-23
 B7, 2020-03-20
 B2, 2020-03-16
 Survey_Iran
