@@ -1545,6 +1545,9 @@ if __name__ == "__main__":
     if arg1 == "CreateFlight":
         flightPlanning = FlightPlanning(filename)
         flightPlanning.creatFlight()
+    if arg1 == "GetCoords":
+        flightPlanning = FlightPlanning(filename)
+        flightPlanning.updateParams()
     # if arg1 == "QualityNoTurn":
     #     QualityCheckNoTurns = QualityCheckNoTurns(filename)
     #     # QualityCheckNoTurns.flightMap()

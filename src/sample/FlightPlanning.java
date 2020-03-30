@@ -264,6 +264,7 @@ public class FlightPlanning {
             dialog.initModality(Modality.APPLICATION_MODAL);
             dialog.initOwner(Controller.getPrimaryStage());
             Button btnShowFlight = new Button("choose start");
+            Button writeToFile = new Button("Write To file");
             Text txtSpacing = new Text("Waypoint Spacing (m)");
             Text txtLineSpacing = new Text("Line Spacing (m)");
             TextField txtFieldSpacing = new TextField();
@@ -561,7 +562,7 @@ public class FlightPlanning {
                 items.remove(list.getSelectionModel().getSelectedItem());
                 list.setItems(items);
             });
-            btnOK.setOnAction(event17 -> {
+            writeToFile.setOnAction(event1 -> {
                 try {
                     PrintWriter out = new PrintWriter(filePath);
                     out.flush();
@@ -601,7 +602,13 @@ public class FlightPlanning {
                     }else{
                         out.write(   "TieStart:\r\n");
                     }
-                    out.close();
+                    out.close();}
+                catch(Exception e){
+
+                }
+            });
+            btnOK.setOnAction(event17 -> {
+                    writeToFile.fire();
                     String path = System.getProperty("user.dir").replace('\\', '/') ;
                     String pathPython = path.replace('\\', '/') + "/Package/pythontest.py";
                     String command = "python " +pathPython+" -m FlightPlan" + " -f "+ path + "/Data/"+Controller.getCurSurvey() +
@@ -617,9 +624,7 @@ public class FlightPlanning {
                     }
                     System.out.println("P ran");
 
-                }catch(Exception e){
 
-                }
                 dialog.close();
             });
 
@@ -671,6 +676,8 @@ public class FlightPlanning {
                     }
                 }
             });
+
+
 
             btnOK.setPrefWidth(80);
             btnCancel.setPrefWidth(80);

@@ -1,5 +1,7 @@
 package sample;
 
+import com.bbn.openmap.proj.Ellipsoid;
+import com.bbn.openmap.proj.coords.LatLonGCT;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -19,17 +21,17 @@ import javafx.stage.Modality;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 
-import java.awt.*;
-import java.awt.event.MouseEvent;
+
 import java.lang.Math;
 import java.io.*;
-import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import com.bbn.openmap.proj.coords.LatLonPoint;
+import com.bbn.openmap.proj.coords.UTMPoint;
 
 public class CanvasFlightPlan  {
 
@@ -54,19 +56,17 @@ public class CanvasFlightPlan  {
     private String planSettings;
     private String wayPoints;
     private String blockPoints;
-    double aCanvas  = 1500.0f;
-    double bCanvas  = 1500.0f;
-    double a = 800.0;
-    double b = 800.0;
-    double offsetX = 100;
-    double offsetY = 100;
+    double aCanvas  = 1500.0f, bCanvas  = 1500.0f;
+    double a = 800.0, b = 800.0;
+    double offsetX = 50, offsetY = 50;
+    double osX = 0, osY = 0;
     private Scene SCENE;
+    private Canvas canvas;
     private ArrayList<Position> polygon = new ArrayList<>(), blockPolygon = new ArrayList<>();
     private GraphicsContext graphics_context;
     private Integer index_color;
     private HashMap<Integer, ArrayList<Position>> polsPositions = new HashMap<>();
-    private Position minPosition;
-    private Position maxPosition;
+    private Position minPosition, maxPosition;
 
     public enum COLORS {
         A(Color.GOLD), B(Color.DARKCYAN),C(Color.DARKGOLDENROD),D(Color.CYAN),
@@ -99,6 +99,7 @@ public class CanvasFlightPlan  {
     public  CanvasFlightPlan(int type) {
 
         this.type = type;
+        String pathPython = System.getProperty("user.dir").replace('\\', '/') + "/Package/pythontest.py";
         String path = System.getProperty("user.dir").replace('\\', '/') + "/Data/" + Current_Survey;
         // All in the Survey/FlightPlan Folder
         planSettingsFile = path +"/FlightPlan" + Controller.getPrefixToSurvey() + "-plan_settings.txt";
@@ -157,13 +158,7 @@ public class CanvasFlightPlan  {
             default: planSettings = planSettingsFile;
             break;
         }
-//        if(type == 1){
-//        }else if(type == 0){
-//        }else if(type == -1){
-//        }else if(type == 2){
-//        }else if(type == 3){
-//        }else{
-//        }
+
         System.out.println(Current_Survey);
         STAGE = new Stage();
         STAGE.initModality(Modality.APPLICATION_MODAL);
@@ -178,30 +173,22 @@ public class CanvasFlightPlan  {
             offsetY = 40;
         }
         //fpMap.setTitle("FlightPlan Map");
-        Canvas canvas = new Canvas(aCanvas, bCanvas);
+        this.canvas = new Canvas(aCanvas, bCanvas);
         // graphics context
-        GraphicsContext graphics_context =
-                canvas.getGraphicsContext2D();
-
+        GraphicsContext graphics_context = canvas.getGraphicsContext2D();
         this.graphics_context = graphics_context;
-
-
-
         graphics_context.setFill(Color.RED);
-
-
         // create a Group
         Group group = new Group(canvas);
-
         // create a scene
         Scene scene = new Scene(group, a, b);
         this.SCENE = scene;
-
         // set the scene
         STAGE.setScene(scene);
         //fpMap.setTitle("Flight Plan Settings");
         STAGE.show();
 
+        // New Window pop up for block planning
         if(type == 0) {
             final Stage partitionStage = new Stage();
             StackPane layout = new StackPane();
@@ -230,12 +217,7 @@ public class CanvasFlightPlan  {
         showWaypoints();
 
         System.out.println("After showWayPoints");
-
-
     }
-
-
-
 
     private void showWaypoints() {
         ArrayList<Position> posList = new ArrayList<>();
@@ -265,7 +247,9 @@ public class CanvasFlightPlan  {
                     }
                 }
             }else{
+                // Convert Lat Lon to UTM in shit
                 segments = new String[coords.size()];
+                int zoneno = 0;
                 for(int i = 0; i < segments.length; i++){
                     String [] ss = coords.get(i).split(",");
                     segments[i] = ss[1] + "," + ss[0];
@@ -305,9 +289,42 @@ public class CanvasFlightPlan  {
             }
             this.minPosition = minPosition;
             this.maxPosition = maxPosition;
+            if(type == -3){
+                //This means that if this is in Lat Lon and the longitude of survey area spans for more than 180 degrees longitude
+                // Fix this by making all coordinates to one side
+                if((this.maxPosition.getX() - this.minPosition.getX()) > 180){
+                    double midpoint = (this.maxPosition.getX() + this.minPosition.getX()) / 2.0;
+                    for (int i = 0; i < posList.size(); i++){
+                        Position p = posList.get(i);
+                        if(p.getX() < midpoint){
+                            posList.set(i, new Position(p.getX() + 360, p.getY()));
+                        }
+                    }
+                }
+                //Get new max and min Position after conversion
+                for(int i = 0; i < posList.size(); i++){
+                    double posx = posList.get(i).getX();
+                    double posy = posList.get(i).getY();
+                    if (i == 0){
+                        minPosition.setX(posx);
+                        minPosition.setY(posy);
+                        maxPosition.setX(posx);
+                        maxPosition.setY(posy);
+                        continue;
+                    }
+                    if(minPosition.getX() > posx)
+                        minPosition.setX(posx);
+                    if(minPosition.getY() > posy)
+                        minPosition.setY(posy);
+                    if(maxPosition.getX() < posx)
+                        maxPosition.setX(posx);
+                    if(maxPosition.getY() < posy)
+                        maxPosition.setY(posy);
+                }
+            }
+
+
             double scale = convertPosition(posList, minPosition, maxPosition);
-
-
             int size = polygon.size();
             for(int i = 0; i < polygon.size(); i++) {
                 graphics_context.setStroke(Color.GREEN);
@@ -385,7 +402,7 @@ public class CanvasFlightPlan  {
                 }
             }
             if(this.type != -3){
-                drawWaypoints( graphics_context, minPosition,  maxPosition );
+                drawWaypoints(graphics_context, minPosition,  maxPosition );
             }
 
         }catch (IOException e){
@@ -393,7 +410,6 @@ public class CanvasFlightPlan  {
         }
 
         //Y then X because Lat is Y and Lon is X
-
     }
 
 
@@ -402,17 +418,28 @@ public class CanvasFlightPlan  {
         double h = maxPosition.getX() - minPosition.getX();
         double v = maxPosition.getY() - minPosition.getY();
         double scale = (h > v)? h : v;
+        osX = (h > v)? 0 : (a-2*offsetX) * (1 - (h / v)) / 2;
+        osY = (h < v)? 0 : (b-offsetY*2) * (1 - (v / h)) / 2;
+        double scalex = ((a-2*offsetX)/scale);
+        double scaley = ((b-offsetY*2)/scale);
+        // Centers the Polygon
+        canvas.setTranslateX(osX);
+        canvas.setTranslateY(osY * -1.0);
         for(Position p : list){
-            polygon.add(new Position(((a-2*offsetX)/scale)*(p.getX()-minPosition.getX())+ offsetX ,
-                    b-(((b-offsetY*2)/scale)*(p.getY()-minPosition.getY())+offsetY)));
+            polygon.add(new Position(scalex*(p.getX()-minPosition.getX()) + offsetX,
+                    b-(scaley*(p.getY()-minPosition.getY()) + offsetY)));
         }
         return scale;
     }
     private void convertPosition(ArrayList<Position> list, Position minPosition, Position maxPosition, double scale){
         polygon.clear();
+        double h = maxPosition.getX() - minPosition.getX();
+        double v = maxPosition.getY() - minPosition.getY();
+        double scalex = ((a-2*offsetX)/scale);
+        double scaley = ((b-offsetY*2)/scale);
         for(Position p : list){
-            polygon.add(new Position(((a-2*offsetX)/scale)*(p.getX()-minPosition.getX())+ offsetX ,
-                    b-(((b-offsetY*2)/scale)*(p.getY()-minPosition.getY())+offsetY)));
+            polygon.add(new Position(scalex*(p.getX()-minPosition.getX())+ offsetX,
+                    b-(scaley*(p.getY()-minPosition.getY())+ offsetY)));
         }
     }
     private void convertBlockPosition(ArrayList<Position> list, Position minPosition, Position maxPosition){
@@ -420,10 +447,11 @@ public class CanvasFlightPlan  {
         double h = maxPosition.getX() - minPosition.getX();
         double v = maxPosition.getY() - minPosition.getY();
         double scale = (h > v)? h : v;
-        double ratio = (h > v)? v / h : h / v;
+        double scalex = ((a-2*offsetX)/scale);
+        double scaley = ((b-offsetY*2)/scale);
         for(Position p : list){
-            blockPolygon.add(new Position(((a-2*offsetX)/scale)*(p.getX()-minPosition.getX())+ offsetX ,
-                    b-(((b-offsetY*2)/scale)*(p.getY()-minPosition.getY())+offsetY)));
+            blockPolygon.add(new Position(scalex*(p.getX()-minPosition.getX())+ offsetX,
+                    b-(scaley*(p.getY()-minPosition.getY())+offsetY)));
         }
     }
 
@@ -432,7 +460,6 @@ public class CanvasFlightPlan  {
         double h = maxPosition.getX() - minPosition.getX();
         double v = maxPosition.getY() - minPosition.getY();
         double scale = (h > v)? h : v;
-
         double minX = minPosition.getX();
         double minY = minPosition.getY();
         DecimalFormat numberFormat = new DecimalFormat("#.0");
@@ -447,6 +474,7 @@ public class CanvasFlightPlan  {
             double y_init = 0;
 
             if((s = br.readLine()) != null){
+                // Fill the Starting point
                 String[] segments = s.split(" ");
                 gc.setFill(Color.RED);
                 double x = ((a-2*offsetX)/scale) * (Double.parseDouble(segments[0])-minX)+offsetX;
@@ -563,15 +591,14 @@ public class CanvasFlightPlan  {
                     try{
                         Color c =  COLORS.values()[(index_color-1) % 10].numVal;
                         graphics_context.setFill(c);
-                        Position newPos = produceZappedPoint(e.getX(),e.getY());
+                        Position newPos = produceZappedPoint(e.getX() - osX, e.getY() + osY);
                         System.out.println(newPos.getX() +" "+ newPos.getY());
                         graphics_context.fillOval(newPos.getX() - 5,newPos.getY() - 5, 10, 10);
                         if(!polsPositions.containsKey(index_color)){
                             polsPositions.put(Controller.getCurBlock(), new ArrayList<>());
                             polsPositions.get(Controller.getCurBlock()).add(newPos);
                             System.out.println("-->");
-                        }
-                        else{
+                        }else{
                             polsPositions.get(index_color).add(newPos);
                             System.out.println("---");
                         }
@@ -606,12 +633,13 @@ public class CanvasFlightPlan  {
             createBlocksPlan.setDisable(true);
             showBlocksPlan.setDisable(true);
             rerenderBlocksPlan.setDisable(false);
-
         });
         //TODO: fix null pointer
         double h = maxPosition.getX() - minPosition.getX();
         double v = maxPosition.getY() - minPosition.getY();
         double scale = (h > v)? h : v;
+
+
         showBlocksPlan.setOnAction((event) -> {
             showBlocksPlan.setDisable(true);
             createBlocksPlan.setDisable(false);
@@ -645,7 +673,7 @@ public class CanvasFlightPlan  {
                     out.write("Points:");
                     for(Position itm : pair.getValue()){
                         double xP = minPosition.getX() + (itm.getX() - offsetX)*scale/(a-2*offsetX);
-                        double yP = (b - itm.getY() -offsetY)*scale/(b-2*offsetY)+ minPosition.getY();
+                        double yP = (b - itm.getY() - offsetY)*scale/(b-2*offsetY)+ minPosition.getY();
                         out.write( xP+","+yP+ ":");
                     }
                     out.write("\n");
@@ -712,8 +740,6 @@ public class CanvasFlightPlan  {
                     return mousePos.closestPoint(p1, p2);
             }
         }
-
-
         return mousePos;
     }
 
@@ -721,6 +747,7 @@ public class CanvasFlightPlan  {
         double h = maxPosition.getX() - minPosition.getX();
         double v = maxPosition.getY() - minPosition.getY();
         double scale = (h > v)? h : v;
+
         graphics_context.setFill(Color.PURPLE);
 
         if(!f1.getText().isEmpty() || !f2.getText().isEmpty()){
@@ -741,13 +768,17 @@ public class CanvasFlightPlan  {
                         graphics_context.setFill(Color.RED);
 
                         Position newPos = produceZappedPoint(e.getX(),e.getY());
-                         double xPos = newPos.x;
-                         double yPos = newPos.y;
+                         double xPos = newPos.x - osX;
+                         double yPos = newPos.y + osY;
                         System.out.println(newPos.getX() +" "+ newPos.getY());
                         graphics_context.fillRect(xPos,yPos, 10, 10);
                          double xP = minPosition.getX() + (xPos - offsetX)*scale/(a-2*offsetX);
-                         double yP = (b - yPos -offsetY)*scale/(b-2*offsetY)+ minPosition.getY();
+                         double yP = (b - yPos - offsetY)*scale/(b-2*offsetY)+ minPosition.getY();
 
+                         if(this.type == -3){
+                             if(xP > 180.0)  xP -= 360.0;
+                             if(xP < -180.0) xP += 360.0;
+                         }
                         f1.setText(Double.toString(xP));
                         f2.setText(Double.toString(yP));
                         System.out.println("Current Starting Point: " + yP + "     " + xP);
@@ -761,46 +792,34 @@ public class CanvasFlightPlan  {
         this.SCENE.addEventHandler(javafx.scene.input.MouseEvent.MOUSE_CLICKED, eventHandlerScene);
     }
 
-
     private String mergeTwoFiles(String file1, String file2) throws IOException{
         String outputFile = System.getProperty("user.dir")+"/Data/"+Current_Survey+"/FlightPlan" + Controller.getPrefixToSurvey() + "-waypointsMerged.txt";
         PrintWriter pw = new PrintWriter(outputFile);
         // BufferedReader object for file1.txt
         BufferedReader br = new BufferedReader(new FileReader(file1));
-
         String line = br.readLine();
-
         // loop to copy each line of
         // file1.txt to  file3.txt
-        while (line != null)
-        {
+        while (line != null){
             pw.println(line);
             line = br.readLine();
         }
-
         br = new BufferedReader(new FileReader(file2));
-
         line = br.readLine();
-
         // loop to copy each line of
         // file2.txt to  file3.txt
-        while(line != null)
-        {
+        while(line != null){
             pw.println(line);
             line = br.readLine();
         }
 
         pw.flush();
-
         // closing resources
         br.close();
         pw.close();
 
-
         return outputFile;
     }
-
-
 
     private class Position{
 
@@ -816,22 +835,9 @@ public class CanvasFlightPlan  {
             return x;
         }
 
-        public double getY(){
-
-            return y;
-        }
-
-        public void setX(double x){
-
-            this.x = x;
-
-
-        }
-        public void setY(double y){
-
-            this.y = y;
-
-        }
+        public double getY(){ return y; }
+        public void setX(double x){ this.x = x; }
+        public void setY(double y){ this.y = y; }
 
         public double distance(Position p){
            double dist = Math.sqrt(Math.pow((p.getX()-x),2) +Math.pow((p.getY()-y),2));
@@ -841,13 +847,10 @@ public class CanvasFlightPlan  {
 
         public double distance2TwoPoints(Position p1, Position p2){
             double dist1 = Math.sqrt(Math.pow((p1.getX()-x),2) +Math.pow((p1.getY()-y),2));
-
             double dist2 = Math.sqrt(Math.pow((p2.getX()-x),2) +Math.pow((p2.getY()-y),2));
             double distanceBetweenTwo = Math.sqrt(Math.pow((p2.getX()-p1.getX()),2) +Math.pow((p2.getY()-p1.getY()),2));
-
             return ((dist1 + dist2) - distanceBetweenTwo) ;
         }
-
         public Position closestPoint(Position p1, Position p2){
             double m = ((p1.getY() - p2.getY())/(p1.getX() - p2.getX()));
 

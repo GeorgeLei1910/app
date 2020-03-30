@@ -32,6 +32,9 @@ B1, 2019-09-21
 F1
 Survey_Quarantine_Mar20
 B1, 2020-03-20
+B2, 2020-03-30
+B3, 2020-03-30
+F1
 Survey_test
 B1, 2019-08-12
 B2, 2019-08-12
@@ -40,15 +43,19 @@ Survey_Demo
 B1, 2020-03-09
 F1
 Survey_UTMCross2
+B1, 2020-03-27
+F1
 Survey_2020 Logging
 B2, 2020-02-19
 F1
 B1, 2020-02-19
 F1
+Survey_Long Survey
 Survey_UTMCross
 B1, 2020-03-25
 F1
 F2
+F3
 Survey_Mexico
 Survey_DavidTest
 B10, 2020-03-11
@@ -140,6 +147,9 @@ F13
 F14
 F15
 Survey_  
+Survey_Long
+B1, 2020-03-30
+F1
 Survey_UTMCrossVertical
 Survey_Isolation_Mar18
 B1, 2020-03-20
@@ -176,6 +186,11 @@ F1
 F2
 Survey_Dummy2020
 B1, 2020-02-27
+F1
+Survey_CrossZone3
+B1, 2020-03-26
+F1
+B2, 2020-03-27
 F1
 Survey_Africa4
 B1, 2019-08-21
