@@ -746,6 +746,7 @@ public class CanvasFlightPlan  {
     public void setInitPosition(TextField f1, TextField f2){
         double h = maxPosition.getX() - minPosition.getX();
         double v = maxPosition.getY() - minPosition.getY();
+
         double scale = (h > v)? h : v;
 
         graphics_context.setFill(Color.PURPLE);
@@ -772,8 +773,9 @@ public class CanvasFlightPlan  {
                          double yPos = newPos.y + osY;
                         System.out.println(newPos.getX() +" "+ newPos.getY());
                         graphics_context.fillRect(xPos,yPos, 10, 10);
+                        //TODO: there is a zero divider here.
                          double xP = minPosition.getX() + (xPos - offsetX)*scale/(a-2*offsetX);
-                         double yP = (b - yPos - offsetY)*scale/(b-2*offsetY)+ minPosition.getY();
+                         double yP = (b - yPos - offsetY)*scale/(b-2*offsetY) + minPosition.getY();
 
                          if(this.type == -3){
                              if(xP > 180.0)  xP -= 360.0;
