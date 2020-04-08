@@ -690,19 +690,22 @@ class FlightPlanning(object):
         if outpoint_s.within(surveyPolygon):
             oslength = self.overshootBlocks
         # if (mode == 1): oslength = self.overshoot
-        # print(length)
+
         dist += oslength
+        print(dist)
+        if dist < 0:
+            wpNeeded = math.floor(dist / self.spacing)
+        else:
+            wpNeeded = math.ceil(dist / self.spacing)
         ret_dist = dist
+        wpDist = dist / wpNeeded
         waypoints = list()
-        i = math.floor(dist / self.spacing)
-        for j in range(0, i):
-            waypoints.append(self.spacing)
-        dist = dist - (self.spacing * i)
+        for j in range(0, wpNeeded):
+            waypoints.append(wpDist)
         # nums_of_points = math.ceil(length / pitch)
         # extra_point = length % pitch
         # print("nums_of_points", pitch)
         # pitch = length / nums_of_points
-        waypoints.append(dist)
         # waypoints.append(oslength)
 
         # print("length of waypoints", len(waypoints))
@@ -887,17 +890,17 @@ class FlightPlanning(object):
             while (((angleOrig - using_angle) / 180).is_integer() == False):
                 j += 1
                 angleOrig = float(df.iat[j, 5])
-            (list_extra, dist) = self.make_extra_waypoints(rowBlocks['Exterior'], x, y, angleOrig + 180)
-            deci = 0.4 / (len(list_extra) + 1)
-            # Add the ends of the lines
-            for nums1 in list_extra:
-                idx -= deci
-                (x, y) = self.get_next_point(x, y, nums1, angle, -1)
-                print(x, y, 0, lineno, idx, angle, idxblk)
-                curr_wp = [x, y, 0, lineno, idx, angle, idxblk]
-                df_holder.drop(df_holder.index, inplace=True)
-                df_holder = pd.DataFrame([curr_wp], columns=["utmX", "utmY", "elevation", "line", "index", "angle", "Block"])
-                df = pd.concat([df_holder, df])
+            # (list_extra, dist) = self.make_extra_waypoints(rowBlocks['Exterior'], x, y, angleOrig + 180)
+            # deci = 0.4 / (len(list_extra) + 1)
+            # # Add the ends of the lines
+            # for nums1 in list_extra:
+            #     idx -= deci
+            #     (x, y) = self.get_next_point(x, y, nums1, angle, -1)
+            #     print(x, y, 0, lineno, idx, angle, idxblk)
+            #     curr_wp = [x, y, 0, lineno, idx, angle, idxblk]
+            #     df_holder.drop(df_holder.index, inplace=True)
+            #     df_holder = pd.DataFrame([curr_wp], columns=["utmX", "utmY", "elevation", "line", "index", "angle", "Block"])
+            #     df = pd.concat([df_holder, df])
             # max_x = df.iloc[0, "utmX"]
             # max_y = df.iloc[0, "utmY"]
             # min_x = df.iloc[0, "utmX"]
@@ -1081,21 +1084,21 @@ class FlightPlanning(object):
                 df = pd.concat([dfTemp, dfTempRest])
                 df = df.reset_index(drop=True)
             #Insert ending here.
-            (x, y, elevation, lineno, idx, angle, idxblk) = df.iloc[len(df) - 1]
-            point = Point(x, y)
-            point_l = Point(self.get_next_point(x, y, LARGE_NUMBER, angle, 1))
-            (list_extra, dist) = self.make_extra_waypoints(rowBlocks['Exterior'], x, y, angle)
-            for i in range(0, len(list_extra)):
-                path = LineString([point, point_l])
-                if path.intersects(polygonSurvey) and length == self.spacing and idx.is_integer():
-                    idx_o -= 1
-                    dfTemp2 = dfWayPoints.loc[dfWayPoints["index"] == idx_o]
-                else:
-                    idx_o -= deci
-                    curr_wp = [x_o, y_o, 0, lineno_o, idx_o, angle_o, idxblk]
-                    dfTemp2 = pd.DataFrame([curr_wp],
-                                           columns=["utmX", "utmY", "elevation", "line", "index", "angle", "Block"])
-                df = pd.concat([df, dfTemp2])
+            # (x, y, elevation, lineno, idx, angle, idxblk) = df.iloc[len(df) - 1]
+            # point = Point(x, y)
+            # point_l = Point(self.get_next_point(x, y, LARGE_NUMBER, angle, 1))
+            # (list_extra, dist) = self.make_extra_waypoints(rowBlocks['Exterior'], x, y, angle)
+            # for i in range(0, len(list_extra)):
+            #     path = LineString([point, point_l])
+            #     if path.intersects(polygonSurvey) and length == self.spacing and idx.is_integer():
+            #         idx_o -= 1
+            #         dfTemp2 = dfWayPoints.loc[dfWayPoints["index"] == idx_o]
+            #     else:
+            #         idx_o -= deci
+            #         curr_wp = [x_o, y_o, 0, lineno_o, idx_o, angle_o, idxblk]
+            #         dfTemp2 = pd.DataFrame([curr_wp],
+            #                                columns=["utmX", "utmY", "elevation", "line", "index", "angle", "Block"])
+            #     df = pd.concat([df, dfTemp2])
             df = df.reset_index(drop=True)
             # df = pd.con
         np.savetxt(filePointsBlock, df.values, fmt='%1.10f')
