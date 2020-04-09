@@ -2,6 +2,7 @@ package sample;
 
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.layout.StackPane;
@@ -15,8 +16,6 @@ public class MainInterface {
     private static MainInterface single_instance = null;
     static private Button buttonLogData, buttonDataQuality, buttonFlightPlan, buttonBlock, buttonSettings, buttonFlight;
     static private Rectangle rectangle = new Rectangle(0, 140, 700, 450);
-    static private ComboBox comboBox;
-    static private ComboBox comboBoxFlights;
 
     public ComboBox listSurveys, listBlocks, listFlights;
 
@@ -27,10 +26,8 @@ public class MainInterface {
         rectangle.setFill(Color.DARKGRAY);
         rectangle.setArcHeight(15);
         rectangle.setArcWidth(15);
-
         rectangle.setStroke(Color.WHITE);
         rectangle.setStrokeWidth(2.3);
-
 
         buttonLogData = new Button("Logging Data");
         buttonDataQuality = new Button("Data Quality");
@@ -85,54 +82,6 @@ public class MainInterface {
         buttonSettings.setStyle("-fx-border-color: #484848; -fx-border-width: 2; " +
                 "-fx-border-radius: 20 20 20 20;" +
                 "-fx-background-radius: 20  20 20 20;");
-
-        comboBox = new ComboBox(Controller.getBlocks());
-        comboBoxFlights = new ComboBox(Controller.getFlights());
-        comboBox.setTranslateX(300);
-        comboBox.setTranslateY(-260);
-        comboBox.setPrefWidth(134);
-        comboBox.setMaxWidth(134);
-
-        comboBoxFlights.setTranslateX(200);
-        comboBoxFlights.setTranslateY(-260);
-        comboBoxFlights.setPrefWidth(50);
-        comboBoxFlights.setMaxWidth(50);
-
-
-
-        comboBox.setOnAction(event -> {
-            try{
-                String str = comboBox.getValue().toString();
-                String num = "0";
-                for(int i = 0; i < str.length(); i++){
-                    char ch2 = str.charAt(i);
-                    if(ch2 == ','){
-                        num = str.substring(1, i);
-                        break;
-                    }
-                }
-                Controller.setCurBlockFolder(Integer.parseInt(num), str);
-            }catch(NullPointerException e){
-
-            }
-        });
-
-
-        comboBoxFlights.setOnAction(event -> {
-            try{
-                String str = comboBoxFlights.getValue().toString();
-                String num = "0";
-                if (!str.equals(""))
-                    num = str.substring(1);
-
-                Controller.setCurFlightFolder(Integer.parseInt(num));
-
-            }catch(NullPointerException e){
-
-            }
-        });
-
-
         buttonDataQuality.setOnAction(event -> {
             try{
             LoggingData loggingData = LoggingData.getInstance(layout);
@@ -145,7 +94,6 @@ public class MainInterface {
             }catch (IllegalArgumentException e){
 
             }
-
         });
 
         buttonLogData.setOnAction(event -> {
@@ -173,49 +121,18 @@ public class MainInterface {
             }catch(IllegalArgumentException e){
 
             }
-
         });
 
-        buttonBlock.setOnAction(new EventHandler<ActionEvent>(){
-
-            @Override
-            public void handle(ActionEvent event) {
-
-                comboBox.setValue(Controller.addBlocks());
-                //comboBoxFlights.setValue(controller.addFlightLines());
-
-            }
-
-        });
-
-
-        buttonFlight.setOnAction(new EventHandler<ActionEvent>(){
-
-            @Override
-            public void handle(ActionEvent event) {
-                //comboBoxFlights.setValue("kkk");
-                comboBoxFlights.setValue(Controller.addFlight());
-            }
-
-        });
-
-
-        buttonSettings.setOnAction(new EventHandler<ActionEvent>(){
-
-            @Override
-            public void handle(ActionEvent event) {
-
-                removeElements(layout);
-                DataQuality dataQuality =  DataQuality.getInstance(layout);
-                LoggingData loggingData = LoggingData.getInstance(layout);
-                FlightPlanning flightPlanning = FlightPlanning.getInstance(layout);
-                dataQuality.removeElements();
-                loggingData.removeElements();
-                flightPlanning.removeElements();
-                Settings settings = Settings.getInstance(layout);
-                settings.showElements(layout);
-            }
-
+        buttonSettings.setOnAction(event -> {
+            removeElements(layout);
+            DataQuality dataQuality =  DataQuality.getInstance(layout);
+            LoggingData loggingData = LoggingData.getInstance(layout);
+            FlightPlanning flightPlanning = FlightPlanning.getInstance(layout);
+            dataQuality.removeElements();
+            loggingData.removeElements();
+            flightPlanning.removeElements();
+            Settings settings = Settings.getInstance(layout);
+            settings.showElements(layout);
         });
 
         listSurveys.setOnAction(event -> {
@@ -252,12 +169,6 @@ public class MainInterface {
 
             }
         });
-
-
-
-
-
-
     }
 
     public static MainInterface getInstance(StackPane layout)
@@ -278,40 +189,30 @@ public class MainInterface {
         layout.getChildren().add(buttonLogData);
         layout.getChildren().add(buttonDataQuality);
         layout.getChildren().add(buttonFlightPlan);
-//        layout.getChildren().add(buttonBlock);
-        layout.getChildren().add(comboBox);
-        layout.getChildren().add(comboBoxFlights);
         layout.getChildren().add(buttonSettings);
         layout.getChildren().add(curSurveyName);
         layout.getChildren().add(listFlights);
         layout.getChildren().add(listBlocks);
         layout.getChildren().add(listSurveys);
 
-        //        layout.getChildren().add(buttonFlight);
-
         LoggingData loggingData =  LoggingData.getInstance(layout);
         loggingData.showElements();
-
-
     }
-
 
     public void removeElements(StackPane layout){
         layout.getChildren().remove(rectangle);
         layout.getChildren().remove(buttonLogData);
         layout.getChildren().remove(buttonDataQuality);
         layout.getChildren().remove(buttonFlightPlan);
-//        layout.getChildren().remove(buttonBlock);
-        layout.getChildren().remove(comboBox);
         layout.getChildren().remove(buttonSettings);
-        layout.getChildren().remove(comboBoxFlights);
         layout.getChildren().remove(curSurveyName);
-//        layout.getChildren().remove(buttonFlight);
         layout.getChildren().remove(listFlights);
         layout.getChildren().remove(listBlocks);
         layout.getChildren().remove(listSurveys);
-
     }
 
-
+    public static void translateNode(Node n, float x, float y){
+        n.setTranslateX(x);
+        n.setTranslateY(y);
+    }
 }

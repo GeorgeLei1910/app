@@ -29,7 +29,7 @@ public class Main extends Application {
 
         MainInterface mainInterface =  MainInterface.getInstance(layout);
         mainInterface.showElements(layout);
-        primaryStage.setTitle("Interface");
+        primaryStage.setTitle("Stratus Flight Planning and Data Logging Software");
         primaryStage.setScene(scene);
         primaryStage.show();
         String curFolder = System.getProperty("user.dir");

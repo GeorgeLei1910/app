@@ -2,6 +2,7 @@ package sample;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.*;
@@ -34,7 +35,6 @@ public class FlightPlanning {
 
     private static ObservableList<String> items = FXCollections.observableArrayList ();
 
-    static ComboBox listFlights, listBlocks, listSurveys;
     static Button createSurvey, createBlock, createFlight;
     static Button editSurvey, editBlock, editFlight;
     static Button showSurvey, showBlock, showFlight;
@@ -48,10 +48,6 @@ public class FlightPlanning {
         // I know this is cohesive but is there anything else
         MainInterface mainInterface = MainInterface.getInstance(layout);
 
-        listSurveys = new ComboBox(Controller.getSurveys());
-        listBlocks = new ComboBox(Controller.getBlocks());
-        listFlights = new ComboBox(Controller.getFlights());
-        //New Stuff
         createSurvey = new Button("Create New Survey");
         createBlock = new Button("Create New Block");
         createFlight = new Button("Create New Flight");
@@ -61,63 +57,36 @@ public class FlightPlanning {
         showSurvey = new Button("Show Flight Lines");
         showBlock = new Button("Show Block Flight Plan");
         showFlight = new Button("Show Selected Flight");
-
         showBlockTie = new Button("Show Block Tie Plan");
-        
         showSurveyTieLines = new Button("Show Tie Lines");
         showSurveyTieFlight = new Button("Show Flight and Tie Lines");
 
-        listSurveys.setTranslateX(-200);
-        listBlocks.setTranslateX(0);
-        listFlights.setTranslateX(200);
-        listSurveys.setTranslateY(-180);
-        listBlocks.setTranslateY(-180);
-        listFlights.setTranslateY(-180);
-        createSurvey.setTranslateX(-200);
-        createBlock.setTranslateX(0);
-        createFlight.setTranslateX(200);
-        createSurvey.setTranslateY(-150);
-        createBlock.setTranslateY(-150);
-        createFlight.setTranslateY(-150);
+        MainInterface.translateNode(createSurvey, -200, -150);
+        MainInterface.translateNode(createBlock, 0, -150);
+        MainInterface.translateNode(createFlight, 200, -150);
 
-        editSurvey.setTranslateX(-200);
-        editBlock.setTranslateX(0);
-        editFlight.setTranslateX(200);
-        editSurvey.setTranslateY(-120);
-        editBlock.setTranslateY(-120);
-        editFlight.setTranslateY(-120);
+        MainInterface.translateNode(editSurvey, -200, -120);
+        MainInterface.translateNode(editBlock, 0, -120);
+        MainInterface.translateNode(editFlight, 200, -120);
 
-        showSurvey.setTranslateX(-200);
-        showBlock.setTranslateX(0);
-        showFlight.setTranslateX(200);
-        showSurvey.setTranslateY(-90);
-        showBlock.setTranslateY(-90);
-        showFlight.setTranslateY(-90);
+        MainInterface.translateNode(showSurvey, -200, -90);
+        MainInterface.translateNode(showBlock, 0, -90);
+        MainInterface.translateNode(showFlight, 200, -90);
 
-        showSurveyTieLines.setTranslateX(-200);
-        showSurveyTieLines.setTranslateY(-60);
-        showSurveyTieFlight.setTranslateX(-200);
-        showSurveyTieFlight.setTranslateY(-30);
-
-        showBlockTie.setTranslateX(0);
-        showBlockTie.setTranslateY(-60);
+        MainInterface.translateNode(showSurveyTieLines, -200, -60);
+        MainInterface.translateNode(showSurveyTieFlight, -200, -30);
+        MainInterface.translateNode(showBlockTie, 0, -60);
         
-        
-        //
         btnShowBlkPlan = new Button("Show Block Plan");
         buttonExport = new Button("Export File");
-
-        btnShowBlkPlan.setTranslateX(-200);
-        btnShowBlkPlan.setTranslateY(-120);
+        MainInterface.translateNode(btnShowBlkPlan, -200, -120);
         btnShowBlkPlan.setStyle("-fx-font: 13 Courier;");
 
-        currentFlight = new Text("No Flight Exists   ");
-        currentFlight.setTranslateX(-220);
-        currentFlight.setTranslateY(-70);
+        currentFlight = new Text("No Flight Exists");
+        MainInterface.translateNode(currentFlight, -220, -70);
         currentFlight.setStyle("-fx-font: 13 Courier;");
 
-        buttonExport.setTranslateX(200);
-        buttonExport.setTranslateY(-30);
+        MainInterface.translateNode(buttonExport, 200, -30);
         buttonExport.setStyle("-fx-font: 13 Courier;");
 
         lineFromTxt = new TextField(); lineToTxt = new TextField();
@@ -125,20 +94,18 @@ public class FlightPlanning {
         cbUseSeperateLines = new CheckBox("Use Single Line\n(Separate Line)"); seperateLines = new TextField();
 
         showFlightPlan = new Button("Show Flight Plan");
-        showFlightPlan.setTranslateY(0);
-        showFlightPlan.setTranslateX(-200);
+        MainInterface.translateNode(showFlightPlan, 0, -200);
 
         applyBtn = new Button("apply");
-        applyBtn.setTranslateX(150); applyBtn.setTranslateY(-70); applyBtn.setMaxWidth(60);
+        MainInterface.translateNode(applyBtn, 150, -70);
+        applyBtn.setMaxWidth(60);
 
         applied = new Text("Not Applied");
-        applied.setTranslateX(270);
-        applied.setTranslateY(-70);
+        MainInterface.translateNode(applied, 270, -70);
         applied.setStyle("-fx-font: 13 Courier;");
 
         txtTie = new Text("Ties:");
-        txtTie.setTranslateX(-45);
-        txtTie.setTranslateY(-70);
+        MainInterface.translateNode(txtTie, -45, -70);
         txtTie.setStyle("-fx-font: 13 Courier;");
 
         //Bind Buttons to Activation
@@ -154,41 +121,6 @@ public class FlightPlanning {
         showFlight.disableProperty().bind(mainInterface.listFlights.valueProperty().isNull());
         buttonExport.disableProperty().bind(mainInterface.listFlights.valueProperty().isNull());
 
-        listSurveys.setOnAction(event -> {
-            String curSurv = listSurveys.getValue().toString();
-            Controller.setCurSurveyFolder(curSurv);
-        });
-
-        listBlocks.setOnAction(event -> {
-            try{
-                String str = listBlocks.getValue().toString();
-                String num = "0";
-                for(int i = 0; i < str.length(); i++){
-                    char ch2 = str.charAt(i);
-                    if(ch2 == ','){
-                        num = str.substring(1, i);
-                        break;
-                    }
-                }
-                Controller.setCurBlockFolder(Integer.parseInt(num), str);
-            }catch(NullPointerException e){
-
-            }
-        });
-        listFlights.setOnAction(event -> {
-            try{
-                String str = listFlights.getValue().toString();
-                String num = "0";
-                if (!str.equals(""))
-                    num = str.substring(1);
-
-                Controller.setCurFlightFolder(Integer.parseInt(num));
-
-            }catch(NullPointerException e){
-
-            }
-        });
-
 
         createSurvey.setOnAction(event -> {
             final Stage dialog = new Stage();
@@ -196,16 +128,13 @@ public class FlightPlanning {
             TextField name = new TextField();
             name.setMaxWidth(200);
             name.setPrefWidth(200);
-            name.setTranslateX(0);
-            name.setTranslateY(-10);
+            MainInterface.translateNode(name, 0, -10);
 
             Button ok = new Button("OK");
-            ok.setTranslateX(40);
-            ok.setTranslateY(50);
+            MainInterface.translateNode(ok, 40, 50);
             ok.setPrefWidth(60);
             Button cancel = new Button("Cancel");
-            cancel.setTranslateX(-40);
-            cancel.setTranslateY(50);
+            MainInterface.translateNode(cancel, -40, 50);
 
             dialog.initModality(Modality.APPLICATION_MODAL);
             dialog.initOwner(Controller.getPrimaryStage());
@@ -222,7 +151,7 @@ public class FlightPlanning {
 
             ok.setOnAction(event1 -> {
                 String nameOfSurvey = name.getText();
-                if(!nameOfSurvey.equals("")) listSurveys.setValue(Controller.addSurvey(nameOfSurvey));
+                if(!nameOfSurvey.equals("")) mainInterface.listSurveys.setValue(Controller.addSurvey(nameOfSurvey));
                 dialog.close();
                 editSurvey.fire();
             });
@@ -239,14 +168,10 @@ public class FlightPlanning {
             Text txtOvershootBlock = new Text("Overshoot Block");
             TextField fieldOvershoot = new TextField();
             TextField fieldOvershootBlock = new TextField();
-            txtOvershoot.setTranslateX(-205);
-            txtOvershoot.setTranslateY(-100);
-            txtOvershootBlock.setTranslateX(-210);
-            txtOvershootBlock.setTranslateY(-70);
-            fieldOvershoot.setTranslateX(-100);
-            fieldOvershoot.setTranslateY(-100);
-            fieldOvershootBlock.setTranslateX(-100);
-            fieldOvershootBlock.setTranslateY(-70);
+            MainInterface.translateNode(txtOvershoot, -205, -100);
+            MainInterface.translateNode(txtOvershootBlock, -210, -70);
+            MainInterface.translateNode(fieldOvershoot, -100, -100);
+            MainInterface.translateNode(fieldOvershootBlock, -100, -70);
             fieldOvershoot.setMaxWidth(50);
             fieldOvershootBlock.setMaxWidth(50);
 
@@ -260,16 +185,12 @@ public class FlightPlanning {
             TextField txtFieldLineSpacing = new TextField();
             txtFieldSpacing.setMaxWidth(50);
             txtFieldLineSpacing.setMaxWidth(50);
-            txtSpacing.setTranslateX(-200);
-            txtSpacing.setTranslateY(-170);
-            txtFieldSpacing.setTranslateX(-110);
-            txtFieldSpacing.setTranslateY(-170);
-            txtFieldLineSpacing.setTranslateX(-110);
-            txtFieldLineSpacing.setTranslateY(-140);
-            txtLineSpacing.setTranslateX(-220);
-            txtLineSpacing.setTranslateY(-140);
-            btnShowFlight.setTranslateX(15);
-            btnShowFlight.setTranslateY(45);
+            MainInterface.translateNode(txtSpacing, -200, -170);
+            MainInterface.translateNode(txtFieldSpacing, -110, -170);
+            MainInterface.translateNode(txtFieldLineSpacing, -110, -140);
+            MainInterface.translateNode(txtLineSpacing, -220, -140);
+            MainInterface.translateNode(btnShowFlight, 15, 45);
+
             StackPane popUplayout =  new StackPane();
             Scene dialogScene = new Scene(popUplayout, 600, 500);
             Text textPosition = new Text("Position: ");
@@ -280,36 +201,27 @@ public class FlightPlanning {
             TextField posLonStart = new TextField();
             posLon.setPromptText("Lon");
             posLat.setPromptText("Lat");
+
             posLon.setPrefWidth(50);
             posLon.setMaxWidth(50);
             posLat.setPrefWidth(50);
             posLat.setMaxWidth(50);
-            posLat.setTranslateX(-180);
-            posLat.setTranslateY(-30);
-            posLon.setTranslateX(-120);
-            posLon.setTranslateY(-30);
-            textPosition.setTranslateX(-240);
-            textPosition.setTranslateY(-30);
-
-
+            MainInterface.translateNode(posLat, -180, -30);
+            MainInterface.translateNode(posLon, -120, -30);
+            MainInterface.translateNode(textPosition, -240, -30);
 
             posLonStart.setPromptText("Lon");
             posLatStart.setPromptText("Lat");
+            MainInterface.translateNode(posLatStart, -120, 45);
+            MainInterface.translateNode(posLonStart, -60, 45);
+            MainInterface.translateNode(textPositionStart, -210, 45);
             posLonStart.setPrefWidth(50);
             posLonStart.setMaxWidth(50);
             posLatStart.setPrefWidth(50);
             posLatStart.setMaxWidth(50);
-            posLatStart.setTranslateX(-120);
-            posLatStart.setTranslateY(45);
-            posLonStart.setTranslateX(-60);
-            posLonStart.setTranslateY(45);
-            textPositionStart.setTranslateX(-210);
-            textPositionStart.setTranslateY(45);
-
 
             Text txtArrow = new Text("--->");
-            txtArrow.setTranslateX(-60);
-            txtArrow.setTranslateY(-30);
+            MainInterface.translateNode(txtArrow, -60, -30);
 
             Button btnDelete = new Button("Delete Selected");
             Button btnAddPos = new Button("ADD");
@@ -319,38 +231,28 @@ public class FlightPlanning {
             list.setMaxHeight(160);
             list.setMaxWidth(150);
             list.setItems(items);
-            list.setTranslateX(165);
-            list.setTranslateY(50);
-            btnDelete.setTranslateX(165);
-            btnDelete.setTranslateY(145);
+            MainInterface.translateNode(list, 165, 50);
+            MainInterface.translateNode(btnDelete, 165, 145);
+
             Text text = new Text("Direction in degrees");
-            text.setTranslateX(-170);
-            text.setTranslateY(-210);
+            MainInterface.translateNode(text, -170, -210);
             Button btnOK = new Button("OK");
             Button btnCancel = new Button("Cancel");
             TextField dir = new TextField();
-            dir.setTranslateX(-70);
-            dir.setTranslateY(-210);
+            MainInterface.translateNode(dir, -70, -210);
             dir.setPrefWidth(50);
             dir.setMaxWidth(50);
-            btnOK.setTranslateX(60);
-            btnOK.setTranslateY(210);
-            btnCancel.setTranslateX(-60);
-            btnCancel.setTranslateY(210);
+            MainInterface.translateNode(btnOK, 60, 210);
+            MainInterface.translateNode(btnCancel, -60, 210);
             dir.getText();
 
             CheckBox chbDir = new CheckBox("Clockwise planning");
             CheckBox chbGoogleApi = new CheckBox("Google API for elevation");
             CheckBox chbTwoWay = new CheckBox("Render Both Ways");
 
-            chbDir.setTranslateX(-200);
-            chbDir.setTranslateY(80);
-
-            chbGoogleApi.setTranslateX(-190);
-            chbGoogleApi.setTranslateY(100);
-
-            chbTwoWay.setTranslateX(-190);
-            chbTwoWay.setTranslateY(120);
+            MainInterface.translateNode(chbDir, -190, 80);
+            MainInterface.translateNode(chbGoogleApi, -190, 100);
+            MainInterface.translateNode(chbTwoWay, -190, 120);
 
             Button useKMLFile = new Button("Load KML file");
             useKMLFile.setTranslateX(165);
@@ -388,9 +290,7 @@ public class FlightPlanning {
             Text tieLineTxtStart = new Text("Start Position");
             tieLineTxtStart.setTranslateX(90);
             tieLineTxtStart.setTranslateY(-135);
-            TextField tieSpaceFieldStartLon = new TextField();
-
-            TextField tieSpaceFieldStartLat = new TextField();
+            TextField tieSpaceFieldStartLon = new TextField(), tieSpaceFieldStartLat = new TextField();
             tieSpaceFieldStartLat.setTranslateX(165);
             tieSpaceFieldStartLat.setTranslateY(-135);
             tieSpaceFieldStartLat.setMaxWidth(40);
@@ -683,7 +583,6 @@ public class FlightPlanning {
             popUplayout.getChildren().add(txtLineSpacing);
             popUplayout.getChildren().add(elevText);
 
-
             popUplayout.getChildren().add(dir);
             popUplayout.getChildren().add(txtFieldSpacing);
             popUplayout.getChildren().add(txtFieldLineSpacing);
@@ -735,23 +634,12 @@ public class FlightPlanning {
             CanvasFlightPlan canvasFlightPlan = new CanvasFlightPlan(3);
         });
 
-        createBlock.setOnAction(event -> {
-            listBlocks.setValue(Controller.addBlocks());
-        });
-        editBlock.setOnAction(event -> {
-            CanvasFlightPlan canvasFlightPlan = new CanvasFlightPlan(0);
-        });
-        showBlock.setOnAction(event -> {
-            CanvasFlightPlan canvasFlightPlan = new CanvasFlightPlan(-1);
-        });
-        showBlockTie.setOnAction(event -> {
-            CanvasFlightPlan canvasFlightPlan = new CanvasFlightPlan(4);
-        });
+        createBlock.setOnAction(event -> { mainInterface.listBlocks.setValue(Controller.addBlocks());  });
+        editBlock.setOnAction(event -> { CanvasFlightPlan canvasFlightPlan = new CanvasFlightPlan(0);});
+        showBlock.setOnAction(event -> { CanvasFlightPlan canvasFlightPlan = new CanvasFlightPlan(-1);});
+        showBlockTie.setOnAction(event -> { CanvasFlightPlan canvasFlightPlan = new CanvasFlightPlan(4);});
 
-        createFlight.setOnAction(event -> {
-            listFlights.setValue(Controller.addFlight());
-        });
-
+        createFlight.setOnAction(event -> { mainInterface.listFlights.setValue(Controller.addFlight());});
         editFlight.setOnAction(event -> {
 //            updateFlightPlanInfo();
             final Stage dialog = new Stage();
@@ -812,22 +700,12 @@ public class FlightPlanning {
                 dialog.close();
             });
         });
-        showFlight.setOnAction(event -> {
-            CanvasFlightPlan canvasFlightPlan = new CanvasFlightPlan(-2);
-        });
-
-
+        showFlight.setOnAction(event -> {CanvasFlightPlan canvasFlightPlan = new CanvasFlightPlan(-2);});
         // Sets function of Buttons
         // Show Block Plan of the flight
-        btnShowBlkPlan.setOnAction((event) -> {
-            CanvasFlightPlan canvasFlightPlanBlock = new CanvasFlightPlan(0);
-        });
-
+        btnShowBlkPlan.setOnAction((event) -> { CanvasFlightPlan canvasFlightPlanBlock = new CanvasFlightPlan(0);});
         // Show Flight Plan after Line and Tie from tos are Applied
-        showFlightPlan.setOnAction((event) -> {
-            CanvasFlightPlan canvasFlightPlanBlock = new CanvasFlightPlan(-1);
-        });
-
+        showFlightPlan.setOnAction((event) -> { CanvasFlightPlan canvasFlightPlanBlock = new CanvasFlightPlan(-1);});
         // Exports Flight Planner into .txt file in Export folder
         buttonExport.setOnAction((event) -> {
             String curPath = System.getProperty("user.dir").replace('\\', '/')+"/Exports";
@@ -967,7 +845,7 @@ public class FlightPlanning {
         lineToTxt.setDisable(false);
         lineFromTxt.setDisable(false);
         applied.setDisable(false);
-        showFlightPlan.setDisable(false );
+        showFlightPlan.setDisable(false);
         applyBtn.setDisable(false);
         lineTieFromTxt.setDisable(false);
         lineTieToTxt.setDisable(false);
@@ -1091,9 +969,6 @@ public class FlightPlanning {
     }
     // Puts elements when Flight Planning tab is selected
     public void showElements(){
-//        layout.getChildren().add(listFlights);
-//        layout.getChildren().add(listBlocks);
-//        layout.getChildren().add(listSurveys);
         layout.getChildren().add(createFlight);
         layout.getChildren().add(createBlock);
         layout.getChildren().add(createSurvey);
@@ -1110,9 +985,6 @@ public class FlightPlanning {
     }
     // Removes the buttons and stuff when Pane transitions
     public void removeElements(){
-//        layout.getChildren().remove(listFlights);
-//        layout.getChildren().remove(listBlocks);
-//        layout.getChildren().remove(listSurveys);
         layout.getChildren().remove(createFlight);
         layout.getChildren().remove(createBlock);
         layout.getChildren().remove(createSurvey);
@@ -1129,4 +1001,5 @@ public class FlightPlanning {
     }
 
     public static ObservableList getCoordinates(){return items;}
+
 }
