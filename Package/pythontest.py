@@ -1046,22 +1046,31 @@ class FlightPlanning(object):
                     (x, y) = self.get_next_point(x, y, length, angle, 1)
                     point = Point(x, y)
                     path = LineString([point, point_l])
-                    if path.intersects(polygonSurvey) and length == self.spacing and idx.is_integer():
-                        idx += 1
-                        dfTemp2 = dfWayPoints.loc[dfWayPoints["index"] == idx]
+                    if path.intersects(polygonSurvey) and idx.is_integer():
+                        if length == self.spacing:
+                            idx += 1
+                            dfTemp2 = dfWayPoints.loc[dfWayPoints["index"] == idx]
+                        else:
+                            idx += (length / self.spacing)
+                            curr_wp = [x, y, 0, lineno, idx, angle, idxblk]
+                            dfTemp2 = pd.DataFrame([curr_wp], columns=["utmX", "utmY", "elevation", "line", "index", "angle", "Block"])
                     else:
                         idx += deci
                         curr_wp = [x, y, 0, lineno, idx, angle, idxblk]
-                        dfTemp2 = pd.DataFrame([curr_wp],
-                                               columns=["utmX", "utmY", "elevation", "line", "index", "angle", "Block"])
+                        dfTemp2 = pd.DataFrame([curr_wp], columns=["utmX", "utmY", "elevation", "line", "index", "angle", "Block"])
                     print(dfTemp2)
                     dfTemp = dfTemp.append(dfTemp2)
                     (x_o, y_o) = self.get_next_point(x_o, y_o, length, angle, 1)
                     point_o = Point(x_o, y_o)
                     path = LineString([point_o, point_o_l])
-                    if path.intersects(polygonSurvey) and length == self.spacing and idx_o.is_integer():
-                        idx_o -= 1
-                        dfTemp2 = dfWayPoints.loc[dfWayPoints["index"] == idx_o]
+                    if path.intersects(polygonSurvey) and idx_o.is_integer():
+                        if length == self.spacing:
+                            idx_o -= 1
+                            dfTemp2 = dfWayPoints.loc[dfWayPoints["index"] == idx_o]
+                        else:
+                            idx_o -= (length / self.spacing)
+                            curr_wp = [x_o, y_o, 0, lineno_o, idx_o, angle_o, idxblk]
+                            dfTemp2 = pd.DataFrame([curr_wp], columns=["utmX", "utmY", "elevation", "line", "index", "angle", "Block"])
                     else:
                         idx_o -= deci
                         curr_wp = [x_o, y_o, 0, lineno_o, idx_o, angle_o, idxblk]

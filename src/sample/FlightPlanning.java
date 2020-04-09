@@ -1,17 +1,13 @@
 package sample;
 
-import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
-import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
@@ -23,12 +19,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-
-
+import java.util.Comparator;
 
 public class FlightPlanning {
-
-
     private static FlightPlanning single_instance = null;
     static private StackPane layout;
     private static Button btnShowBlkPlan, buttonExport, applyBtn, showFlightPlan;
@@ -52,7 +45,9 @@ public class FlightPlanning {
     private FlightPlanning(StackPane layout) {
         // Setup for Layout
         FlightPlanning.layout = layout;
-        
+        // I know this is cohesive but is there anything else
+        MainInterface mainInterface = MainInterface.getInstance(layout);
+
         listSurveys = new ComboBox(Controller.getSurveys());
         listBlocks = new ComboBox(Controller.getBlocks());
         listFlights = new ComboBox(Controller.getFlights());
@@ -129,9 +124,6 @@ public class FlightPlanning {
         lineTieFromTxt = new TextField(); lineTieToTxt = new TextField();
         cbUseSeperateLines = new CheckBox("Use Single Line\n(Separate Line)"); seperateLines = new TextField();
 
-
-
-
         showFlightPlan = new Button("Show Flight Plan");
         showFlightPlan.setTranslateY(0);
         showFlightPlan.setTranslateX(-200);
@@ -150,20 +142,17 @@ public class FlightPlanning {
         txtTie.setStyle("-fx-font: 13 Courier;");
 
         //Bind Buttons to Activation
-        editSurvey.disableProperty().bind(listSurveys.valueProperty().isNull());
-        showSurvey.disableProperty().bind(listSurveys.valueProperty().isNull());
-        showSurveyTieFlight.disableProperty().bind(listSurveys.valueProperty().isNull());
-        showSurveyTieLines.disableProperty().bind(listSurveys.valueProperty().isNull());
-        listBlocks.disableProperty().bind(listSurveys.valueProperty().isNull());
-        createBlock.disableProperty().bind(listSurveys.valueProperty().isNull());
-        editBlock.disableProperty().bind(listBlocks.valueProperty().isNull());
-        showBlock.disableProperty().bind(listBlocks.valueProperty().isNull());
-        showBlockTie.disableProperty().bind(listBlocks.valueProperty().isNull());
-        listFlights.disableProperty().bind(listBlocks.valueProperty().isNull());
-        createFlight.disableProperty().bind(listBlocks.valueProperty().isNull());
-        editFlight.disableProperty().bind(listFlights.valueProperty().isNull());
-        showFlight.disableProperty().bind(listFlights.valueProperty().isNull());
-        buttonExport.disableProperty().bind(listFlights.valueProperty().isNull());
+        showSurvey.disableProperty().bind(mainInterface.listSurveys.valueProperty().isNull());
+        showSurveyTieFlight.disableProperty().bind(mainInterface.listSurveys.valueProperty().isNull());
+        showSurveyTieLines.disableProperty().bind(mainInterface.listSurveys.valueProperty().isNull());
+        createBlock.disableProperty().bind(mainInterface.listSurveys.valueProperty().isNull());
+        editBlock.disableProperty().bind(mainInterface.listBlocks.valueProperty().isNull());
+        showBlock.disableProperty().bind(mainInterface.listBlocks.valueProperty().isNull());
+        showBlockTie.disableProperty().bind(mainInterface.listBlocks.valueProperty().isNull());
+        createFlight.disableProperty().bind(mainInterface.listBlocks.valueProperty().isNull());
+        editFlight.disableProperty().bind(mainInterface.listFlights.valueProperty().isNull());
+        showFlight.disableProperty().bind(mainInterface.listFlights.valueProperty().isNull());
+        buttonExport.disableProperty().bind(mainInterface.listFlights.valueProperty().isNull());
 
         listSurveys.setOnAction(event -> {
             String curSurv = listSurveys.getValue().toString();
@@ -400,12 +389,15 @@ public class FlightPlanning {
             tieLineTxtStart.setTranslateX(90);
             tieLineTxtStart.setTranslateY(-135);
             TextField tieSpaceFieldStartLon = new TextField();
-            tieSpaceFieldStartLon.setTranslateX(165);
-            tieSpaceFieldStartLon.setTranslateY(-135);
+
             TextField tieSpaceFieldStartLat = new TextField();
-            tieSpaceFieldStartLat.setTranslateX(210);
+            tieSpaceFieldStartLat.setTranslateX(165);
             tieSpaceFieldStartLat.setTranslateY(-135);
             tieSpaceFieldStartLat.setMaxWidth(40);
+            tieSpaceFieldStartLon.setPromptText("Lon");
+            tieSpaceFieldStartLat.setPromptText("Lat");
+            tieSpaceFieldStartLon.setTranslateX(210);
+            tieSpaceFieldStartLon.setTranslateY(-135);
             tieSpaceFieldStartLon.setMaxWidth(40);
 
             Button btnChooseStartTie = new Button("choose start");
@@ -682,41 +674,49 @@ public class FlightPlanning {
             btnOK.setPrefWidth(80);
             btnCancel.setPrefWidth(80);
             popUplayout.getChildren().add(text);
-            popUplayout.getChildren().add(btnCancel);
-            popUplayout.getChildren().add(btnOK);
-            popUplayout.getChildren().add(dir);
-            popUplayout.getChildren().add(list);
             popUplayout.getChildren().add(textPosition);
-            popUplayout.getChildren().add(posLat);
-            popUplayout.getChildren().add(posLon);
-            popUplayout.getChildren().add(btnDelete);
             popUplayout.getChildren().add(txtArrow);
-            popUplayout.getChildren().add(btnAddPos);
-            popUplayout.getChildren().add(btnShowFlight);
-            popUplayout.getChildren().add(posLonStart);
-            popUplayout.getChildren().add(posLatStart);
             popUplayout.getChildren().add(textPositionStart);
             popUplayout.getChildren().add(txtSpacing);
-            popUplayout.getChildren().add(txtFieldSpacing);
-            popUplayout.getChildren().add(fieldOvershoot);
-            popUplayout.getChildren().add(fieldOvershootBlock);
             popUplayout.getChildren().add(txtOvershoot);
             popUplayout.getChildren().add(txtOvershootBlock);
-            popUplayout.getChildren().add(chbGoogleApi);
-            popUplayout.getChildren().add(chbDir);
-            popUplayout.getChildren().add(chbTwoWay);
-            popUplayout.getChildren().add(txtFieldLineSpacing);
             popUplayout.getChildren().add(txtLineSpacing);
-            popUplayout.getChildren().add(useKMLFile);
             popUplayout.getChildren().add(elevText);
-            popUplayout.getChildren().add(elevTxtField);
+
+
+            popUplayout.getChildren().add(dir);
+            popUplayout.getChildren().add(txtFieldSpacing);
+            popUplayout.getChildren().add(txtFieldLineSpacing);
+            popUplayout.getChildren().add(fieldOvershoot);
+            popUplayout.getChildren().add(fieldOvershootBlock);
+
             popUplayout.getChildren().add(rectangle);
             popUplayout.getChildren().add(tieLineTxt);
-            popUplayout.getChildren().add(tieSpaceField);
             popUplayout.getChildren().add(tieLineTxtStart);
+            popUplayout.getChildren().add(tieSpaceField);
             popUplayout.getChildren().add(tieSpaceFieldStartLat);
             popUplayout.getChildren().add(tieSpaceFieldStartLon);
             popUplayout.getChildren().add(btnChooseStartTie);
+
+            popUplayout.getChildren().add(posLat);
+            popUplayout.getChildren().add(posLon);
+            popUplayout.getChildren().add(btnAddPos);
+
+            popUplayout.getChildren().add(useKMLFile);
+            popUplayout.getChildren().add(list);
+            popUplayout.getChildren().add(btnDelete);
+
+            popUplayout.getChildren().add(posLatStart);
+            popUplayout.getChildren().add(posLonStart);
+            popUplayout.getChildren().add(btnShowFlight);
+
+            popUplayout.getChildren().add(chbDir);
+            popUplayout.getChildren().add(chbGoogleApi);
+            popUplayout.getChildren().add(chbTwoWay);
+            popUplayout.getChildren().add(elevTxtField);
+
+            popUplayout.getChildren().add(btnCancel);
+            popUplayout.getChildren().add(btnOK);
 
             posLat.getParent().requestFocus();
             posLon.getParent().requestFocus();
@@ -1091,9 +1091,9 @@ public class FlightPlanning {
     }
     // Puts elements when Flight Planning tab is selected
     public void showElements(){
-        layout.getChildren().add(listFlights);
-        layout.getChildren().add(listBlocks);
-        layout.getChildren().add(listSurveys);
+//        layout.getChildren().add(listFlights);
+//        layout.getChildren().add(listBlocks);
+//        layout.getChildren().add(listSurveys);
         layout.getChildren().add(createFlight);
         layout.getChildren().add(createBlock);
         layout.getChildren().add(createSurvey);
@@ -1110,9 +1110,9 @@ public class FlightPlanning {
     }
     // Removes the buttons and stuff when Pane transitions
     public void removeElements(){
-        layout.getChildren().remove(listFlights);
-        layout.getChildren().remove(listBlocks);
-        layout.getChildren().remove(listSurveys);
+//        layout.getChildren().remove(listFlights);
+//        layout.getChildren().remove(listBlocks);
+//        layout.getChildren().remove(listSurveys);
         layout.getChildren().remove(createFlight);
         layout.getChildren().remove(createBlock);
         layout.getChildren().remove(createSurvey);
@@ -1129,5 +1129,4 @@ public class FlightPlanning {
     }
 
     public static ObservableList getCoordinates(){return items;}
-
 }

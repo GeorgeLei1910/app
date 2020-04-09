@@ -18,13 +18,11 @@ public class MainInterface {
     static private ComboBox comboBox;
     static private ComboBox comboBoxFlights;
 
-    public static ComboBox listSurveys, listBlocks, listFlights;
+    public ComboBox listSurveys, listBlocks, listFlights;
 
     static private Text curSurveyName;
 
     private MainInterface(StackPane layout){
-
-        
 
         rectangle.setFill(Color.DARKGRAY);
         rectangle.setArcHeight(15);
@@ -220,6 +218,41 @@ public class MainInterface {
 
         });
 
+        listSurveys.setOnAction(event -> {
+            String curSurv = listSurveys.getValue().toString();
+            Controller.setCurSurveyFolder(curSurv);
+        });
+
+        listBlocks.setOnAction(event -> {
+            try{
+                String str = listBlocks.getValue().toString();
+                String num = "0";
+                for(int i = 0; i < str.length(); i++){
+                    char ch2 = str.charAt(i);
+                    if(ch2 == ','){
+                        num = str.substring(1, i);
+                        break;
+                    }
+                }
+                Controller.setCurBlockFolder(Integer.parseInt(num), str);
+            }catch(NullPointerException e){
+
+            }
+        });
+        listFlights.setOnAction(event -> {
+            try{
+                String str = listFlights.getValue().toString();
+                String num = "0";
+                if (!str.equals(""))
+                    num = str.substring(1);
+
+                Controller.setCurFlightFolder(Integer.parseInt(num));
+
+            }catch(NullPointerException e){
+
+            }
+        });
+
 
 
 
@@ -250,7 +283,11 @@ public class MainInterface {
         layout.getChildren().add(comboBoxFlights);
         layout.getChildren().add(buttonSettings);
         layout.getChildren().add(curSurveyName);
-//        layout.getChildren().add(buttonFlight);
+        layout.getChildren().add(listFlights);
+        layout.getChildren().add(listBlocks);
+        layout.getChildren().add(listSurveys);
+
+        //        layout.getChildren().add(buttonFlight);
 
         LoggingData loggingData =  LoggingData.getInstance(layout);
         loggingData.showElements();
@@ -270,6 +307,9 @@ public class MainInterface {
         layout.getChildren().remove(comboBoxFlights);
         layout.getChildren().remove(curSurveyName);
 //        layout.getChildren().remove(buttonFlight);
+        layout.getChildren().remove(listFlights);
+        layout.getChildren().remove(listBlocks);
+        layout.getChildren().remove(listSurveys);
 
     }
 

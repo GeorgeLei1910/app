@@ -180,6 +180,8 @@ public class Controller {
         for(String survey : mapOfFiles.keySet()){
             surveys.add(survey);
         }
+        Collections.sort(surveys);
+        System.out.println(surveys.toString());
     }
 
     static private void setUpPackage() {
@@ -210,8 +212,6 @@ public class Controller {
             }
         }
         updateFileStructure();
-
-
     }
 
 
@@ -423,10 +423,5 @@ public class Controller {
             System.out.println(line);
         }
         reader.close();
-    }
-
-
-    private static void updateLines(){
-
     }
 }

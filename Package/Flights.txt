@@ -46,12 +46,16 @@ F1
 Survey_UTMCross2
 B1, 2020-03-27
 F1
+Survey_Rio_Tinto_A
+Survey_Rio_Tinto_B
 Survey_2020 Logging
 B2, 2020-02-19
 F1
 B1, 2020-02-19
 F1
 Survey_Long Survey
+Survey_Rio_Tinto_C
+Survey_101010
 Survey_UTMCross
 B1, 2020-03-25
 F1
@@ -147,6 +151,7 @@ F12
 F13
 F14
 F15
+Survey_Survey_1010
 Survey_Halp_Apr7
 B1, 2020-04-07
 Survey_  
