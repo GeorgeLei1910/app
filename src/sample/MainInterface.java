@@ -14,7 +14,7 @@ import javafx.scene.text.Text;
 public class MainInterface {
 
     private static MainInterface single_instance = null;
-    static private Button buttonLogData, buttonDataQuality, buttonFlightPlan, buttonBlock, buttonSettings, buttonFlight;
+    static private Button buttonLogData, buttonDataQuality, buttonFlightPlan, buttonBlock, buttonFlight;
     static private Rectangle rectangle = new Rectangle(0, 140, 700, 450);
 
     public ComboBox listSurveys, listBlocks, listFlights;
@@ -33,7 +33,6 @@ public class MainInterface {
         buttonDataQuality = new Button("Data Quality");
         buttonFlightPlan = new Button("Flight Planning");
         buttonBlock = new Button("New Block");
-        buttonSettings = new Button("Settings");
         buttonFlight = new Button("New Flight");
         curSurveyName = new Text(Controller.getCurSurvey());
         buttonBlock.setStyle("-fx-font-size:16");
@@ -46,8 +45,6 @@ public class MainInterface {
         buttonFlightPlan.setTranslateY(-230);
         buttonBlock.setTranslateX(0);
         buttonBlock.setTranslateY(250);
-        buttonSettings.setTranslateX(-330);
-        buttonSettings.setTranslateY(-260);
 
         buttonFlight.setTranslateX(-240);
         buttonFlight.setTranslateY(-260);
@@ -57,17 +54,12 @@ public class MainInterface {
         listSurveys = new ComboBox(Controller.getSurveys());
         listBlocks = new ComboBox(Controller.getBlocks());
         listFlights = new ComboBox(Controller.getFlights());
-
-        listSurveys.setTranslateX(-200);
-        listBlocks.setTranslateX(0);
-        listFlights.setTranslateX(200);
-        listSurveys.setTranslateY(-180);
-        listBlocks.setTranslateY(-180);
-        listFlights.setTranslateY(-180);
+        translateNode(listSurveys, -200, -180);
+        translateNode(listBlocks, 0, -180);
+        translateNode(listFlights, 200, -180);
 
         curSurveyName.setFill(Color.WHITE);
-        curSurveyName.setTranslateX(0);
-        curSurveyName.setTranslateY(-270);
+        translateNode(curSurveyName, 0, -270);
         curSurveyName.setStyle("-fx-font: 20 Courier;");
 
         buttonLogData.setStyle("-fx-border-color: #484848; -fx-border-width: 2; " +
@@ -79,9 +71,6 @@ public class MainInterface {
         buttonDataQuality.setStyle("-fx-border-color: #484848; -fx-border-width: 2; " +
                 "-fx-border-radius: 7 7 7 7;" +
                 "-fx-background-radius: 6.5  6.5 6.5 6.5;");
-        buttonSettings.setStyle("-fx-border-color: #484848; -fx-border-width: 2; " +
-                "-fx-border-radius: 20 20 20 20;" +
-                "-fx-background-radius: 20  20 20 20;");
         buttonDataQuality.setOnAction(event -> {
             try{
             LoggingData loggingData = LoggingData.getInstance(layout);
@@ -121,18 +110,6 @@ public class MainInterface {
             }catch(IllegalArgumentException e){
 
             }
-        });
-
-        buttonSettings.setOnAction(event -> {
-            removeElements(layout);
-            DataQuality dataQuality =  DataQuality.getInstance(layout);
-            LoggingData loggingData = LoggingData.getInstance(layout);
-            FlightPlanning flightPlanning = FlightPlanning.getInstance(layout);
-            dataQuality.removeElements();
-            loggingData.removeElements();
-            flightPlanning.removeElements();
-            Settings settings = Settings.getInstance(layout);
-            settings.showElements(layout);
         });
 
         listSurveys.setOnAction(event -> {
@@ -189,7 +166,6 @@ public class MainInterface {
         layout.getChildren().add(buttonLogData);
         layout.getChildren().add(buttonDataQuality);
         layout.getChildren().add(buttonFlightPlan);
-        layout.getChildren().add(buttonSettings);
         layout.getChildren().add(curSurveyName);
         layout.getChildren().add(listFlights);
         layout.getChildren().add(listBlocks);
@@ -204,7 +180,6 @@ public class MainInterface {
         layout.getChildren().remove(buttonLogData);
         layout.getChildren().remove(buttonDataQuality);
         layout.getChildren().remove(buttonFlightPlan);
-        layout.getChildren().remove(buttonSettings);
         layout.getChildren().remove(curSurveyName);
         layout.getChildren().remove(listFlights);
         layout.getChildren().remove(listBlocks);

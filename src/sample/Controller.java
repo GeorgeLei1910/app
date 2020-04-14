@@ -416,12 +416,13 @@ public class Controller {
         return "/Data/"+getCurSurvey()+"/Block"+getCurBlock()+"/Flight"+getCurFlight();
     }
 
-    public static void pythonConsole(Process p) throws IOException {
+    public static String pythonConsole(Process p) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
         String line;
         while ((line = reader.readLine()) != null) {
             System.out.println(line);
         }
         reader.close();
+        return line;
     }
 }

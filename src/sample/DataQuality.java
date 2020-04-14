@@ -20,7 +20,6 @@ public class DataQuality {
     static private TextField r1;
     static private TextField r2;
 
-
      enum graphType {
         FourthDiff,
          FourthDiffBMag,
@@ -32,10 +31,8 @@ public class DataQuality {
          MavAltvsPiksiAlt,
     }
 
-
-
     private DataQuality(StackPane layout){
-        this.layout = layout;
+        DataQuality.layout = layout;
         txtRange = new Text("Range");
         r1 = new TextField();
         r2 = new TextField();
@@ -48,39 +45,28 @@ public class DataQuality {
          cb5 = new CheckBox("Base Mag Profile");
          cb6 = new CheckBox("Flight Map");
          cb7 = new CheckBox("Mav Alt vs Piksi Alt");
-        cb8 = new CheckBox("Flight Map Piksi vs Mav");
+         cb8 = new CheckBox("Flight Map Piksi vs Mav");
 
         buttonGraph = new Button("Graph");
         buttonGraphTrim = new Button("trimmed Graph");
-        cb1.setTranslateX(-240);
-        cb1.setTranslateY(-150);
-        txtRange.setTranslateX(-150);
-        txtRange.setTranslateY(-150);
-        r1.setTranslateX(-100);
-        r1.setTranslateY(-150);
-        r2.setTranslateX(-40);
-        r2.setTranslateY(-150);
+        MainInterface.translateNode(cb1, -240, -90);
+        MainInterface.translateNode(txtRange, -150, -90);
+        MainInterface.translateNode(r1, -100, -90);
+        MainInterface.translateNode(r2, -40, -90);
+
+        MainInterface.translateNode(cb2, -240, -60);
+        MainInterface.translateNode(cb3, -240, -30);
+        MainInterface.translateNode(cb4, -240, 0);
+        MainInterface.translateNode(cb5, -240, 30);
+        MainInterface.translateNode(cb6, -240, 60);
+        MainInterface.translateNode(cb7, -240, 90);
+        MainInterface.translateNode(cb8, -240, 120);
+
         r1.setText("0");
         r2.setText("0");
-        cb2.setTranslateX(-200);
-        cb2.setTranslateY(-120);
-        cb3.setTranslateX(-249);
-        cb3.setTranslateY(-90);
-        cb4.setTranslateX(-246);
-        cb4.setTranslateY(-60);
-        cb5.setTranslateX(-232);
-        cb5.setTranslateY(-30);
-        cb6.setTranslateX(-252);
-        cb6.setTranslateY(0);
-        cb7.setTranslateX(-228);
-        cb7.setTranslateY(30);
-        cb8.setTranslateX(-214);
-        cb8.setTranslateY(60);
 
         cbUseRaw = new CheckBox("Use Raw Data");
-        cbUseRaw.setTranslateX(-200);
-        cbUseRaw.setTranslateY(-200);
-
+        MainInterface.translateNode(cbUseRaw, -200, -150);
 
         buttonGraph.setTranslateX(200);
         buttonGraph.setTranslateY(-100);
@@ -139,56 +125,45 @@ public class DataQuality {
             listOfGraphs.add(graphType.FlightMapPiksivsMav);
     }
 
-    public static DataQuality getInstance(StackPane layout)
-    {
+    public static DataQuality getInstance(StackPane layout){
         if (single_instance == null)
             single_instance = new DataQuality(layout);
-
-
         return single_instance;
     }
-
     public void showElems(){
-        this.layout.getChildren().add(cb1);
-        this.layout.getChildren().add(cb2);
-        this.layout.getChildren().add(cb3);
-        this.layout.getChildren().add(cb4);
-        this.layout.getChildren().add(cb5);
-        this.layout.getChildren().add(cb6);
-        this.layout.getChildren().add(cb7);
-        this.layout.getChildren().add(cb8);
-        this.layout.getChildren().add(buttonGraph);
-        this.layout.getChildren().add(buttonGraphTrim);
+        layout.getChildren().add(cb1);
+        layout.getChildren().add(cb2);
+        layout.getChildren().add(cb3);
+        layout.getChildren().add(cb4);
+        layout.getChildren().add(cb5);
+        layout.getChildren().add(cb6);
+        layout.getChildren().add(cb7);
+        layout.getChildren().add(cb8);
+        layout.getChildren().add(buttonGraph);
+        layout.getChildren().add(buttonGraphTrim);
 
-        this.layout.getChildren().add(txtRange);
-        this.layout.getChildren().add(r1);
-        this.layout.getChildren().add(r2);
-        this.layout.getChildren().add(cbUseRaw);
-
+        layout.getChildren().add(txtRange);
+        layout.getChildren().add(r1);
+        layout.getChildren().add(r2);
+        layout.getChildren().add(cbUseRaw);
     }
-
 
     public void removeElements(){
-        this.layout.getChildren().remove(cb1);
-        this.layout.getChildren().remove(cb2);
-        this.layout.getChildren().remove(cb3);
-        this.layout.getChildren().remove(cb4);
-        this.layout.getChildren().remove(cb5);
-        this.layout.getChildren().remove(cb6);
-        this.layout.getChildren().remove(cb7);
-        this.layout.getChildren().remove(cb8);
+        layout.getChildren().remove(cb1);
+        layout.getChildren().remove(cb2);
+        layout.getChildren().remove(cb3);
+        layout.getChildren().remove(cb4);
+        layout.getChildren().remove(cb5);
+        layout.getChildren().remove(cb6);
+        layout.getChildren().remove(cb7);
+        layout.getChildren().remove(cb8);
 
-        this.layout.getChildren().remove(buttonGraph);
-        this.layout.getChildren().remove(buttonGraphTrim);
+        layout.getChildren().remove(buttonGraph);
+        layout.getChildren().remove(buttonGraphTrim);
 
-        this.layout.getChildren().remove(txtRange);
-        this.layout.getChildren().remove(r1);
-        this.layout.getChildren().remove(r2);
-        this.layout.getChildren().remove(cbUseRaw);
-
-
+        layout.getChildren().remove(txtRange);
+        layout.getChildren().remove(r1);
+        layout.getChildren().remove(r2);
+        layout.getChildren().remove(cbUseRaw);
     }
-
-
-
 }

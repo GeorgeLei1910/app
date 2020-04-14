@@ -9,17 +9,15 @@ from scipy.interpolate import interp1d
 # from mpl_toolkits.mplot3d import Axes3D
 # from scipy.signal import savgol_filter
 import pandas as pd
-# import pickle
 import os
-# import csv
 import sys
 import math
 from pyproj import Proj
-from math import pi, sin, cos, tan, sqrt
 from shapely.geometry import Point
-from shapely.geometry.polygon import Polygon, LineString, LinearRing
+from shapely.geometry.polygon import Polygon, LineString
 import simplejson
 import urllib
+import elevation
 import time
 
 # LatLong- UTM conversion..h
@@ -831,9 +829,9 @@ class FlightPlanning(object):
                     for j in range(int(start), int(end)):
                         idx = dfTemp.iat[j, 4]
                         dfWayPoints.loc[dfWayPoints['index'] == idx, 'Block'] = idxblk
-                    # If the line intersects but not points are inside the polygon, Find a point inside the polygon and make it a waypoint
-                    # Adding extra in block waypoints before beginning of line if needed.
 
+
+                    # Some points are not produced because
                     (x, y, elevation, lineno, idx, angle, idxblk) = dfTemp.iloc[0]
                     (x_b, y_b) = self.get_next_point(x, y, self.spacing, angle, -1)
                     (x_l, y_l) = self.get_next_point(x, y, LARGE_NUMBER, angle, -1)
@@ -879,6 +877,7 @@ class FlightPlanning(object):
             # Get the waypoints that has the Current Block number
             idxblk = float(rowBlocks['Name'][5:])
             df = dfWayPoints[dfWayPoints['Block'] == idxblk].sort_values(by="index")
+            df = df.reset_index(drop=True)
             if (len(df) == 0):  continue
             # Add one to make the first one one
             (x, y, elevation, lineno, idx, angle, idxblk) = df.iloc[0]
@@ -890,21 +889,29 @@ class FlightPlanning(object):
             while (((angleOrig - using_angle) / 180).is_integer() == False):
                 j += 1
                 angleOrig = float(df.iat[j, 5])
-            # (list_extra, dist) = self.make_extra_waypoints(rowBlocks['Exterior'], x, y, angleOrig + 180)
-            # deci = 0.4 / (len(list_extra) + 1)
-            # # Add the ends of the lines
-            # for nums1 in list_extra:
-            #     idx -= deci
-            #     (x, y) = self.get_next_point(x, y, nums1, angle, -1)
-            #     print(x, y, 0, lineno, idx, angle, idxblk)
-            #     curr_wp = [x, y, 0, lineno, idx, angle, idxblk]
-            #     df_holder.drop(df_holder.index, inplace=True)
-            #     df_holder = pd.DataFrame([curr_wp], columns=["utmX", "utmY", "elevation", "line", "index", "angle", "Block"])
-            #     df = pd.concat([df_holder, df])
-            # max_x = df.iloc[0, "utmX"]
-            # max_y = df.iloc[0, "utmY"]
-            # min_x = df.iloc[0, "utmX"]
-            # min_y = df.iloc[0, "utmY"]
+            (x_ret, y_ret, dist) = self.find_intersection(rowBlocks['Exterior'], x, y, angleOrig + 180)
+            print("Point is from block: ", dist)
+            if dist < 0:
+                df = df.drop([0])
+                df = df.reset_index(drop=True)
+            (x, y, elevation, lineno, idx, angle, idxblk) = df.iloc[0]
+            (list_extra, dist) = self.make_extra_waypoints(rowBlocks['Exterior'], x, y, angleOrig + 180)
+            deci = 0.4 / (len(list_extra) + 1)
+            # Add the ends of the lines
+            for nums1 in list_extra:
+                idx -= deci
+                (x, y) = self.get_next_point(x, y, nums1, angleOrig, -1)
+                curr_wp = [x, y, 0, lineno, idx, angle, idxblk]
+                print(curr_wp)
+                df_holder.drop(df_holder.index, inplace=True)
+                df_holder = pd.DataFrame([curr_wp], columns=["utmX", "utmY", "elevation", "line", "index", "angle", "Block"])
+                df = pd.concat([df_holder, df])
+                print(df)
+                df = df.reset_index(drop=True)
+            max_x = x
+            max_y = y
+            min_x = x
+            min_y = y
             for line in range(int(df['line'].min()), int(df['line'].max())):
                 # Get the last number of the current line
                 dfTemp = df.loc[df['line'] <= line]
@@ -1080,36 +1087,45 @@ class FlightPlanning(object):
                     df_holder.drop(df_holder.index, inplace=True)
                     df_holder = df_holder.append(dfTemp2)
                     dfTempRest = pd.concat([df_holder, dfTempRest])
-                    # (x, y, elevation, lineno, idx, angle, idxblk) = dfTemp.iloc[len(dfTemp) - 1]
-                    # (x_o, y_o, elevation_o, lineno_o, idx_o, angle_o, idxblk_o) = dfTempRest.iloc[0]
-                    # x_array = [min_x, x, x_o, max_x]
-                    # y_array = [min_y, y, y_o, max_y]
-                    # x_array.sort()
-                    # y_array.sort()
-                    # min_x = x_array[0]
-                    # max_x = x_array[-1]
-                    # min_y = y_array[0]
-                    # max_y = y_array[-1]
+                    x_array = [min_x, x, x_o, max_x]
+                    y_array = [min_y, y, y_o, max_y]
+                    x_array.sort()
+                    y_array.sort()
+                    min_x = x_array[0]
+                    max_x = x_array[-1]
+                    min_y = y_array[0]
+                    max_y = y_array[-1]
                 df = pd.concat([dfTemp, dfTempRest])
                 df = df.reset_index(drop=True)
             #Insert ending here.
-            # (x, y, elevation, lineno, idx, angle, idxblk) = df.iloc[len(df) - 1]
-            # point = Point(x, y)
-            # point_l = Point(self.get_next_point(x, y, LARGE_NUMBER, angle, 1))
-            # (list_extra, dist) = self.make_extra_waypoints(rowBlocks['Exterior'], x, y, angle)
-            # for i in range(0, len(list_extra)):
-            #     path = LineString([point, point_l])
-            #     if path.intersects(polygonSurvey) and length == self.spacing and idx.is_integer():
-            #         idx_o -= 1
-            #         dfTemp2 = dfWayPoints.loc[dfWayPoints["index"] == idx_o]
-            #     else:
-            #         idx_o -= deci
-            #         curr_wp = [x_o, y_o, 0, lineno_o, idx_o, angle_o, idxblk]
-            #         dfTemp2 = pd.DataFrame([curr_wp],
-            #                                columns=["utmX", "utmY", "elevation", "line", "index", "angle", "Block"])
-            #     df = pd.concat([df, dfTemp2])
+            (x, y, elevation, lineno, idx, angle, idxblk) = df.iloc[len(df) - 1]
+            (x_ret, y_ret, dist) = self.find_intersection(rowBlocks['Exterior'], x, y, angle)
+            if dist < 0:
+                df = df.drop([len(df) - 1])
+            (x, y, elevation, lineno, idx, angle, idxblk) = df.iloc[len(df) - 1]
+            (list_extra, dist) = self.make_extra_waypoints(rowBlocks['Exterior'], x, y, angle)
+            deci = 0.2 / (len(list_use) + 1)
+            for nums1 in list_extra:
+                idx += deci
+                (x, y) = self.get_next_point(x, y, nums1, angleOrig, 1)
+                print(x, y, 0, lineno, idx, angle, idxblk)
+                curr_wp = [x, y, 0, lineno, idx, angle, idxblk]
+                df_holder.drop(df_holder.index, inplace=True)
+                df_holder = pd.DataFrame([curr_wp], columns=["utmX", "utmY", "elevation", "line", "index", "angle", "Block"])
+                df = pd.concat([df, df_holder])
+            x_array = [min_x, x, max_x]
+            y_array = [min_y, y, max_y]
+            x_array.sort()
+            y_array.sort()
+            min_x = x_array[0]
+            max_x = x_array[-1]
+            min_y = y_array[0]
+            max_y = y_array[-1]
             df = df.reset_index(drop=True)
             # df = pd.con
+            print("X range:", min_x, max_x)
+            print("Y range:", min_y, max_y)
+        # Add SRTM Elevation.
         np.savetxt(filePointsBlock, df.values, fmt='%1.10f')
         self.UTMtoLL(filePointsBlock, type, prefix)
 

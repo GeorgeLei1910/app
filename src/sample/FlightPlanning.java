@@ -255,16 +255,13 @@ public class FlightPlanning {
             MainInterface.translateNode(chbTwoWay, -190, 120);
 
             Button useKMLFile = new Button("Load KML file");
-            useKMLFile.setTranslateX(165);
-            useKMLFile.setTranslateY(-50);
+            MainInterface.translateNode(useKMLFile, 165, -50);
 
             Text elevText = new Text("Elevation Buffer");
-            elevText.setTranslateX(-200);
-            elevText.setTranslateY(160);
+            MainInterface.translateNode(elevText, -200, 160);
 
             TextField elevTxtField = new TextField();
-            elevTxtField.setTranslateX(-120);
-            elevTxtField.setTranslateY(160);
+            MainInterface.translateNode(elevTxtField, -120, 160);
             elevTxtField.setMaxWidth(50);
 
 
@@ -275,38 +272,28 @@ public class FlightPlanning {
 
             rectangle.setStroke(Color.BLACK);
             rectangle.setStrokeWidth(1.5);
-            rectangle.setTranslateX(160);
-            rectangle.setTranslateY(-150);
-
+            MainInterface.translateNode(rectangle, 160, -150);
 
             Text tieLineTxt = new Text("Tie-Line Spacing (m)");
-            tieLineTxt.setTranslateX(100);
-            tieLineTxt.setTranslateY(-190);
+            MainInterface.translateNode(tieLineTxt, 100, -190);
             TextField tieSpaceField = new TextField();
-            tieSpaceField.setTranslateX(190);
-            tieSpaceField.setTranslateY(-190);
+            MainInterface.translateNode(tieSpaceField, 190, -190);
             tieSpaceField.setMaxWidth(50);
 
             Text tieLineTxtStart = new Text("Start Position");
-            tieLineTxtStart.setTranslateX(90);
-            tieLineTxtStart.setTranslateY(-135);
+            MainInterface.translateNode(tieLineTxtStart, 90, -135);
             TextField tieSpaceFieldStartLon = new TextField(), tieSpaceFieldStartLat = new TextField();
-            tieSpaceFieldStartLat.setTranslateX(165);
-            tieSpaceFieldStartLat.setTranslateY(-135);
+            MainInterface.translateNode(tieSpaceFieldStartLat, 165, -135);
             tieSpaceFieldStartLat.setMaxWidth(40);
             tieSpaceFieldStartLon.setPromptText("Lon");
             tieSpaceFieldStartLat.setPromptText("Lat");
-            tieSpaceFieldStartLon.setTranslateX(210);
-            tieSpaceFieldStartLon.setTranslateY(-135);
+            MainInterface.translateNode(tieSpaceFieldStartLon, 210, -135);
             tieSpaceFieldStartLon.setMaxWidth(40);
 
             Button btnChooseStartTie = new Button("choose start");
-            btnChooseStartTie.setTranslateX(135);
-            btnChooseStartTie.setTranslateY(-100);
-
+            MainInterface.translateNode(btnChooseStartTie, 135, -100);
 
             try{
-
                 String s;
                 InputStream ins = new FileInputStream(filePath);
                 Reader r = new InputStreamReader(ins, StandardCharsets.UTF_8); // leave charset out for default
@@ -508,15 +495,15 @@ public class FlightPlanning {
                     System.out.println(command);
                     try {
                         Process p = Runtime.getRuntime().exec(command);
-                        Controller.pythonConsole(p);
+                        if(!Controller.pythonConsole(p).equals("ENDER")){
+                            AllAlerts.createError(command);
+                        }
 //                    p.waitFor();
                         //Python console log
                     }catch(Exception e){
 
                     }
                     System.out.println("P ran");
-
-
                 dialog.close();
             });
 
@@ -825,13 +812,10 @@ public class FlightPlanning {
                 //Python code runs here
                 Process p = Runtime.getRuntime().exec(command);
                 Controller.pythonConsole(p);
-//                p.waitFor();
-                //Python console log
             }catch(Exception e){
 
             }
         });
-
     }
     // Gets the single instance of Flight Planning page
     public static FlightPlanning getInstance(StackPane layout) {
@@ -839,7 +823,6 @@ public class FlightPlanning {
             single_instance = new FlightPlanning(layout);
         return single_instance;
     }
-
     //Updates FlightPlanInfo when Flight is switched over
     public static void updateFlightPlanInfo(){
         lineToTxt.setDisable(false);

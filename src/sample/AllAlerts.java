@@ -77,4 +77,11 @@ public class AllAlerts {
         alert.setContentText("Add at least Three points in the \"Position\" section and try again");
         alert.showAndWait();
     }
+    public static void createError(String p){
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Python Error");
+        alert.setHeaderText("Your Python Script is throwing an exception");
+        alert.setContentText("Try running the following command in Command Line:\n" + p);
+        alert.showAndWait();
+    }
 }
