@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="openmap">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../openmap-5.1.15/openmap-5.1.15/lib/openmap.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>

@@ -3,6 +3,8 @@ package sample;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.TextArea;
+import javafx.scene.layout.GridPane;
 
 import java.io.File;
 import java.util.Optional;
@@ -78,10 +80,23 @@ public class AllAlerts {
         alert.showAndWait();
     }
     public static void createError(String p){
+        TextArea textArea = new TextArea("Try running the following command in Command Line:\n" + p + "\nTo see the exception thrown");
+        textArea.setEditable(false);
+        textArea.setWrapText(true);
+        GridPane gridPane = new GridPane();
+        gridPane.setMaxWidth(Double.MAX_VALUE);
+        gridPane.add(textArea, 0, 0);
         Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Python Error");
+        alert.setTitle("Render Error");
         alert.setHeaderText("Your Python Script is throwing an exception");
-        alert.setContentText("Try running the following command in Command Line:\n" + p);
+        alert.getDialogPane().setContent(gridPane);
+        alert.showAndWait();
+    }
+    public static void renderBlockSuccessful(String survey, String block){
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Render Complete");
+        alert.setHeaderText("Render Successful");
+        alert.setContentText(survey + " Block" + block + " has rendered successfully");
         alert.showAndWait();
     }
 }

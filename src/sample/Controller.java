@@ -111,14 +111,11 @@ public class Controller {
         int size = mapOfFiles.get(Current_Survey).get(Curr_BlockName).size();
         String i = Integer.toString(size + 1);
         String flight = "F"+i;
-        //System.out.println(rounds.get(Current_Round-1).keySet());
-        //String key = "B"+Current_Block+","+" "+"2019-07-31";
-        //System.out.println(key);
+
         mapOfFiles.get(Current_Survey).get(Curr_BlockName).add(flight);
-        //flightListLines.add(flight);
+
         loadFlights();
         updateFileStructure();
-        //setCurFlightFolder(Integer.parseInt(i));
         createFlightFolder(i);
         return flight;
     }
@@ -418,9 +415,15 @@ public class Controller {
 
     public static String pythonConsole(Process p) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
-        String line;
-        while ((line = reader.readLine()) != null) {
+        String line = reader.readLine();
+        String nextLine;
+        while (line != null) {
             System.out.println(line);
+            if((nextLine = reader.readLine()) == null){
+                break;
+            }else{
+                line = nextLine;
+            }
         }
         reader.close();
         return line;

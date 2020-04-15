@@ -273,7 +273,8 @@ class FlightPlanning(object):
             print("Getting elevation on Google")
             return self.get_elevation_google_api(loc)
 
-    def get_elevation_srtm(self, loc):
+    def get_elevation_srtm(self, min_x, min_y, max_x, max_y, df):
+        elevation.info()
         return (10, 10)
 
     # Gets elevation from Google API
@@ -289,7 +290,6 @@ class FlightPlanning(object):
         return (elevation, resolution)
 
     def creatFlight(self):
-
         # Creates flight txts for waypoints
         folderBlock = os.path.dirname(self.filepath)
         folderBlock = os.path.dirname(folderBlock)
@@ -1107,7 +1107,7 @@ class FlightPlanning(object):
             deci = 0.2 / (len(list_use) + 1)
             for nums1 in list_extra:
                 idx += deci
-                (x, y) = self.get_next_point(x, y, nums1, angleOrig, 1)
+                (x, y) = self.get_next_point(x, y, nums1, angle, 1)
                 print(x, y, 0, lineno, idx, angle, idxblk)
                 curr_wp = [x, y, 0, lineno, idx, angle, idxblk]
                 df_holder.drop(df_holder.index, inplace=True)
@@ -1125,7 +1125,15 @@ class FlightPlanning(object):
             # df = pd.con
             print("X range:", min_x, max_x)
             print("Y range:", min_y, max_y)
-        # Add SRTM Elevation.
+            min_wp = [min_x, min_y, 0, 0, -2, angle, idxblk]
+            max_wp = [max_x, max_y, 0, 0, -1, angle, idxblk]
+            df_holder.drop(df_holder.index, inplace=True)
+            df_holder = pd.DataFrame([min_wp, max_wp], columns=["utmX", "utmY", "elevation", "line", "index", "angle", "Block"])
+            print(df_holder)
+            df = pd.concat([df_holder, df])
+            df = df.reset_index(drop=True)
+
+    # Add SRTM Elevation.
         np.savetxt(filePointsBlock, df.values, fmt='%1.10f')
         self.UTMtoLL(filePointsBlock, type, prefix)
 

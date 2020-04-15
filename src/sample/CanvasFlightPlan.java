@@ -1,18 +1,13 @@
 package sample;
 
-import com.bbn.openmap.proj.Ellipsoid;
-import com.bbn.openmap.proj.coords.LatLonGCT;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
-import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
-import javafx.scene.control.Control;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
@@ -30,8 +25,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import com.bbn.openmap.proj.coords.LatLonPoint;
-import com.bbn.openmap.proj.coords.UTMPoint;
 
 public class CanvasFlightPlan  {
 
@@ -192,7 +185,7 @@ public class CanvasFlightPlan  {
         if(type == 0) {
             final Stage partitionStage = new Stage();
             StackPane layout = new StackPane();
-            Scene scenePartition = new Scene(layout, 200, 100);
+            Scene scenePartition = new Scene(layout, 400, 320);
             partitionStage.setScene(scenePartition);
             javafx.geometry.Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
             double x = bounds.getMinX() + (bounds.getWidth() - scene.getWidth()) * 0.3;
@@ -201,16 +194,158 @@ public class CanvasFlightPlan  {
             partitionStage.setY(y);
             partitionStage.show();
             partitionStage.setResizable(true);
-            Button btnPartition = new Button("Partition into Blocks");
-            btnPartition.setPrefWidth(200);
-            btnPartition.setPrefHeight(100);
-            layout.getChildren().add(btnPartition);
-            btnPartition.setOnAction((event) -> {
-                partitionStage.setWidth(400);
-                partitionStage.setHeight(320);
-                layout.getChildren().remove(btnPartition);
-                partitionSettings(layout, scene);
+
+            Button createBlock_mode_on = new Button("CreateBlock Mode ON");
+            Button createBlock_mode_off = new Button("CreateBlock Mode OFF");
+            Button showBlocksPlan = new Button("Show Block Plans");
+            Button createBlocksPlan = new Button("Create Block Plans");
+            Button rerenderBlocksPlan = new Button("Re-Render Block Plans");
+            Button undoPoints = new Button("Undo");
+            MainInterface.translateNode(createBlock_mode_on, -80, 100);
+            MainInterface.translateNode(createBlock_mode_off, 80, 100);
+            createBlock_mode_off.setDisable(true);
+            MainInterface.translateNode(showBlocksPlan, -80, 70);
+            MainInterface.translateNode(createBlocksPlan, 80, 70);
+            MainInterface.translateNode(undoPoints, -80, 40);
+            undoPoints.setDisable(true);
+            MainInterface.translateNode(rerenderBlocksPlan, 80, 40);
+
+            ComboBox comboBox = new ComboBox(Controller.getBlocks());
+            comboBox.setDisable(true);
+            comboBox.setTranslateY(-110);
+
+            comboBox.setValue(Controller.getBlocks().get(Controller.getCurBlock()));
+            System.out.println(comboBox.getValue().toString());
+            String str = comboBox.getValue().toString();
+
+            try{
+                for(int i = 0; i < str.length(); i++) {
+                    char ch2 = str.charAt(i);
+                    if (ch2 == ',') {
+                        str = str.substring(1, i);
+                        index_color = Integer.parseInt(str);
+                        break;
+                    }
+                }
+            }catch(NullPointerException e){
+                e.printStackTrace();
+            }
+
+            layout.getChildren().add(createBlock_mode_on);
+            layout.getChildren().add(createBlock_mode_off);
+            layout.getChildren().add(comboBox);
+            layout.getChildren().add(createBlocksPlan);
+            layout.getChildren().add(showBlocksPlan);
+            layout.getChildren().add(rerenderBlocksPlan);
+            layout.getChildren().add(undoPoints);
+            showBlocksPlan.setDisable(true);
+            createBlocksPlan.setDisable(true);
+            EventHandler<javafx.scene.input.MouseEvent> eventHandlerScene =
+                    e -> {
+                        showBlocksPlan.setDisable(false);
+                        undoPoints.setDisable(false);
+                        try{
+                            Color c =  COLORS.values()[(index_color-1) % 10].numVal;
+                            graphics_context.setFill(c);
+                            Position newPos = produceZappedPoint(e.getX() - osX, e.getY() + osY);
+                            System.out.println(newPos.getX() +" "+ newPos.getY());
+                            graphics_context.fillOval(newPos.getX() - 5,newPos.getY() - 5, 10, 10);
+                            if(!polsPositions.containsKey(index_color)){
+                                polsPositions.put(Controller.getCurBlock(), new ArrayList<>());
+                                polsPositions.get(Controller.getCurBlock()).add(newPos);
+                                System.out.println("-->");
+                            }else{
+                                polsPositions.get(index_color).add(newPos);
+                                System.out.println("---");
+                            }
+                        }catch(NullPointerException nullE){
+
+                        }
+                    };
+
+            createBlock_mode_on.setOnAction((event) -> {
+                createBlock_mode_on.setDisable(true);
+                createBlock_mode_off.setDisable(false);
+                rerenderBlocksPlan.setDisable(true);
+                scene.addEventHandler(javafx.scene.input.MouseEvent.MOUSE_CLICKED, eventHandlerScene);
             });
+            undoPoints.setOnAction(event -> {
+                ArrayList<Position> todel = polsPositions.get(Controller.getCurBlock());
+                if(todel.size() > 0){
+                    Position delete = todel.remove(todel.size() - 1);
+                    graphics_context.setFill(Color.WHITE);
+                    graphics_context.fillOval(delete.getX() - 5,delete.getY() - 5, 10, 10);
+                }
+            });
+            rerenderBlocksPlan.setOnAction(event -> {
+                String command = "python " + pathPython + " -m FlightPlanBlocks -f " + planSettingsFile + " -b " + Controller.getCurBlock();
+                String p = renderBlock(Controller.getCurBlock());
+                if(p.equals("ENDER")){
+                    AllAlerts.renderBlockSuccessful(Controller.getCurSurvey(), Integer.toString(Controller.getCurBlock()));
+                    partitionStage.close();
+                    STAGE.close();
+                }else {
+                    AllAlerts.createError(command);
+                }
+            });
+
+            createBlock_mode_off.setOnAction((event) -> {
+                scene.removeEventHandler(javafx.scene.input.MouseEvent.MOUSE_CLICKED, eventHandlerScene);
+                createBlock_mode_on.setDisable(false);
+                createBlock_mode_off.setDisable(true);
+                createBlocksPlan.setDisable(true);
+                showBlocksPlan.setDisable(true);
+                rerenderBlocksPlan.setDisable(false);
+            });
+
+            showBlocksPlan.setOnAction((event) -> {
+                showBlocksPlan.setDisable(true);
+                createBlocksPlan.setDisable(false);
+                Iterator it = polsPositions.entrySet().iterator();
+                while(it.hasNext()){
+                    Map.Entry<Integer, ArrayList<Position>> pair = (Map.Entry) it.next();
+
+                    int size = pair.getValue().size();
+
+                    for (int i = 0 ; i < size ; i++){
+                        graphics_context.setStroke(COLORS.values()[(pair.getKey()-1) % 10].numVal);
+                        graphics_context.setLineWidth(2);
+                        graphics_context.strokeLine(pair.getValue().get(i % size).getX(), pair.getValue().get(i % size).getY(),
+                                pair.getValue().get((i+1) % size).getX(), pair.getValue().get((i+1) % size).getY());
+                    }
+                }
+            });
+            //Create BLock Plan on the
+            createBlocksPlan.setOnAction((event) -> {
+                createBlocksPlan.setDisable(true);
+                double h = maxPosition.getX() - minPosition.getX();
+                double v = maxPosition.getY() - minPosition.getY();
+                double scale = (h > v)? h : v;
+                int blockno = 0;
+                Iterator it = polsPositions.entrySet().iterator();
+                while(it.hasNext()){
+                    Map.Entry<Integer, ArrayList<Position>> pair = (Map.Entry) it.next();
+                    blockno = pair.getKey();
+                    try{
+                        String fileFlightPlanBlock = System.getProperty("user.dir")+"/Data/"+ Current_Survey+"/Block"+ blockno +"/flight_plan" + Controller.getPrefixToSurvey() +
+                                "-B" + pair.getKey() +"-flightPalnBlock.txt";
+                        PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(fileFlightPlanBlock,false)));
+                        out.flush();
+                        out.write("Points:");
+                        for(Position itm : pair.getValue()){
+                            double xP = minPosition.getX() + (itm.getX() - offsetX)*scale/(a-2*offsetX);
+                            double yP = (b - itm.getY() - offsetY)*scale/(b-2*offsetY)+ minPosition.getY();
+                            out.write( xP+","+yP+ ":");
+                        }
+                        out.write("\n");
+                        out.close();
+                    }catch(Exception e) {
+
+                    }
+                    rerenderBlocksPlan.fire();
+                }
+            });
+
         }
         System.out.println("After MinMax");
 
@@ -287,6 +422,8 @@ public class CanvasFlightPlan  {
                     maxPosition.setY(posy);
                 posList.add(new Position(posx, posy));
             }
+            // compare the first two of stuff
+
             this.minPosition = minPosition;
             this.maxPosition = maxPosition;
             if(type == -3){
@@ -321,6 +458,26 @@ public class CanvasFlightPlan  {
                     if(maxPosition.getY() < posy)
                         maxPosition.setY(posy);
                 }
+            }else if (type < 0 || type == 4){
+                InputStream ins = new FileInputStream(wayPoints);
+                Reader r = new InputStreamReader(ins, StandardCharsets.UTF_8); // leave charset out for default
+                BufferedReader br = new BufferedReader(r);
+                s = br.readLine();
+                segments = s.split(" ");
+                Double posx =  Double.parseDouble(segments[0]);
+                Double posy =  Double.parseDouble(segments[1]);
+                if(minPosition.getX() > posx)
+                    minPosition.setX(posx);
+                if(minPosition.getY() > posy)
+                    minPosition.setY(posy);
+                s = br.readLine();
+                segments = s.split(" ");
+                posx =  Double.parseDouble(segments[0]);
+                posy =  Double.parseDouble(segments[1]);
+                if(maxPosition.getX() < posx)
+                    maxPosition.setX(posx);
+                if(maxPosition.getY() < posy)
+                    maxPosition.setY(posy);
             }
 
 
@@ -476,6 +633,10 @@ public class CanvasFlightPlan  {
             if((s = br.readLine()) != null){
                 // Fill the Starting point
                 String[] segments = s.split(" ");
+                while (Double.parseDouble(segments[4]) <= 0){
+                    s = br.readLine();
+                    segments = s.split(" ");
+                }
                 gc.setFill(Color.RED);
                 double x = ((a-2*offsetX)/scale) * (Double.parseDouble(segments[0])-minX)+offsetX;
                 double y = b-(((b-2*offsetY)/scale)*(Double.parseDouble(segments[1])-minY)+offsetY);
@@ -532,171 +693,22 @@ public class CanvasFlightPlan  {
     }
 
     private void partitionSettings(StackPane layout, Scene scene){
-        Button createBlock_mode_on = new Button("CreateBlock Mode ON");
-        Button createBlock_mode_off = new Button("CreateBlock Mode OFF");
-        Button showBlocksPlan = new Button("Show Block Plans");
-        Button createBlocksPlan = new Button("Create Block Plans");
-        Button rerenderBlocksPlan = new Button("Re-Render Block Plans");
-        Button undoPoints = new Button("Undo");
-        createBlock_mode_on.setTranslateY(100);
-        createBlock_mode_on.setTranslateX(-80);
-        createBlock_mode_off.setTranslateY(100);
-        createBlock_mode_off.setTranslateX(80);
-        createBlock_mode_off.setDisable(true);
-        showBlocksPlan.setTranslateY(70);
-        showBlocksPlan.setTranslateX(-80);
-        createBlocksPlan.setTranslateY(70);
-        createBlocksPlan.setTranslateX(80);
 
-        undoPoints.setTranslateY(40);
-        undoPoints.setTranslateX(-80);
-        undoPoints.setDisable(true);
-        rerenderBlocksPlan.setTranslateY(40);
-        rerenderBlocksPlan.setTranslateX(80);
-
-        ComboBox comboBox = new ComboBox(Controller.getBlocks());
-        comboBox.setDisable(true);
-        comboBox.setTranslateY(-110);
-
-        comboBox.setValue(Controller.getBlocks().get(Controller.getCurBlock()));
-        System.out.println(comboBox.getValue().toString());
-        String str = comboBox.getValue().toString();
-
-        try{
-            for(int i = 0; i < str.length(); i++) {
-                char ch2 = str.charAt(i);
-                if (ch2 == ',') {
-                    str = str.substring(1, i);
-                    index_color = Integer.parseInt(str);
-                    break;
-                }
-            }
-        }catch(NullPointerException e){
-            e.printStackTrace();
-        }
-
-        layout.getChildren().add(createBlock_mode_on);
-        layout.getChildren().add(createBlock_mode_off);
-        layout.getChildren().add(comboBox);
-        layout.getChildren().add(createBlocksPlan);
-        layout.getChildren().add(showBlocksPlan);
-        layout.getChildren().add(rerenderBlocksPlan);
-        layout.getChildren().add(undoPoints);
-        showBlocksPlan.setDisable(true);
-        createBlocksPlan.setDisable(true);
-        EventHandler<javafx.scene.input.MouseEvent> eventHandlerScene =
-                e -> {
-                showBlocksPlan.setDisable(false);
-                undoPoints.setDisable(false);
-                    try{
-                        Color c =  COLORS.values()[(index_color-1) % 10].numVal;
-                        graphics_context.setFill(c);
-                        Position newPos = produceZappedPoint(e.getX() - osX, e.getY() + osY);
-                        System.out.println(newPos.getX() +" "+ newPos.getY());
-                        graphics_context.fillOval(newPos.getX() - 5,newPos.getY() - 5, 10, 10);
-                        if(!polsPositions.containsKey(index_color)){
-                            polsPositions.put(Controller.getCurBlock(), new ArrayList<>());
-                            polsPositions.get(Controller.getCurBlock()).add(newPos);
-                            System.out.println("-->");
-                        }else{
-                            polsPositions.get(index_color).add(newPos);
-                            System.out.println("---");
-                        }
-                        }catch(NullPointerException nullE){
-
-                    }
-                };
-
-        createBlock_mode_on.setOnAction((event) -> {
-            createBlock_mode_on.setDisable(true);
-            createBlock_mode_off.setDisable(false);
-            rerenderBlocksPlan.setDisable(true);
-            scene.addEventHandler(javafx.scene.input.MouseEvent.MOUSE_CLICKED, eventHandlerScene);
-        });
-        undoPoints.setOnAction(event -> {
-            ArrayList<Position> todel = polsPositions.get(Controller.getCurBlock());
-            if(todel.size() > 0){
-            Position delete = todel.remove(todel.size() - 1);
-            graphics_context.setFill(Color.WHITE);
-            graphics_context.fillOval(delete.getX() - 5,delete.getY() - 5, 10, 10);
-            }
-        });
-        rerenderBlocksPlan.setOnAction(event -> {
-            renderBlock(Controller.getCurBlock());
-        });
-
-
-        createBlock_mode_off.setOnAction((event) -> {
-            scene.removeEventHandler(javafx.scene.input.MouseEvent.MOUSE_CLICKED, eventHandlerScene);
-            createBlock_mode_on.setDisable(false);
-            createBlock_mode_off.setDisable(true);
-            createBlocksPlan.setDisable(true);
-            showBlocksPlan.setDisable(true);
-            rerenderBlocksPlan.setDisable(false);
-        });
-        //TODO: fix null pointer
-        double h = maxPosition.getX() - minPosition.getX();
-        double v = maxPosition.getY() - minPosition.getY();
-        double scale = (h > v)? h : v;
-
-
-        showBlocksPlan.setOnAction((event) -> {
-            showBlocksPlan.setDisable(true);
-            createBlocksPlan.setDisable(false);
-            Iterator it = polsPositions.entrySet().iterator();
-            while(it.hasNext()){
-                Map.Entry<Integer, ArrayList<Position>> pair = (Map.Entry) it.next();
-
-                int size = pair.getValue().size();
-
-                for (int i = 0 ; i < size ; i++){
-                    graphics_context.setStroke(COLORS.values()[(pair.getKey()-1) % 10].numVal);
-                    graphics_context.setLineWidth(2);
-                    graphics_context.strokeLine(pair.getValue().get(i % size).getX(), pair.getValue().get(i % size).getY(),
-                            pair.getValue().get((i+1) % size).getX(), pair.getValue().get((i+1) % size).getY());
-                }
-            }
-        });
-        //Create BLock Plan on the
-        createBlocksPlan.setOnAction((event) -> {
-            createBlocksPlan.setDisable(true);
-            int blockno = 0;
-            Iterator it = polsPositions.entrySet().iterator();
-            while(it.hasNext()){
-                Map.Entry<Integer, ArrayList<Position>> pair = (Map.Entry) it.next();
-                blockno = pair.getKey();
-                try{
-                    String fileFlightPlanBlock = System.getProperty("user.dir")+"/Data/"+ Current_Survey+"/Block"+ blockno +"/flight_plan" + Controller.getPrefixToSurvey() +
-                            "-B" + pair.getKey() +"-flightPalnBlock.txt";
-                    PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(fileFlightPlanBlock,false)));
-                    out.flush();
-                    out.write("Points:");
-                    for(Position itm : pair.getValue()){
-                        double xP = minPosition.getX() + (itm.getX() - offsetX)*scale/(a-2*offsetX);
-                        double yP = (b - itm.getY() - offsetY)*scale/(b-2*offsetY)+ minPosition.getY();
-                        out.write( xP+","+yP+ ":");
-                    }
-                    out.write("\n");
-                    out.close();
-                }catch(Exception e) {
-
-                }
-                renderBlock(blockno);
-            }
-        });
 
     }
-    private void renderBlock(int blockno){
+    private String renderBlock(int blockno){
         String path = System.getProperty("user.dir");
         String pathPython = path + "/Package/pythontest.py";
         String command = "python " + pathPython + " -m FlightPlanBlocks -f " + planSettingsFile + " -b " + blockno;
+        String returnString = "";
         System.out.println(command);
         try {
             Process p = Runtime.getRuntime().exec(command);
-            Controller.pythonConsole(p);
+            returnString = Controller.pythonConsole(p);
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return returnString;
     }
 
     private Position produceZappedPoint(double x, double y){
