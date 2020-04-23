@@ -7,6 +7,7 @@ import javafx.scene.control.TextArea;
 import javafx.scene.layout.GridPane;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Optional;
 
 public class AllAlerts {
@@ -64,11 +65,15 @@ public class AllAlerts {
         alert.setContentText("All files from " + orig + "\nis downloaded into " + dest);
         alert.showAndWait();
     }
-    public static void downloadFailed(String orig, String dest){
+    public static void downloadFailed(ArrayList<String> s){
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("Download Failed");
         alert.setHeaderText("Download Unsuccessful");
-        alert.setContentText("No files were downloaded.\nEither Beaglebone is disconnected, or files were not found");
+        String listString = "";
+        for (String add: s){
+            listString.concat(add + " \n");
+        }
+        alert.setContentText("The following files are not downloaded:\n" + listString);
         alert.showAndWait();
     }
 
@@ -97,6 +102,23 @@ public class AllAlerts {
         alert.setTitle("Render Complete");
         alert.setHeaderText("Render Successful");
         alert.setContentText(survey + " Block" + block + " has rendered successfully");
+        alert.showAndWait();
+    }
+    public static void surveyNameError(int s){
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Survey Name Error");
+        String headerOption = "";
+        String bodyOption = "";
+        switch(s){
+            case 0: headerOption = "empty";
+                    bodyOption = "Type in a name for your survey and press ok";
+                break;
+            case 1: headerOption = "has a space or (back)slash";
+                    bodyOption = "Make sure your survey name does not have a space, or (back)slash";
+                break;
+        }
+        alert.setHeaderText("Your survey is " + headerOption);
+        alert.setContentText(bodyOption);
         alert.showAndWait();
     }
 }

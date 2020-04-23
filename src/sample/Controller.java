@@ -63,7 +63,7 @@ public class Controller {
         }while ((s = br.readLine()) != null);
         if(!mapOfFiles.isEmpty()){
             //System.out.println("sdfsefwfw");
-            setCurSurveyFolder(surveyContained);
+//            setCurSurveyFolder(surveyContained);
             loadSurveys();
         }
         }catch (Exception e)

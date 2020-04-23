@@ -109,6 +109,7 @@ public class FlightPlanning {
         txtTie.setStyle("-fx-font: 13 Courier;");
 
         //Bind Buttons to Activation
+        editSurvey.disableProperty().bind(mainInterface.listSurveys.valueProperty().isNull());
         showSurvey.disableProperty().bind(mainInterface.listSurveys.valueProperty().isNull());
         showSurveyTieFlight.disableProperty().bind(mainInterface.listSurveys.valueProperty().isNull());
         showSurveyTieLines.disableProperty().bind(mainInterface.listSurveys.valueProperty().isNull());
@@ -151,9 +152,15 @@ public class FlightPlanning {
 
             ok.setOnAction(event1 -> {
                 String nameOfSurvey = name.getText();
-                if(!nameOfSurvey.equals("")) mainInterface.listSurveys.setValue(Controller.addSurvey(nameOfSurvey));
-                dialog.close();
-                editSurvey.fire();
+                if(nameOfSurvey.equals("")){
+                    AllAlerts.surveyNameError(0);
+                }else if (nameOfSurvey.contains(" ") || nameOfSurvey.contains("/") || nameOfSurvey.contains("\\")){
+                    AllAlerts.surveyNameError(1);
+                }else {
+                    mainInterface.listSurveys.setValue(Controller.addSurvey(nameOfSurvey));
+                    dialog.close();
+                    editSurvey.fire();
+                }
             });
             cancel.setOnAction(event1 -> {
                 dialog.close();
@@ -497,6 +504,8 @@ public class FlightPlanning {
                         Process p = Runtime.getRuntime().exec(command);
                         if(!Controller.pythonConsole(p).equals("ENDER")){
                             AllAlerts.createError(command);
+                        }else{
+                            showSurveyTieFlight.fire();
                         }
 //                    p.waitFor();
                         //Python console log

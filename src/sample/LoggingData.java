@@ -47,7 +47,7 @@ public class LoggingData {
     private static int isLogging = 0;
 //    static private Button openStates;
     private LoggingData(StackPane layout){
-        this.layout = layout;
+        LoggingData.layout = layout;
         buttonConnect = new Button("Connect UAV");
         buttonDownload = new Button("Download Older Data");
         buttonProcess = new Button("Process Data");
@@ -79,13 +79,12 @@ public class LoggingData {
         latestTime.setTranslateY(100);
         latestTime.setFont(new Font(12));
 
-
         buttonStart.setDisable(true);
         buttonStop.setDisable(true);
         buttonDownload.setDisable(true);
         buttonLatest.setDisable(true);
-
-        //                    filenames.add("Mag.csv");
+        buttonProcess.setDisable(true);
+        filenames.add("Mag.csv");
         filenames.add("Mav.csv");
         filenames.add("MavAtt.csv");
         filenames.add("MavLaser.csv");
@@ -97,7 +96,6 @@ public class LoggingData {
             BBconnect bbConnect = BBconnect.getInstance();
             String connection = null;
             try {
-
                 download.connect(ipAddressField.getText());
                 bbConnect.setIPAddress(ipAddressField.getText());
                 connection = bbConnect.connect(1);
@@ -129,9 +127,12 @@ public class LoggingData {
                 ce.printStackTrace();
                 download.disconnect();
                 AllAlerts.disconnectedAlert();
+                disableDisconnected();
             } catch (JSchException e) {
                 e.printStackTrace();
                 download.disconnect();
+                AllAlerts.disconnectedAlert();
+                disableDisconnected();
             }
         });
 
@@ -145,8 +146,13 @@ public class LoggingData {
                 try {
                     BBconnect bbConnect = BBconnect.getInstance();
                     if(bbConnect.connect(2).contains("Start")){
-                        while(!buttonStart.isDisabled()){
+                        for(int i = 0; i < 5; i++){
                             buttonConnect.fire();
+                            if(buttonStart.isDisabled()){
+                                break;
+                            }else if (i == 4){
+
+                            }
                         }
                     }else{
                         AllAlerts.disconnectedAlert();
@@ -163,8 +169,13 @@ public class LoggingData {
             try {
                 if(bbConnect.connect(3).equals("Stop")){
                     shouldLoad = true;
-                    while(!buttonStop.isDisabled()){
+                    for(int i = 0; i < 5; i++){
                         buttonConnect.fire();
+                        if(buttonStop.isDisabled()){
+                            break;
+                        }else if (i == 4){
+
+                        }
                     }
                 }else{
                     AllAlerts.disconnectedAlert();
@@ -181,25 +192,32 @@ public class LoggingData {
                 File directory = new File(Controller.getCurDataFolder());
                 if (directory.isDirectory() && directory.listFiles().length > 0) {
                     write = AllAlerts.overwriteWarning(directory);
+                }else{
+                    write = 1;
                 }
                 if(write != 0) {
                     String orig = "/home/debian/stratus/build/datafiles/" + listOfFiles.get(0);
                     String dest = Controller.getCurDataFolder();
-                    try {
+                    ArrayList<String> unsuccessfulFiles = new ArrayList<>();
+
                         for (String fn : filenames) {
                             System.out.println("Copying from: " + orig + "/" + listOfFiles.get(0) + "-" + fn);
                             System.out.println("Copying to: " + dest + "/" + listOfFiles.get(0) + "-" + fn);
+                            try {
                             download.download(orig + "/" + listOfFiles.get(0) + "-" + fn, dest + "/" + listOfFiles.get(0).replace(":", "") + "-" + fn);
+                            } catch (JSchException e) {
+                                e.printStackTrace();
+                                unsuccessfulFiles.add(fn);
+                            } catch (SftpException e) {
+                                e.printStackTrace();
+                                unsuccessfulFiles.add(fn);
+                            }
                         }
-                    } catch (JSchException e) {
-                        e.printStackTrace();
-                    } catch (SftpException e) {
-                        e.printStackTrace();
-                    }
-                    if(directory.length() > 0){
+
+                    if(unsuccessfulFiles.size() == 0){
                         AllAlerts.downloadSuccessful(orig, dest);
                     }else{
-                        AllAlerts.downloadFailed(orig, dest);
+                        AllAlerts.downloadFailed(unsuccessfulFiles);
                     }
                 }
             }else{
@@ -261,6 +279,7 @@ public class LoggingData {
                         write = AllAlerts.overwriteWarning(directory);
                     }
                     if (write != 0) {
+                        ArrayList<String> unsuccessfulFiles = new ArrayList<>();
                         for (String fn : filenames) {
                             System.out.println("Copying from: " + orig + "-" + fn);
                             System.out.println("Copying to: " + dest + "-" + fn);
@@ -268,13 +287,15 @@ public class LoggingData {
                                 download.download(orig + "-" + fn, dest + "-" + fn);
                             } catch (JSchException e) {
                                 e.printStackTrace();
+                                unsuccessfulFiles.add(fn);
                             } catch (SftpException e) {
                                 e.printStackTrace();
+                                unsuccessfulFiles.add(fn);
                             }
                             if(directory.length() > 0){
                                 AllAlerts.downloadSuccessful(orig, dest);
                             }else{
-                                AllAlerts.downloadFailed(orig, dest);
+                                AllAlerts.downloadFailed(unsuccessfulFiles);
                             }
                         }
                     }
@@ -365,6 +386,8 @@ public class LoggingData {
         buttonStart.setDisable(true);
         buttonStop.setDisable(true);
         buttonDownload.setDisable(true);
+        buttonLatest.setDisable(true);
+        buttonProcess.setDisable(true);
     }
 
     private void getFilesFromServer(){

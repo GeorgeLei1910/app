@@ -2,10 +2,7 @@ package sample;
 
 import javax.naming.ldap.Control;
 import java.io.*;
-import java.net.ConnectException;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.SocketTimeoutException;
+import java.net.*;
 
 public class BBconnect {
     private static Socket socket= null;
@@ -17,6 +14,8 @@ public class BBconnect {
     private static int port3 = 5092;
     // Download Port
     private static int port4 = 5093;
+
+    private byte[] buf = new byte[256];
     InetSocketAddress  endPoint1;
     InetSocketAddress  endPoint2;
     InetSocketAddress  endPoint3;
@@ -71,26 +70,24 @@ public class BBconnect {
         String response = "Error";
         try {
             socket = new Socket();
-
             socket.connect(endPoint, 3000);
 
             input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            writer = new PrintWriter(socket.getOutputStream(),true);
+            writer = new PrintWriter(socket.getOutputStream(), true);
 
-            switch (typeOfConn){
-                case 1: response = getStatus(input);
+            switch (typeOfConn) {
+                case 1:
+                    response = getStatus(input);
                     break;
                 case 2:
                     response = getResponse(input);
-                    System.out.println(Controller.getPrefixToFlight());
-                    writer.print(Controller.getPrefixToFlight() + "\n");
+                    writer.print("Start" + "\n");
                     break;
-                case 3: response = getResponse(input);
+                case 3:
+                    response = getResponse(input);
                     break;
             }
-
             socket.close();
-
         }catch(ConnectException ce){
             throw new ConnectException();
         }catch(SocketTimeoutException ste){

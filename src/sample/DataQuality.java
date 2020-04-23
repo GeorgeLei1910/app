@@ -98,11 +98,12 @@ public class DataQuality {
                 }catch(Exception e){
 
                 }
+
             }
         });
+        buttonGraphTrim.setOnAction(event -> {
 
-
-
+        });
     }
 
     private static void fillGraphList(){

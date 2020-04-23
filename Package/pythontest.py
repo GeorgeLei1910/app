@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib
 import argparse
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
@@ -10,7 +9,6 @@ from scipy.interpolate import interp1d
 # from scipy.signal import savgol_filter
 import pandas as pd
 import os
-import sys
 import math
 from pyproj import Proj
 from shapely.geometry import Point
@@ -269,12 +267,13 @@ class FlightPlanning(object):
         if (self.elevation_type == 0):
             # print("Getting elevation on preset")
             return self.get_elevation_srtm(loc)
+            # return 0
         else:
             print("Getting elevation on Google")
             return self.get_elevation_google_api(loc)
 
-    def get_elevation_srtm(self, min_x, min_y, max_x, max_y, df):
-        elevation.info()
+    def get_elevation_srtm(self, loc):
+        # elevation.info()
         return (10, 10)
 
     # Gets elevation from Google API
@@ -622,6 +621,8 @@ class FlightPlanning(object):
         for index, row in dfWayPointsblocks.iterrows():
             (lon, lat) = self.converter(row["utmX"], row["utmY"], inverse=True)
             loc = str(lat) + ',' + str(lon)
+            #TODO: Implement SRTM Elevation function.
+            elev = 0
             (elev, resol) = self.get_elevation(loc)
             dfWayPointsblocksLL.loc[len(dfWayPointsblocksLL) - 1] = [lon, lat, elev + self.elevation_buffer, resol,
                                                                      row["index"], row["line"]]
@@ -743,6 +744,7 @@ class FlightPlanning(object):
         polygonSurvey = Polygon(exteriorSurvey)
         print("surveyPlanFolder: ", surveyFolder)
         self.blockName = block
+        using_spacing = 0
         prefix = "/S" + self.surveyName + "-B" + self.blockName
         # print(prefix)
         for name in os.listdir(surveyFolder):
@@ -771,11 +773,14 @@ class FlightPlanning(object):
                                       header=None)
             dataFilename = prefix + "-waypointsDataBlock.txt"
             using_angle = self.dirAngle
+            using_spacing = self.linespacing
         else:
             dfWayPoints = pd.read_csv(surveyPlanFolder + "/S" + self.surveyName + "-waypointsDataTieLine.txt", sep=" ",
                                       header=None)
             dataFilename = prefix + "-waypointsDataBlockTieLines.txt"
             using_angle = self.dirAngle + 90
+            using_spacing = self.tie_spacing
+
 
         dfWayPoints.columns = ["utmX", "utmY", "elevation", "line", "index", "angle"]
         # add 'Block' Column and make last column = -1
@@ -934,7 +939,7 @@ class FlightPlanning(object):
                 # # Length to catch up
                 print(magnitude)
                 print(vdot)
-                wpNeeded = round(math.sqrt((magnitude ** 2) - (self.linespacing ** 2))) / self.spacing
+                wpNeeded = round(math.sqrt((magnitude ** 2) - (using_spacing ** 2))) / self.spacing
                 if vdot > 0.0:
                     print("Waypoints Needed: ", wpNeeded)
                     # If there are points in the waypoint file that are inbetween the end points
@@ -999,9 +1004,9 @@ class FlightPlanning(object):
                 # df = pd.concat([dfTemp, dfTempRest])
                 dfTemp = dfTemp.reset_index(drop=True)
                 dfTempRest = dfTempRest.reset_index(drop=True)
-                # # Fill in the overshoot extensions.
-                # # If one is out and one is in , find the point outside to polygon boundary and use that point as reference
-                # # If both are inside or out, then find the point that is closest the the polygon boundary and use that point as reference.
+                # Fill in the overshoot extensions.
+                # If one is out and one is in , find the point outside to polygon boundary and use that point as reference
+                # If both are inside or out, then find the point that is closest the the polygon boundary and use that point as reference.
                 (x, y, elevation, lineno, idx, angle, idxblk) = dfTemp.iloc[len(dfTemp) - 1]
                 (x_o, y_o, elevation_o, lineno_o, idx_o, angle_o, idxblk_o) = dfTempRest.iloc[0]
                 point = Point(x, y)
@@ -1104,7 +1109,7 @@ class FlightPlanning(object):
                 df = df.drop([len(df) - 1])
             (x, y, elevation, lineno, idx, angle, idxblk) = df.iloc[len(df) - 1]
             (list_extra, dist) = self.make_extra_waypoints(rowBlocks['Exterior'], x, y, angle)
-            deci = 0.2 / (len(list_use) + 1)
+            deci = 0.2 / (len(list_extra) + 1)
             for nums1 in list_extra:
                 idx += deci
                 (x, y) = self.get_next_point(x, y, nums1, angle, 1)
@@ -1255,7 +1260,6 @@ class QualityCheck(object):
                                xAxisName="LON", yAxisName="LAT", colour="black", format='.')
         plt.show()
 
-    # TODO: Nothing here is showing. Fix me!
     def FlightMapPiksivsMav(self):
         PiksiLat = self.data_piksi["Piksi Lat"]
         PiksiLon = self.data_piksi["Piksi Lon"]
