@@ -74,32 +74,29 @@ public class DataQuality {
         buttonGraphTrim.setTranslateX(200);
         buttonGraphTrim.setTranslateY(-70);
 
-        buttonGraph.setOnAction(new EventHandler<ActionEvent>(){
-            @Override
-            public void handle(ActionEvent event) {
-                fillGraphList();
-                try{
-                    String path = System.getProperty("user.dir").replace('\\', '/');
-                    String pathPython = path + "/Package/pythontest.py";
-                    Iterator<graphType> listInterator = listOfGraphs.iterator();
-                    String param = "";
-                   while(listInterator.hasNext()){
-                        param = listInterator.next().toString();
-                        System.out.println(">>>>>>>>>>>>>>>>> Graphing "+ param + " Attempted");
-                        String command = "python " +pathPython+" -m ";
-                        String args = " -r1 "+r1.getText() + " -r2 "+r2.getText();
-                        String  pathFolder = Controller.getCurDataFolder();
-                        command = command + param + " -f "+pathFolder+ args;
-                        System.out.println(command);
-                        GraphingThread graphingThread = new GraphingThread(command);
-                        graphingThread.showGraph();
-                    }
-
-                }catch(Exception e){
-
+        buttonGraph.setOnAction(event -> {
+            fillGraphList();
+            try{
+                String path = System.getProperty("user.dir").replace('\\', '/');
+                String pathPython = path + "/Package/pythontest.py";
+                Iterator<graphType> listInterator = listOfGraphs.iterator();
+                String param = "";
+               while(listInterator.hasNext()){
+                    param = listInterator.next().toString();
+                    System.out.println(">>>>>>>>>>>>>>>>> Graphing "+ param + " Attempted");
+                    String command = "python " +pathPython+" -m ";
+                    String args = " -r1 "+r1.getText() + " -r2 "+r2.getText();
+                    String  pathFolder = Controller.getCurDataFolder();
+                    command = command + param + " -f "+pathFolder + args + " -i " + (cbUseRaw.isSelected()? "1":"0");
+                    System.out.println(command);
+                    GraphingThread graphingThread = new GraphingThread(command);
+                    graphingThread.showGraph();
                 }
 
+            }catch(Exception e){
+
             }
+
         });
         buttonGraphTrim.setOnAction(event -> {
 

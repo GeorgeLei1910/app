@@ -640,6 +640,8 @@ public class FlightPlanning {
 //            updateFlightPlanInfo();
             final Stage dialog = new Stage();
 //                downloadFiles.disableProperty().bind(downloadableFiles.valueProperty().isNull());
+
+
             dialog.initModality(Modality.APPLICATION_MODAL);
             dialog.initOwner(Controller.getPrimaryStage());
             StackPane popUpLayout = new StackPane();
@@ -652,12 +654,61 @@ public class FlightPlanning {
             Text txtFlight, txtTie, from, to;
 //            TextField lineFromTxt, lineToTxt, lineTieFromTxt, lineTieToTxt, seperateLines;
             Button efOK, efCancel;
+            String lft="0", ltt="0", ltft="0", lttt ="0";
 //            CheckBox cbUseSeperateLines;
+            String fpPath = System.getProperty("user.dir")+ Controller.getPathToBlock() +"/flight_plan/"+ Controller.getPrefixToBlock() + "-waypointsDataBlock.txt";
+            FileInputStream ins = null;
+            try {
+                ins = new FileInputStream(fpPath);
+                Reader r = new InputStreamReader(ins, StandardCharsets.UTF_8); // leave charset out for default
+                BufferedReader br = new BufferedReader(r);
+                for (int i = 0; i < 2; i++){
+                    String s = br.readLine();
+                    String [] ss = s.split(" ");
+                    double numero = Double.parseDouble(ss[4]);
+                    int lineend = (int) Double.parseDouble(ss[3]);
+                    if(numero == -2){
+                        lft = Integer.toString(lineend);
+                    }else if(numero == -1){
+                        ltt = Integer.toString(lineend);
+                    }
+                }
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            fpPath = System.getProperty("user.dir")+ Controller.getPathToBlock() +"/flight_plan/"+ Controller.getPrefixToBlock() + "-waypointsDataBlockTieLines.txt";
+            try {
+                ins = new FileInputStream(fpPath);
+                Reader r = new InputStreamReader(ins, StandardCharsets.UTF_8); // leave charset out for default
+                BufferedReader br = new BufferedReader(r);
+                for (int i = 0; i < 2; i++){
+                    String s = br.readLine();
+                    String [] ss = s.split(" ");
+                    double numero = Double.parseDouble(ss[4]);
+                    int lineend = (int) Double.parseDouble(ss[3]);
+                    if(numero == -2.0){
+                        ltft = Integer.toString(lineend);
+                    }else if (numero == -1.0){
+                        lttt = Integer.toString(lineend);
+                    }
+                }
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
             txtFlight = new Text("Flight Lines"); txtTie = new Text("Tie Lines");
             from = new Text("From"); to = new Text("To");
 
             efOK = new Button("OK (Apply)"); efCancel = new Button("Cancel");
+
+            lineFromTxt.setPromptText(lft);
+            lineToTxt.setPromptText(ltt);
+            lineTieFromTxt.setPromptText(ltft);
+            lineTieToTxt.setPromptText(lttt);
 
             txtFlight.setFill(Color.WHITE); txtTie.setFill(Color.WHITE); from.setFill(Color.WHITE); to.setFill(Color.WHITE);
             cbUseSeperateLines.setTextFill(Color.WHITE);

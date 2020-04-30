@@ -83,7 +83,7 @@ public class LoggingData {
         buttonStop.setDisable(true);
         buttonDownload.setDisable(true);
         buttonLatest.setDisable(true);
-        buttonProcess.setDisable(true);
+        buttonProcess.setDisable(false);
         filenames.add("Mag.csv");
         filenames.add("Mav.csv");
         filenames.add("MavAtt.csv");
@@ -156,11 +156,13 @@ public class LoggingData {
                         }
                     }else{
                         AllAlerts.disconnectedAlert();
+                        disableDisconnected();
                     }
 
                 }catch (ConnectException | SocketTimeoutException ce) {
                     ce.printStackTrace();
                     AllAlerts.disconnectedAlert();
+                    disableDisconnected();
                 }
         });
 
@@ -179,10 +181,12 @@ public class LoggingData {
                     }
                 }else{
                     AllAlerts.disconnectedAlert();
+                    disableDisconnected();
                 }
             } catch (ConnectException | SocketTimeoutException ce){
                 ce.printStackTrace();
                 AllAlerts.disconnectedAlert();
+                disableDisconnected();
             }
         });
 
@@ -387,7 +391,7 @@ public class LoggingData {
         buttonStop.setDisable(true);
         buttonDownload.setDisable(true);
         buttonLatest.setDisable(true);
-        buttonProcess.setDisable(true);
+        buttonProcess.setDisable(false);
     }
 
     private void getFilesFromServer(){

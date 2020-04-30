@@ -3,10 +3,6 @@ import argparse
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
-# from scipy import interpolate
-# from scipy.interpolate import make_interp_spline, BSpline
-# from mpl_toolkits.mplot3d import Axes3D
-# from scipy.signal import savgol_filter
 import pandas as pd
 import os
 import math
@@ -310,6 +306,9 @@ class FlightPlanning(object):
         dfWayPoints = pd.read_csv(fileFlightWaypoints, sep=" ", header=None)
         dfWayPoints.columns = ["utmX", "utmY", "elevation", "line", "index", "angle", "Block"]
 
+        dfWayPoints = dfWayPoints.loc[dfWayPoints['index'] > 0]
+        dfWayPointsLL = dfWayPointsLL.loc[dfWayPointsLL['index'] > 0]
+
         # Reads through and records the values in flightplan.txt in the Flight Folder
         file = open(self.filepath, "r+")
         line = file.readline()
@@ -361,18 +360,19 @@ class FlightPlanning(object):
 
         print(from_line, to_line)
         file.close()
-
+        # Creates Data Frames
         dfTemp = pd.DataFrame(columns=["utmX", "utmY", "elevation", "line", "index", "angle", "Block"])
         dfTempLL = pd.DataFrame(columns=["LON", "LAT", "elevation", "resolution", "index", "line"])
         step = 1
         if (from_line > to_line):
             step = -1
         if (use_seperate_lines == 0):
-            for line in range(int(from_line), int(to_line + step), step):
-                print(line)
-                print(dfWayPointsLL.loc[dfWayPointsLL['line'] == line])
-                dfTempLL = pd.concat([dfTempLL, dfWayPointsLL.loc[dfWayPointsLL['line'] == line]])
-                dfTemp = pd.concat([dfTemp, dfWayPoints.loc[dfWayPoints['line'] == line]])
+            if int(from_line) > 0 and int(to_line + step) > 0:
+                for line in range(int(from_line), int(to_line + step), step):
+                    print(line)
+                    print(dfWayPointsLL.loc[dfWayPointsLL['line'] == line])
+                    dfTempLL = pd.concat([dfTempLL, dfWayPointsLL.loc[dfWayPointsLL['line'] == line]])
+                    dfTemp = pd.concat([dfTemp, dfWayPoints.loc[dfWayPoints['line'] == line]])
         else:
             prev = float(segs[0].strip())
             reverse_mode = 0
@@ -401,11 +401,12 @@ class FlightPlanning(object):
         step = 1
         if (from_tie_line > to_tie_line):
             step = -1
-        for line in range(int(from_tie_line), int(to_tie_line + step), step):
-            print(line)
-            print(dfWayPointsLL.loc[dfWayPointsLL['line'] == line])
-            dfTempLL = pd.concat([dfTempLL, dfWayPointsLL.loc[dfWayPointsLL['line'] == line]])
-            dfTemp = pd.concat([dfTemp, dfWayPoints.loc[dfWayPoints['line'] == line]])
+        if int(from_tie_line) > 0 and int(to_tie_line + step) > 0:
+            for line in range(int(from_tie_line), int(to_tie_line + step), step):
+                print(line)
+                print(dfWayPointsLL.loc[dfWayPointsLL['line'] == line])
+                dfTempLL = pd.concat([dfTempLL, dfWayPointsLL.loc[dfWayPointsLL['line'] == line]])
+                dfTemp = pd.concat([dfTemp, dfWayPoints.loc[dfWayPoints['line'] == line]])
 
         dfTempLL.loc[:, 'index'] = np.arange(len(dfTempLL))
         dfTemp.loc[:, 'index'] = np.arange(len(dfTemp))
@@ -1130,8 +1131,9 @@ class FlightPlanning(object):
             # df = pd.con
             print("X range:", min_x, max_x)
             print("Y range:", min_y, max_y)
-            min_wp = [min_x, min_y, 0, 0, -2, angle, idxblk]
-            max_wp = [max_x, max_y, 0, 0, -1, angle, idxblk]
+            #The extreme points of the block, the min line and max line
+            min_wp = [min_x, min_y, 0, df.iat[0,3], -2, angle, idxblk]
+            max_wp = [max_x, max_y, 0, df.iat[len(df) - 1, 3], -1, angle, idxblk]
             df_holder.drop(df_holder.index, inplace=True)
             df_holder = pd.DataFrame([min_wp, max_wp], columns=["utmX", "utmY", "elevation", "line", "index", "angle", "Block"])
             print(df_holder)
@@ -1142,7 +1144,6 @@ class FlightPlanning(object):
         np.savetxt(filePointsBlock, df.values, fmt='%1.10f')
         self.UTMtoLL(filePointsBlock, type, prefix)
 
-
 # Class for Quality Check
 class QualityCheck(object):
     # Initialized QualityCheck Object
@@ -1152,38 +1153,49 @@ class QualityCheck(object):
 
     # Loads the 6 csv files to
     def load_data(self, type):
-        # IF using data_from_UAV.csv, go to load_data_processed()
-        if (type == 1):
-            self.load_data_processed()
+        print(type)
+        listoffiles = os.listdir(self.filepath)
+        prefix = ""
+        if len(listoffiles) < 6:
+            raise FileNotFoundError
+        if len(listoffiles[0]) > 19:
+            prefix = listoffiles[0][0:19]
+        print(prefix)
+        if (type == 0):
+            self.load_data_processed(prefix)
         else:
             try:
-                self.data_mag = pd.read_csv(self.filepath + "/Mag.csv")
+                self.data_mag = pd.read_csv(self.filepath + "/" + prefix + "Mag.csv")
                 self.data_mag.columns = ["BBB Time", "Mag Vals", "Lamor"]
             except:
                 pass
             try:
-                self.data_laser = pd.read_csv(self.filepath + "/MavLaser.csv")
+                self.data_laser = pd.read_csv(self.filepath + "/" + prefix +  "MavLaser.csv")
                 self.data_laser.columns = ["BBB Time", "Laser"]
             except:
                 pass
             try:
-                self.data_mav = pd.read_csv(self.filepath + "/Mav.csv")
-                self.data_mav.columns = ["BBB Time", "Mav Time", "Altitude", "Mav Lat", "Mav Lon"]
+                self.data_mav = pd.read_csv(self.filepath + "/" + prefix + "Mav.csv")
+                print(self.data_mav)
+                print(self.filepath + "/" + prefix + "Mav.csv")
+                self.data_mav.columns = ["BBB Time", "Mav Time", "Mav Alt", "Mav Lat", "Mav Lon"]
             except:
                 pass
             try:
-                self.data_piksi = pd.read_csv(self.filepath + "/PiksiGPS.csv")
+                self.data_piksi = pd.read_csv(self.filepath + "/" + prefix + "PiksiGPS.csv")
                 self.data_piksi.columns = ["BBB Time", "Piksi Lat", "Piksi Lon", "Piksi Alt"]
             except:
                 pass
 
-    def load_data_processed(self):
-        self.data = pd.read_csv(os.path.dirname(self.filepath) + "/data_from_UAV.csv")
-        self.data.columns = ["index", "BBB Time", "Piksi Lat", "Piksi Lon", "Mav Lat", "Mav Lon", "Mag Vals", "Lamor",
+    def load_data_processed(self, prefix):
+        print(self.filepath[0:-8])
+        self.data = pd.read_csv(os.path.dirname(self.filepath[0:-8]) + "/" + prefix + "data_from_UAV.csv")
+        print(self.data)
+        self.data.columns = ["index", "BBB Time", "Piksi Lat", "Piksi Lon","Piksi Alt", "Mav Lat", "Mav Lon", "Mav Alt", "Mag Vals", "Lamor",
                              "Laser"]
         self.data_mag = self.data[["BBB Time", "Mag Vals", "Lamor"]]
         self.data_laser = self.data[["BBB Time", "Laser"]]
-        self.data_mav = self.data[["BBB Time", "BBB Time", "Altitude", "Mav Lat", "Mav Lon"]]
+        self.data_mav = self.data[["BBB Time", "index", "Mav Alt", "Mav Lat", "Mav Lon"]]
         self.data_piksi = self.data[["BBB Time", "Piksi Lat", "Piksi Lon", "Piksi Alt"]]
 
     # fouth difference formula for mag (x - 4x + 6x^2 - 4x^3 + 1)
@@ -1215,16 +1227,12 @@ class QualityCheck(object):
 
         fourthDiffVals = []
         mag_vals = self.data_mag["Mag Vals"].values
-        for i in range(0, len(mag_vals)):
+        for i in range(2, len(mag_vals) - 2):
             mag1 = mag_vals[i - 2]
             mag2 = mag_vals[i - 1]
             mag3 = mag_vals[i]
-            if (i >= len(mag_vals) - 2):
-                mag4 = 0
-                mag5 = 0
-            else:
-                mag4 = mag_vals[i + 1]
-                mag5 = mag_vals[i + 2]
+            mag4 = mag_vals[i + 1]
+            mag5 = mag_vals[i + 2]
             val = self.fourthDiffFormula(mag1, mag2, mag3, mag4, mag5)
             fourthDiffVals.append(val)
         if (low == 0 and high == 0):
@@ -1232,14 +1240,14 @@ class QualityCheck(object):
             high = len(fourthDiffVals)
         std = np.std(fourthDiffVals[low:high], dtype=np.float32)
         mean = np.mean(fourthDiffVals[low:high])
-        plt = self.saveShowFig("4th Difference", yAxis=fourthDiffVals[low:high], xAxis=range(low, high),
+        plt = self.saveShowFig("4th Difference",yAxis=fourthDiffVals[low:high], xAxis=range(low, high),
                                xAxisName="Data Points", yAxisName="4th Difference", colour="red", format='.')
-        string = 'Standard Deviation: ' + str(std) + '\n\n' + 'Mean: ' + str(mean)
-        plt.title(string, y=0.78)
+        plt.suptitle("4th Difference",fontsize=24, y=0.98)
+        string = 'Standard Deviation: ' + str(std) + '        ' + 'Mean: ' + str(mean)
+        plt.title(string, y=-1, fontsize=12)
         plt.show()
 
     def magProfile(self):
-
         mag_vals = self.data_mag["Mag Vals"].values
         plt = self.saveShowFig("Mag Profile", yAxis=mag_vals,
                                xAxisName="Data Points", yAxisName="Mag", colour="orchid", format='.')
@@ -1277,10 +1285,12 @@ class QualityCheck(object):
         plt.show()
 
     def mavalt_piksialt(self):
-        MavAlt = self.data_mav["Altitude"] / 1000
+        MavAlt = self.data_mav["Mav Alt"] / 1000
+        print(self.data_mav["BBB Time"])
         BBB_mavLaserTimeMav = [StringToDecimal(ss) for ss in self.data_mav["BBB Time"]]
         BBB_mavLaserTimePiksi = [StringToDecimal(ss) for ss in self.data_piksi["BBB Time"]]
-        print(len(MavAlt))
+
+        # print(BBB_mavLaserTimeMav)
         PiksiAlt = self.data_piksi["Piksi Alt"]
         xPiksi = np.linspace(0, len(PiksiAlt), len(PiksiAlt))
         xMav = np.linspace(0, len(PiksiAlt), len(MavAlt))
@@ -1324,12 +1334,14 @@ class QualityCheck(object):
 def StringToDecimal(ss):
     # print(ss)
     try:
-        (h, m, s) = ss.split(':')
-    except ValueError:
-        (m, s) = ss.split(':')
-        h = 0
-    result = int(h) * 3600 + int(m) * 60 + float(s)
-    return result
+        hms = ss.split(':')
+    except AttributeError:
+        return round(float(ss),3)
+    if len(hms) == 3:
+        return int(hms[0]) * 3600 + int(hms[1]) * 60 + float(hms[2])
+    elif len(hms) == 2:
+        return int(hms[0]) * 60 + float(hms[1])
+    return hms
 
 
 def treamdata(array):
@@ -1345,34 +1357,32 @@ def process_data(filename):
     file_paths = ["Mag.csv", "PiksiGPS.csv", "PiksiGPSTime.csv", "Mav.csv", "MavLaser.csv", "MavAtt.csv"]
     filepatOrig = os.path.dirname(filename)
     print(filepatOrig)
-    foldername = os.path.basename(filepatOrig)
-    listFlightFolders = list()
-    for name in os.listdir(filepatOrig):
-        if name.startswith("Flight"):
-            listFlightFolders.append()
-    if (foldername.startswith("Block")):
-        for file_name in file_paths:
-            for folder in listFlightFolders:
-                print("Thing")
 
-    print("Processing data")
-    filepath = filename
-    data_mag = pd.read_csv(filepath + "/Mag.csv")
+    listoffiles = os.listdir(filepatOrig + "/raw_data")
+    if len(listoffiles) < 6:
+        raise FileNotFoundError
+    if len(listoffiles[0]) > 19:
+        prefix = listoffiles[0][0:19]
+    print(prefix)
+
+    #Get the files
+    filepath = filename + "/" + prefix
+    data_mag = pd.read_csv(filepath + "Mag.csv")
     print("data_mag", len(data_mag))
-    data_piksiGPS = pd.read_csv(filepath + "/PiksiGPS.csv")
+    data_piksiGPS = pd.read_csv(filepath + "PiksiGPS.csv")
     print("data_piksiGPS", len(data_piksiGPS))
-    data_piksiGPSTime = pd.read_csv(filepath + "/PiksiGPSTime.csv")
+    data_piksiGPSTime = pd.read_csv(filepath + "PiksiGPSTime.csv")
     print("data_piksiGPSTime", len(data_piksiGPSTime))
-    data_mav = pd.read_csv(filepath + "/Mav.csv")
+    data_mav = pd.read_csv(filepath + "Mav.csv")
     print("data_mav", len(data_mav))
-    data_mav_laser = pd.read_csv(filepath + "/MavLaser.csv")
+    data_mav_laser = pd.read_csv(filepath + "MavLaser.csv")
     print("data_mav_laser", len(data_mav_laser))
-    data_mav_att = pd.read_csv(filepath + "/MavAtt.csv")
+    data_mav_att = pd.read_csv(filepath + "MavAtt.csv")
     print("data_mav_att", len(data_mav_att))
     data_mag.columns = ["BBB Time", "Mag Vals", "Lamor"]
     data_piksiGPS.columns = ["BBB Time", "Piksi Lat", "Piksi Lon", "Piksi Alt"]
     data_piksiGPSTime.columns = ["BBB Time", "Weeks", "Secs"]
-    data_mav.columns = ["BBB Time", "Mav Time", "Altitude", "Mav Lat", "Mav Lon"]
+    data_mav.columns = ["BBB Time", "Mav Time", "Mav Alt", "Mav Lat", "Mav Lon"]
     data_mav_laser.columns = ["BBB Time", "Laser"]
     # print(data_mag)
     TIME_MAG_USED = data_mag["BBB Time"].values
@@ -1395,7 +1405,7 @@ def process_data(filename):
     BBB_mavTime = np.array(BBB_mavTime)
     Lat_mav_data = data_mav["Mav Lat"].values
     Lon_mav_data = data_mav["Mav Lon"].values
-    Alt_mav_data = data_mav["Altitude"].values
+    Alt_mav_data = data_mav["Mav Alt"].values
     BBB_mavLaserTime = data_mav_laser["BBB Time"].values
     BBB_mavLaserTime = [StringToDecimal(ss) for ss in BBB_mavLaserTime]
     BBB_mavLaserTime = np.array(BBB_mavLaserTime)
@@ -1413,10 +1423,12 @@ def process_data(filename):
     BBB_timePiksi_GPS = treamdata(BBB_timePiksi_GPS)
     Lat_data = Lat_data[Lat_data.size - BBB_timePiksi_GPS.size:Lat_data.size]
     Lon_data = Lon_data[Lon_data.size - BBB_timePiksi_GPS.size:Lon_data.size]
+    Alt_data = Alt_data[Alt_data.size - BBB_timePiksi_GPS.size:Alt_data.size]
 
     BBB_mavTime = treamdata(BBB_mavTime)
     Lat_mav_data = Lat_mav_data[Lat_mav_data.size - BBB_mavTime.size:Lat_mav_data.size]
     Lon_mav_data = Lon_mav_data[Lon_mav_data.size - BBB_mavTime.size:Lon_mav_data.size]
+    Alt_mav_data = Alt_mav_data[Alt_mav_data.size - BBB_mavTime.size:Alt_mav_data.size]
 
     BBB_mavLaserTime = treamdata(BBB_mavLaserTime)
     Laser = Laser[Laser.size - BBB_mavLaserTime.size:Laser.size]
@@ -1427,29 +1439,38 @@ def process_data(filename):
     Func_Polated_PiksiTime = interp1d(BBB_time_piksi, Piksi_time, kind='linear', fill_value="extrapolate")
     Func_Polated_PiksiTimeGPSLAT = interp1d(BBB_timePiksi_GPS, Lat_data, kind='linear', fill_value="extrapolate")
     Func_Polated_PiksiTimeGPSLON = interp1d(BBB_timePiksi_GPS, Lon_data, kind='linear', fill_value="extrapolate")
+    Func_Polated_PiksiTimeGPSALT = interp1d(BBB_timePiksi_GPS, Alt_data, kind='linear', fill_value="extrapolate")
     Func_Polated_MavDataGPSLON = interp1d(BBB_mavTime, Lon_mav_data, kind='linear', fill_value="extrapolate")
     Func_Polated_MavDataGPSLAT = interp1d(BBB_mavTime, Lat_mav_data, kind='linear', fill_value="extrapolate")
+    Func_Polated_MavDataGPSALT = interp1d(BBB_mavTime, Alt_mav_data, kind='linear', fill_value="extrapolate")
     Func_Polated_Laser = interp1d(BBB_mavLaserTime, Laser, kind='linear', fill_value="extrapolate")
+
+
 
     NEW_PIKSI_TIME_VALS = np.array(Func_Polated_PiksiTime(TIME_MAG_USED))
     NEW_PIKSI_LAT_VALS = np.array(Func_Polated_PiksiTimeGPSLAT(TIME_MAG_USED))
     NEW_PIKSI_LON_VALS = np.array(Func_Polated_PiksiTimeGPSLON(TIME_MAG_USED))
-    NEW_MAV_LON_VALS = np.array(Func_Polated_MavDataGPSLON(TIME_MAG_USED)) / 10000000
-    NEW_MAV_LAT_VALS = np.array(Func_Polated_MavDataGPSLAT(TIME_MAG_USED)) / 10000000
+    NEW_PIKSI_ALT_VALS = np.array(Func_Polated_PiksiTimeGPSALT(TIME_MAG_USED))
+    NEW_MAV_LON_VALS = np.array(Func_Polated_MavDataGPSLON(TIME_MAG_USED))
+    NEW_MAV_LAT_VALS = np.array(Func_Polated_MavDataGPSLAT(TIME_MAG_USED))
+    NEW_MAV_ALT_VALS = np.array(Func_Polated_MavDataGPSALT(TIME_MAG_USED))
     NEW_LASER_MAV = np.array(Func_Polated_Laser(TIME_MAG_USED))
 
     FINAL_RESULT = pd.DataFrame()
     FINAL_RESULT['Piksi Time'] = NEW_PIKSI_TIME_VALS
     FINAL_RESULT['Lat Piksi'] = NEW_PIKSI_LAT_VALS
     FINAL_RESULT['Lon Piksi'] = NEW_PIKSI_LON_VALS
+    FINAL_RESULT['Alt Piksi'] = NEW_PIKSI_ALT_VALS
     FINAL_RESULT['Lat Mav'] = NEW_MAV_LAT_VALS
     FINAL_RESULT['Lon Mav'] = NEW_MAV_LON_VALS
+    FINAL_RESULT['Alt Mav'] = NEW_MAV_ALT_VALS
     FINAL_RESULT['Mag'] = MAG_VALS
     FINAL_RESULT['Lamor'] = LAMOR
     FINAL_RESULT['Laser'] = NEW_LASER_MAV
 
+
     # Makes data_from_UAV.csv
-    pd.DataFrame(FINAL_RESULT).to_csv(filepatOrig + "/data_from_UAV.csv")
+    pd.DataFrame(FINAL_RESULT).to_csv(filepatOrig + "/" + prefix + "data_from_UAV.csv")
 
 
 def export_data(filename, prefixflight):
@@ -1541,7 +1562,6 @@ if __name__ == "__main__":
         qualitycheck.load_data(proc)
         qualitycheck.counter_map()
     if arg1 == "process":
-        print("Processing Data")
         process_data(filename)
     if arg1 == "ExportFile":
         export_data(filename)

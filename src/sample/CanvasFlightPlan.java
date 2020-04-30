@@ -342,7 +342,15 @@ public class CanvasFlightPlan  {
                     }catch(Exception e) {
 
                     }
-                    rerenderBlocksPlan.fire();
+                }
+                String command = "python " + pathPython + " -m FlightPlanBlocks -f " + planSettingsFile + " -b " + Controller.getCurBlock();
+                String p = renderBlock(Controller.getCurBlock());
+                if(p.equals("ENDER")){
+                    AllAlerts.renderBlockSuccessful(Controller.getCurSurvey(), Integer.toString(Controller.getCurBlock()));
+                    partitionStage.close();
+                    STAGE.close();
+                }else {
+                    AllAlerts.createError(command);
                 }
             });
 
@@ -382,7 +390,7 @@ public class CanvasFlightPlan  {
                     }
                 }
             }else{
-                // Convert Lat Lon to UTM in shit
+                // Convert Lat Lon to UTM
                 segments = new String[coords.size()];
                 int zoneno = 0;
                 for(int i = 0; i < segments.length; i++){
@@ -458,7 +466,7 @@ public class CanvasFlightPlan  {
                     if(maxPosition.getY() < posy)
                         maxPosition.setY(posy);
                 }
-            }else if (type < 0 || type == 4){
+            }else if (type == 0 || type == -1  || type == 4){
                 InputStream ins = new FileInputStream(wayPoints);
                 Reader r = new InputStreamReader(ins, StandardCharsets.UTF_8); // leave charset out for default
                 BufferedReader br = new BufferedReader(r);
@@ -478,6 +486,28 @@ public class CanvasFlightPlan  {
                     maxPosition.setX(posx);
                 if(maxPosition.getY() < posy)
                     maxPosition.setY(posy);
+            }else if (type == -2){
+                InputStream ins = new FileInputStream(wayPoints);
+                Reader r = new InputStreamReader(ins, StandardCharsets.UTF_8); // leave charset out for default
+                BufferedReader br = new BufferedReader(r);
+                String lineno = "";
+                while((s = br.readLine()) != null) {
+                    segments = s.split(" ");
+                    if(lineno.equals(segments[3])){
+                        continue;
+                    }
+                    lineno = segments[3];
+                    Double posx = Double.parseDouble(segments[0]);
+                    Double posy = Double.parseDouble(segments[1]);
+                    if (minPosition.getX() > posx)
+                        minPosition.setX(posx);
+                    if (minPosition.getY() > posy)
+                        minPosition.setY(posy);
+                    if (maxPosition.getX() < posx)
+                        maxPosition.setX(posx);
+                    if (maxPosition.getY() < posy)
+                        maxPosition.setY(posy);
+                }
             }
 
 
